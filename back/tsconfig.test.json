@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",  // Extend the base configuration
+  "include": [
+    "src/**/*.test.ts",           // Include all test files
+    "src/**/__tests__/**/*.ts",     // Include files in __tests__ folders
+    "src/types/**/*.d.ts"  // Make sure this is included
+  ]
+}

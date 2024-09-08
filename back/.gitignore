@@ -1,0 +1,12 @@
+# Node modules
+node_modules/
+
+# Compiled output
+dist/
+
+# Environment variables
+.env
+*.js
+
+# Logs
+npm-debug.log*
