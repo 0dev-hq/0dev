@@ -1,90 +1,172 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "react-query";
+import {
+  getQueries,
+  getQueriesByDataSource,
+  deleteQuery,
+  rebuildQuery,
+} from "../../services/queryService";
+import { Link, useNavigate } from "react-router-dom";
+import { getDataSources } from "../../services/dataSourceService";
 import QueryBlock from "../components/QueryBlock";
-
-// Define the structure of a Query item
-interface Query {
-  id: number;
-  text: string;
-}
+import { Query } from "../../models/Query";
 
 const QueriesPage: React.FC = () => {
-  // Tab state: 'recent' or 'dataSource'
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"recent" | "dataSource">("recent");
+  const [displayMode, setDisplayMode] = useState<"standard" | "accordion">(
+    "standard"
+  );
   const [selectedDataSource, setSelectedDataSource] = useState<string>("");
 
-  // Dummy data for recent and data source queries
-  const recentQueries: Query[] = [
-    { id: 1, text: "SELECT * FROM users" },
-    { id: 2, text: "SELECT * FROM orders WHERE status = 'shipped'" },
-  ];
+  // Fetch all queries for the recent tab
+  const queryClient = useQueryClient();
+  const { data: recentQueries, isLoading: loadingRecentQueries } = useQuery<
+    Query[]
+  >("recentQueries", getQueries);
 
-  const dataSourceQueries: { [key: string]: Query[] } = {
-    mysql: [
-      { id: 1, text: "SELECT * FROM customers" },
-      { id: 2, text: "SELECT * FROM transactions WHERE amount > 1000" },
-    ],
-    mongodb: [
-      { id: 3, text: "SELECT * FROM user_activity" },
-      { id: 4, text: "SELECT * FROM product_performance" },
-    ],
+  // Fetch data sources
+  const { data: dataSources, isLoading: isLoadingDataSources } = useQuery(
+    "dataSources",
+    getDataSources
+  );
+
+  // Fetch queries by data source
+  const { data: dataSourceQueries, refetch: fetchDataSourceQueries } = useQuery(
+    ["dataSourceQueries", selectedDataSource],
+    () => getQueriesByDataSource(selectedDataSource),
+    {
+      enabled: false, // Don't fetch until the data source is selected
+    }
+  );
+
+  const deleteMutation = useMutation(deleteQuery, {
+    onSuccess: () => {
+      queryClient.invalidateQueries("recentQueries"); // Refetch queries after deletion
+      if (selectedDataSource) {
+        queryClient.invalidateQueries([
+          "dataSourceQueries",
+          selectedDataSource,
+        ]);
+      }
+    },
+  });
+
+  const handleDelete = (id: string) => {
+    deleteMutation.mutate(id);
+  };
+  const handleRunQuery = (id: string) => {
+    navigate(`/query/run?queryId=${id}&page=1`);
   };
 
-  // Dummy data sources for the dropdown
-  const dataSources = [
-    { id: "mysql", name: "MySQL Database" },
-    { id: "mongodb", name: "MongoDB Database" },
-  ];
+  const { mutate: mutateRebuildQuery, isLoading: isRebuildQueryLoading } = useMutation(
+    (id: string) => rebuildQuery(id),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries("recentQueries"); // Refetch queries after rebuilding
+        if (selectedDataSource) {
+          queryClient.invalidateQueries([
+            "dataSourceQueries",
+            selectedDataSource,
+          ]);
+        }
+      },
+    }
+  );
 
-  // Handlers for the query actions (placeholders)
-  const handleView = (id: number) => alert(`View query ${id}`);
-  const handleEdit = (id: number) => alert(`Edit query ${id}`);
-  const handleDelete = (id: number) => alert(`Delete query ${id}`);
+  const handleRebuildQuery = (id: string) => {
+    mutateRebuildQuery(id);
+  };
+
+  useEffect(() => {
+    if (selectedDataSource) {
+      fetchDataSourceQueries();
+    }
+  }, [selectedDataSource]);
+
+  if (loadingRecentQueries || isLoadingDataSources) {
+    return <p>Loading queries...</p>;
+  }
+
+  if (isRebuildQueryLoading) {
+    return <p>Rebuilding query...</p>;
+  }
 
   return (
     <div className="flex flex-col space-y-6">
       {/* New Query Button */}
       <div>
-        <button className="bg-black text-white px-4 py-2 rounded hover:bg-opacity-90">
+        <Link
+          to="/query/new"
+          className="bg-black text-white px-4 py-2 rounded hover:bg-opacity-90"
+        >
           New Query
-        </button>
+        </Link>
       </div>
 
       {/* Tabs for Recent Queries and Data Source Queries */}
-      <div className="flex space-x-4 border-b border-black pb-2">
-        <button
-          className={`${
-            activeTab === "recent"
-              ? "text-black border-b-2 border-black"
-              : "text-gray-600"
-          } pb-2`}
-          onClick={() => setActiveTab("recent")}
-        >
-          Recent Queries
-        </button>
-        <button
-          className={`${
-            activeTab === "dataSource"
-              ? "text-black border-b-2 border-black"
-              : "text-gray-600"
-          } pb-2`}
-          onClick={() => setActiveTab("dataSource")}
-        >
-          Data Source Queries
-        </button>
+      <div className="flex justify-between items-center border-b border-black pb-2">
+        <div className="flex space-x-4">
+          <button
+            className={`${
+              activeTab === "recent"
+                ? "text-black border-b-2 border-black"
+                : "text-gray-600"
+            } pb-2`}
+            onClick={() => setActiveTab("recent")}
+          >
+            Recent Queries
+          </button>
+          <button
+            className={`${
+              activeTab === "dataSource"
+                ? "text-black border-b-2 border-black"
+                : "text-gray-600"
+            } pb-2`}
+            onClick={() => setActiveTab("dataSource")}
+          >
+            Data Source Queries
+          </button>
+        </div>
+
+        {/* Display Mode Toggle */}
+        <div className="flex items-center">
+          <label className="mr-2 text-gray-600">Display Mode:</label>
+          <select
+            value={displayMode}
+            onChange={(e) =>
+              setDisplayMode(e.target.value as "standard" | "accordion")
+            }
+            className="p-2 border border-gray-300 rounded-md"
+          >
+            <option value="standard">Standard</option>
+            <option value="accordion">Accordion</option>
+          </select>
+        </div>
       </div>
 
       {/* Query Blocks */}
       <div className="space-y-4">
-        {activeTab === "recent" &&
-          recentQueries.map((query) => (
-            <QueryBlock
-              key={query.id}
-              queryText={query.text}
-              onView={() => handleView(query.id)}
-              onEdit={() => handleEdit(query.id)}
-              onDelete={() => handleDelete(query.id)}
-            />
-          ))}
+        {activeTab === "recent" && (
+          <>
+            {recentQueries && recentQueries?.length > 0 ? (
+              recentQueries.map((query: Query) => (
+                <QueryBlock
+                  mode={displayMode}
+                  key={query._id}
+                  description={query.description}
+                  name={query.name}
+                  onEdit={() => navigate(`/query/edit/${query._id}`)}
+                  onRun={() => handleRunQuery(query._id!)}
+                  onDelete={() => handleDelete(query._id!)}
+                  onRebuild={() => handleRebuildQuery(query._id!)}
+                />
+              ))
+            ) : (
+              <p>No recent queries found.</p>
+            )}
+          </>
+        )}
 
         {activeTab === "dataSource" && (
           <div className="flex flex-col space-y-6">
@@ -97,7 +179,7 @@ const QueriesPage: React.FC = () => {
             >
               <option value="">-- Select Data Source --</option>
               {dataSources.map((source) => (
-                <option key={source.id} value={source.id}>
+                <option key={source._id} value={source._id}>
                   {source.name}
                 </option>
               ))}
@@ -105,17 +187,24 @@ const QueriesPage: React.FC = () => {
 
             {/* Show Queries for the selected data source */}
             {selectedDataSource && (
-              <div className="space-y-4">
-                {dataSourceQueries[selectedDataSource]?.map((query) => (
-                  <QueryBlock
-                    key={query.id}
-                    queryText={query.text}
-                    onView={() => handleView(query.id)}
-                    onEdit={() => handleEdit(query.id)}
-                    onDelete={() => handleDelete(query.id)}
-                  />
-                ))}
-              </div>
+              <>
+                {dataSourceQueries?.length > 0 ? (
+                  dataSourceQueries.map((query: Query) => (
+                    <QueryBlock
+                      mode={displayMode}
+                      key={query._id}
+                      description={query.description}
+                      name={query.name}
+                      onEdit={() => navigate(`/query/edit/${query._id}`)}
+                      onRun={() => handleRunQuery(query._id!)}
+                      onDelete={() => handleDelete(query._id!)}
+                      onRebuild={() => handleRebuildQuery(query._id!)}
+                    />
+                  ))
+                ) : (
+                  <p>No queries found for the selected data source.</p>
+                )}
+              </>
             )}
           </div>
         )}

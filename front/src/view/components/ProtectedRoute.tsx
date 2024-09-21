@@ -6,15 +6,20 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
 
+  // Wait until loading completes
+  if (loading) {
+    return <div>Loading...</div>;  // You can replace this with a spinner or loader component
+  }
+
+  // Redirect to sign-in page if not authenticated
   if (!user) {
-    // Redirect to sign-in page, pass current URL in returnTo
     return (
-      <Navigate 
-        to={`/auth/signin?returnTo=${encodeURIComponent(location.pathname)}`} 
-        replace 
+      <Navigate
+        to={`/auth/signin?returnTo=${encodeURIComponent(location.pathname)}`}
+        replace
       />
     );
   }

@@ -30,7 +30,7 @@ const SignInPage: React.FC<SignInPageProps> = ({ returnTo }) => {
         setUser({ id: decodedToken.id, email: decodedToken.email }); // Update the user in context
         
         const searchParams = new URLSearchParams(window.location.search);
-        const returnTo = searchParams.get("returnTo") || "/data-sources";
+        const returnTo = searchParams.get("returnTo") || "/data-source";
         navigate(returnTo);
         
       },

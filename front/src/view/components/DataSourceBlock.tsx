@@ -1,63 +1,82 @@
 import React from "react";
-import { FiEdit, FiTrash2, FiFileText, FiDatabase } from "react-icons/fi";
+import { FiEdit, FiTrash2, FiFileText, FiDatabase, FiRefreshCw } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
 interface DataSourceBlockProps {
-  id: number;
+  id: string;
   name: string;
   type: string;
-  onEdit: (id: number) => void;
-  onDelete: (id: number) => void;
+  lastTimeAnalyzed?: string;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+  onCaptureSchema: (id: string) => void;
 }
 
 const DataSourceBlock: React.FC<DataSourceBlockProps> = ({
   id,
   name,
   type,
+  lastTimeAnalyzed,
+  onCaptureSchema,
   onEdit,
   onDelete,
 }) => {
   return (
-    <div className="border border-black rounded-md bg-white flex flex-col justify-between">
-      <div className="flex-grow p-4">
-        <h3 className="text-lg font-bold">{name}</h3>
-        <p className="text-gray-600">{type}</p>
+    <div className="border border-gray-200 rounded-lg bg-white shadow-md flex flex-col">
+      <div className="p-4 flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">{name}</h3>
+          <p className="text-gray-500">{type}</p>
+          <p className="text-xs text-gray-400 mt-1">
+            Last Analyzed:{" "}
+            {lastTimeAnalyzed
+              ? `${new Date(lastTimeAnalyzed).toLocaleString()} (Local TZ)`
+              : "Never"}
+          </p>
+        </div>
+        <button
+          onClick={() => onCaptureSchema(id)}
+          className="flex items-center px-4 py-2 space-x-2 bg-black hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition"
+        >
+          <FiRefreshCw size={16} />
+          <span>Analyze</span>
+        </button>
       </div>
-      <div className="border-t border-black mt-4 flex">
+      <div className="border-t border-gray-200 flex">
         {/* List Queries */}
         <Link
           to={`/data-source/${id}/queries`}
-          className="flex-1 flex items-center justify-center space-x-2 text-gray-600 hover:text-black p-3"
+          className="flex-1 flex items-center justify-center space-x-2 text-gray-600 hover:text-black p-3 transition"
         >
-          <FiDatabase size={20} />
-          <span>List Queries</span>
+          <FiDatabase size={18} />
+          <span className="text-sm font-medium">Queries</span>
         </Link>
 
         {/* List Reports */}
         <Link
           to={`/data-source/${id}/reports`}
-          className="flex-1 flex items-center justify-center space-x-2 text-gray-600 hover:text-black p-3"
+          className="flex-1 flex items-center justify-center space-x-2 text-gray-600 hover:text-black p-3 transition"
         >
-          <FiFileText size={20} />
-          <span>List Reports</span>
+          <FiFileText size={18} />
+          <span className="text-sm font-medium">Reports</span>
         </Link>
 
         {/* Edit */}
         <button
           onClick={() => onEdit(id)}
-          className="flex-1 flex items-center justify-center space-x-2 text-gray-600 hover:text-black p-3"
+          className="flex-1 flex items-center justify-center space-x-2 text-gray-600 hover:text-black p-3 transition"
         >
-          <FiEdit size={20} />
-          <span>Edit</span>
+          <FiEdit size={18} />
+          <span className="text-sm font-medium">Edit</span>
         </button>
 
         {/* Delete */}
         <button
           onClick={() => onDelete(id)}
-          className="flex-1 flex items-center justify-center space-x-2 bg-red-600 text-white hover:bg-red-700 p-3"
+          className="flex-1 flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white p-3 transition"
         >
-          <FiTrash2 size={20} />
-          <span>Delete</span>
+          <FiTrash2 size={18} />
+          <span className="text-sm font-medium">Delete</span>
         </button>
       </div>
     </div>

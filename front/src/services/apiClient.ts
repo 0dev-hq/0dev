@@ -1,24 +1,39 @@
-import axios from "axios";
+import axios, { InternalAxiosRequestConfig } from "axios";
 
-// Create an axios instance with a base URL and common settings
+// API client for general API routes (e.g., /api)
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "/api", // Use environment variable or fallback to '/api'
-  timeout: 5000, // Timeout after 5 seconds
+  baseURL: `${import.meta.env.VITE_API_BASE_URL}/api`, // Assuming general API routes under /api
+  timeout: 10000,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Optionally, you can add interceptors here for request/response if needed
-apiClient.interceptors.request.use(
-  (config) => {
-    // You can modify the request here, for example by adding authorization headers
-    // config.headers['Authorization'] = `Bearer ${token}`;
-    return config;
+// API client for auth routes (e.g., /auth)
+const authClient = axios.create({
+  baseURL: `${import.meta.env.VITE_API_BASE_URL}/auth`, // Assuming auth routes under /auth
+  timeout: 15000,
+  headers: {
+    "Content-Type": "application/json",
   },
-  (error) => {
-    return Promise.reject(error);
+});
+
+const configAxios = (
+  config: InternalAxiosRequestConfig
+): InternalAxiosRequestConfig => {
+  const token = localStorage.getItem("authToken");
+  if (token) {
+    config.headers["Authorization"] = `Bearer ${token}`;
   }
+  return config;
+};
+
+apiClient.interceptors.request.use(configAxios, (error) =>
+  Promise.reject(error)
 );
 
-export default apiClient;
+authClient.interceptors.request.use(configAxios, (error) =>
+  Promise.reject(error)
+);
+
+export { apiClient, authClient };

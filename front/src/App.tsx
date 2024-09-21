@@ -11,6 +11,12 @@ import { AuthProvider } from "./hooks/useAuth";
 import { QueryClient, QueryClientProvider } from "react-query"; // Added React Query setup
 import "./App.css";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import NewQueryPage from "./view/pages/NewQueryPage";
+import RunQueryPage from "./view/pages/RunQueryPage";
+import ReportCanvasPage from "./view/pages/ReportCanvasPage";
+import ReportViewPage from "./view/pages/ReportViewPage";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css"; // Import Toastify styles
 
 const queryClient = new QueryClient(); // Initialize the QueryClient
 
@@ -36,14 +42,25 @@ const App: React.FC = () => {
                 }
               >
                 {/* Nested routes inside the Layout */}
-                <Route path="data-sources" element={<DataSourcesPage />} />
-                <Route path="new-data-source" element={<NewDataSourcePage />} />
-                <Route path="queries" element={<QueriesPage />} />
-                <Route path="reports" element={<ReportsPage />} />
+                <Route path="data-source" element={<DataSourcesPage />} />
+                <Route path="data-source/new" element={<NewDataSourcePage />} />
+                <Route
+                  path="data-source/edit/:id"
+                  element={<NewDataSourcePage />}
+                />
+                <Route path="query" element={<QueriesPage />} />
+                <Route path="query/new" element={<NewQueryPage />} />
+                <Route path="query/edit/:id" element={<NewQueryPage />} />
+                <Route path="query/run" element={<RunQueryPage />} />
+                <Route path="report" element={<ReportsPage />} />
+                <Route path="report/new" element={<ReportCanvasPage />} />
+                <Route path="report/edit/:id" element={<ReportCanvasPage />} />
+                <Route path="report/view/:id" element={<ReportViewPage />} />
               </Route>
             </Routes>
           </AuthProvider>
         </Router>
+        <ToastContainer />
       </QueryClientProvider>
     </GoogleOAuthProvider>
   );

@@ -1,52 +1,63 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReportBlock from "../components/ReportBlock";
+import { Link, useNavigate } from "react-router-dom";
+import { deleteReport, getReports } from "../../services/reportService";
 
-// Define the structure of a Report item
-interface Report {
-  id: number;
-  text: string;
+interface ReportSummary {
+  _id: string; // Use string if MongoDB ID, adjust if necessary
+  name: string;
 }
 
 const ReportsPage: React.FC = () => {
-  // Tab state: 'recent' or 'dataSource'
   const [activeTab, setActiveTab] = useState<"recent" | "dataSource">("recent");
   const [selectedDataSource, setSelectedDataSource] = useState<string>("");
+  const [recentReports, setRecentReports] = useState<ReportSummary[]>([]);
+  const [dataSourceReports, setDataSourceReports] = useState<{
+    [key: string]: ReportSummary[];
+  }>({});
 
-  // Dummy data for recent and data source reports
-  const recentReports: Report[] = [
-    { id: 1, text: "Monthly Sales Report" },
-    { id: 2, text: "Customer Satisfaction Report" },
-  ];
+  const navigate = useNavigate();
 
-  const dataSourceReports: { [key: string]: Report[] } = {
-    mysql: [
-      { id: 1, text: "Sales Transactions Report" },
-      { id: 2, text: "Inventory Restock Report" },
-    ],
-    mongodb: [
-      { id: 3, text: "User Activity Report" },
-      { id: 4, text: "Product Performance Report" },
-    ],
+  // Fetch reports when the component loads
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        const reports = await getReports(); // Fetch all reports
+        // Assuming that the backend doesn't categorize recent and dataSource reports, you'd need to filter/split accordingly
+        setRecentReports(reports); // Set as recent reports (you could filter or categorize as needed)
+      } catch (error) {
+        console.error("Failed to fetch reports", error);
+      }
+    };
+    fetchReports();
+  }, []);
+
+  // Handlers
+  const handleView = (id: string) => navigate(`/report/view/${id}`);
+  const handleEdit = (id: string) => navigate(`/report/edit/${id}`);
+  const handleDelete = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this report?")) {
+      try {
+        await deleteReport(id); // Delete report from the backend
+        setRecentReports(recentReports.filter(report => report._id !== id)); // Update state after deletion
+      } catch (error) {
+        console.error("Failed to delete report", error);
+      }
+    }
   };
 
-  // Dummy data sources for the dropdown
   const dataSources = [
     { id: "mysql", name: "MySQL Database" },
     { id: "mongodb", name: "MongoDB Database" },
   ];
 
-  // Handlers for the report actions (placeholders)
-  const handleView = (id: number) => alert(`View report ${id}`);
-  const handleEdit = (id: number) => alert(`Edit report ${id}`);
-  const handleDelete = (id: number) => alert(`Delete report ${id}`);
-
   return (
     <div className="flex flex-col space-y-6">
       {/* New Report Button */}
       <div>
-        <button className="bg-black text-white px-4 py-2 rounded hover:bg-opacity-90">
+        <Link to="/report/new" className="bg-black text-white px-4 py-2 rounded hover:bg-opacity-90">
           New Report
-        </button>
+        </Link>
       </div>
 
       {/* Tabs for Recent Reports and Data Source Reports */}
@@ -78,11 +89,11 @@ const ReportsPage: React.FC = () => {
         {activeTab === "recent" &&
           recentReports.map((report) => (
             <ReportBlock
-              key={report.id}
-              reportText={report.text}
-              onView={() => handleView(report.id)}
-              onEdit={() => handleEdit(report.id)}
-              onDelete={() => handleDelete(report.id)}
+              key={report._id}
+              reportText={report.name} // Assuming 'name' is the text for the report
+              onView={() => handleView(report._id)}
+              onEdit={() => handleEdit(report._id)}
+              onDelete={() => handleDelete(report._id)}
             />
           ))}
 
@@ -108,11 +119,11 @@ const ReportsPage: React.FC = () => {
               <div className="space-y-4">
                 {dataSourceReports[selectedDataSource]?.map((report) => (
                   <ReportBlock
-                    key={report.id}
-                    reportText={report.text}
-                    onView={() => handleView(report.id)}
-                    onEdit={() => handleEdit(report.id)}
-                    onDelete={() => handleDelete(report.id)}
+                    key={report._id}
+                    reportText={report.name} // Assuming 'name' is the text for the report
+                    onView={() => handleView(report._id)}
+                    onEdit={() => handleEdit(report._id)}
+                    onDelete={() => handleDelete(report._id)}
                   />
                 ))}
               </div>

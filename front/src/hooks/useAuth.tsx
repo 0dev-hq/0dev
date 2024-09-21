@@ -3,52 +3,63 @@ import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "react-query";
 import { loginRequest, logoutRequest } from "../services/authService";
 import { User } from "../types";
-import {jwtDecode} from "jwt-decode";
+import { jwtDecode, JwtPayload } from "jwt-decode";
 
-// Define a type for the AuthContext
 interface AuthContextType {
   user: User | null;
-  token: string | null;  // Store JWT token
+  token: string | null;
+  loading: boolean;  // Add loading state to the context
   login: (email: string, password: string, returnTo?: string) => Promise<void>;
   logout: () => Promise<void>;
-  setUser: React.Dispatch<React.SetStateAction<User | null>>;  // Add setUser here
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
 
-// Create the context with the defined type or null initially
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// AuthProvider component
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null); // Store JWT token
+  const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);  // Initialize loading to true
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Load the JWT from localStorage (if exists) on initial load
+  const isTokenExpired = (token: string) => {
+    const decoded: JwtPayload = jwtDecode(token);
+    if (decoded.exp && Date.now() >= decoded.exp * 1000) {
+      return true; // Token has expired
+    }
+    return false;
+  };
+
+  // Load JWT from localStorage and decode it
   useEffect(() => {
     const storedToken = localStorage.getItem("authToken");
-    if (storedToken) {
+    if (storedToken && !isTokenExpired(storedToken)) {
       setToken(storedToken);
-      const decodedToken = jwtDecode<{id: string, email: string}>(storedToken);
+      const decodedToken = jwtDecode<{ id: string; email: string }>(storedToken);
       setUser({ id: decodedToken.id, email: decodedToken.email });
+    } else {
+      // If token is expired or not present, clear it from local storage
+      localStorage.removeItem("authToken");
+      setUser(null);
     }
+    setLoading(false); // Mark loading as complete
   }, []);
 
   const loginMutation = useMutation(
     async ({ email, password, returnTo }: { email: string; password: string; returnTo?: string }) => {
-      return loginRequest(email, password); // Ensure loginRequest handles only email/password
+      return loginRequest(email, password);
     },
     {
       onSuccess: (data, variables) => {
         const { token, user } = data;
-        const { returnTo } = variables; // Now, this will be recognized
-  
-        setToken(token); // Store JWT token
-        setUser(user); // Set the user data
-        localStorage.setItem("authToken", token); // Save token to localStorage
+        const { returnTo } = variables;
+
+        setToken(token);
+        setUser(user);
+        localStorage.setItem("authToken", token);
         queryClient.setQueryData("user", user);
-  
-        // Redirect to returnTo or default to /data-sources
+
         navigate(returnTo || "/data-sources");
       },
       onError: (error) => {
@@ -63,9 +74,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     },
     {
       onSuccess: () => {
-        setToken(null); // Clear JWT token
+        setToken(null);
         setUser(null);
-        localStorage.removeItem("authToken"); // Remove token from localStorage
+        localStorage.removeItem("authToken");
         queryClient.removeQueries("user");
         navigate("/auth/signin");
       },
@@ -84,13 +95,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, setUser }}>
+    <AuthContext.Provider value={{ user, token, loading, login, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Custom hook to use the AuthContext
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {

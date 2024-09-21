@@ -142,8 +142,6 @@ router.post("/login", (req, res, next) => {
         { expiresIn: "1h" }
       );
 
-      console.log(`token: ${token}`);
-
       // Return JSON with the token and redirect URL
       res.json({ token });
     });

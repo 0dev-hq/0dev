@@ -22,23 +22,23 @@ const Sidebar: React.FC = () => {
       <div className="flex-grow px-6">
         {/* Links */}
         <nav className="flex flex-col space-y-4">
-          <Link to="/data-sources" className="text-cream opacity-75 hover:opacity-100">
+          <Link to="/data-source" className="text-cream opacity-75 hover:opacity-100">
             Data Source
           </Link>
-          <Link to="/queries" className="text-cream opacity-75 hover:opacity-100">
+          <Link to="/query" className="text-cream opacity-75 hover:opacity-100">
             Queries
           </Link>
-          <Link to="/reports" className="text-cream opacity-75 hover:opacity-100">
+          <Link to="/report" className="text-cream opacity-75 hover:opacity-100">
             Reports
           </Link>
         </nav>
       </div>
       {/* Footer Links */}
       <div className="flex flex-col p-6 border-t-2">
-        <Link to="/data-sources" className="text-cream opacity-75 hover:opacity-100">
+        <Link to="/data-source" className="text-cream opacity-75 hover:opacity-100">
           Settings
         </Link>
-        <Link to="/data-sources" className="text-cream opacity-75 hover:opacity-100 mt-4">
+        <Link to="/data-source" className="text-cream opacity-75 hover:opacity-100 mt-4">
           Help
         </Link>
         {/* Logout Link (Styled like other links) */}
