@@ -29,3 +29,24 @@ export const sendConfirmationEmail = async (email: string, token: string) => {
     console.error("Error sending email:", error);
   }
 };
+
+// Function to send invitation email
+export const sendInvitationEmail = async (
+  email: string,
+  invitationLink: string
+) => {
+  const mailOptions = {
+    from: process.env.SES_EMAIL_SOURCE!,
+    to: email,
+    subject: "You're invited to join 0dev.io",
+    text: `You're invited to join 0dev.io! Click the following link to sign up: ${invitationLink}`,
+    html: `<p>You're invited to join 0dev.io! Click the following link to sign up: <a href="${invitationLink}">${invitationLink}</a></p>`, // HTML version
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log("Invitation email sent to:", email);
+  } catch (error) {
+    console.error("Error sending email:", error);
+  }
+};

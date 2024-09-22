@@ -35,8 +35,8 @@ const Sidebar: React.FC = () => {
       </div>
       {/* Footer Links */}
       <div className="flex flex-col p-6 border-t-2">
-        <Link to="/data-source" className="text-cream opacity-75 hover:opacity-100">
-          Settings
+        <Link to="/account" className="text-cream opacity-75 hover:opacity-100">
+          Account
         </Link>
         <Link to="/data-source" className="text-cream opacity-75 hover:opacity-100 mt-4">
           Help
