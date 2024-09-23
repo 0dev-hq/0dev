@@ -165,7 +165,6 @@ router.get("/confirm-email/:token", async (req, res) => {
 
     res.status(200).send("Email confirmed successfully. You can now log in.");
   } catch (error) {
-    console.error("Email confirmation error:", error);
     res.status(400).send("Invalid or expired token.");
   }
 });

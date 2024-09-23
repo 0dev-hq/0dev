@@ -30,7 +30,7 @@ export const sendInvitation = async (req: Request, res: Response) => {
   await invitation.save();
 
   // Send an invitation email
-  const invitationLink = `${process.env.FRONTEND_URL}/auth/signup?invitationToken=${token}`;
+  const invitationLink = `${process.env.FRONTEND_URL}/auth/signup?invitationToken=${token}&email=${email}`;
   await sendInvitationEmail(email, invitationLink);
 
   res.status(200).json({ message: "Invitation sent successfully" });
@@ -41,8 +41,6 @@ export const getAccount = async (req: Request, res: Response) => {
   try {
     // Assuming userId is available in req.user from an authentication middleware
     const userId = req.user!.id as any;
-
-    console.log("Fetching account details for user:", userId);
 
     // Find the user's account
     const user = await User.findById(userId).populate("account");
