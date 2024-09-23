@@ -1,34 +1,45 @@
 import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useMutation } from "react-query";
-import { signupRequest } from "../../../services/authService";
+import { signupRequest, acceptInvitation } from "../../../services/authService";
 import logo from "../../../assets/logo-black-bg-square.png";
 import backgroundImage from "../../../assets/signup-bg1.jpg";
+import { toast } from "react-toastify";
 
 const SignUpPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
   const [searchParams] = useSearchParams();
   const invitationToken = searchParams.get("invitationToken");
   const invitationEmail = searchParams.get("email");
 
   const mutation = useMutation(async () => signupRequest(email, password), {
     onSuccess: () => {
-      setSuccessMessage(
-        "Sign-up successful! Please check your email to confirm your account."
-      );
+      // show toast
+      toast.success("Sign-up successful! Please check your email to confirm your account.");
       setError(null);
     },
     onError: (err: any) =>
       setError(err.response?.data?.message || "Sign-up failed"),
   });
 
+  const inviteMutation = useMutation(() => acceptInvitation(invitationToken!, password), {
+    onSuccess: () => {
+      toast.success("Invitation accepted successfully! You can now sign in.");
+      setError(null);
+    },
+    onError: (err: any) =>
+      setError(err.response?.data?.message || "Failed to accept invitation"),
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    mutation.mutate();
+    if (invitationToken && invitationEmail) {
+      inviteMutation.mutate();
+    } else {
+      mutation.mutate();
+    }
   };
 
   const handleGoogleSignUp = () => {
@@ -49,7 +60,7 @@ const SignUpPage: React.FC = () => {
         <div className="bg-dark-purple p-8 rounded-lg shadow-lg max-w-md w-full mx-auto">
           <img src={logo} alt="Logo" className="w-36 mx-auto" />
           <h2 className="text-4xl font-bold text-center mb-6">
-            Create an Account
+            {invitationToken && invitationEmail ? "Join Your Team" : "Create an Account"}
           </h2>
 
           {invitationToken && invitationEmail && invitationMessage}
@@ -82,14 +93,11 @@ const SignUpPage: React.FC = () => {
               type="submit"
               className="w-full py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition duration-300"
             >
-              {mutation.isLoading ? "Signing Up..." : "Sign Up"}
+              {(mutation.isLoading || inviteMutation.isLoading) ? "Signing Up..." : "Sign Up"}
             </button>
           </form>
 
           {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
-          {successMessage && (
-            <p className="text-green-500 mt-4 text-center">{successMessage}</p>
-          )}
 
           <div className="mt-6 flex items-center justify-center space-x-2">
             <button

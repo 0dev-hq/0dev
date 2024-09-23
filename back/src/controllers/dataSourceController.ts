@@ -26,9 +26,14 @@ export const testDataSourceConnection = async (req: Request, res: Response) => {
         return res.json({ success: true });
 
       case "mongodb":
-        // MongoDB connection
-        await mongoose.connect(connectionString);
-        await mongoose.connection.close();
+        // MongoDB connection with isolated connection instance
+        const tempMongoConnection = await mongoose
+          .createConnection(connectionString, {
+            serverSelectionTimeoutMS: 5000, // Add any options you need here
+          })
+          .asPromise();
+
+        await tempMongoConnection.close(); // Close the temporary connection
         return res.json({ success: true });
 
       case "mysql":

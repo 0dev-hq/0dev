@@ -23,3 +23,11 @@ export const confirmEmailRequest = async (token: string) => {
   const response = await authClient.get(`/confirm-email/${token}`);
   return response.data;
 };
+
+// Accept an invitation
+export const acceptInvitation = async (token: string, password: string) => {
+  const response = await authClient.post(`/accept-invite/${token}`, {
+    password,
+  });
+  return response.data;
+};

@@ -170,7 +170,7 @@ router.get("/confirm-email/:token", async (req, res) => {
 });
 
 // Invitation acceptance route
-router.get("/accept-invite/:token", async (req, res) => {
+router.post("/accept-invite/:token", async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
 
@@ -190,6 +190,9 @@ router.get("/accept-invite/:token", async (req, res) => {
   const user = new User({ username: email, email, password: hashedPassword });
   try {
     await addMemberToAccount(user, invitation as IInvitation);
+    invitation.status = "accepted";
+    await invitation.save();
+    res.status(200).send("Invitation accepted successfully");
   } catch (error: any) {
     if (error.message === "Account not found") {
       // If the account was not found, create a new account for the user
@@ -198,11 +201,6 @@ router.get("/accept-invite/:token", async (req, res) => {
     }
     res.status(500).send("Error adding user to account");
   }
-
-  // Redirect to the frontend callback with the inviteToken
-  res.redirect(
-    `${process.env.FRONTEND_URL}/auth/accept-invite?inviteToken=${token}`
-  );
 });
 
 // Local login with passport local strategy
