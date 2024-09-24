@@ -49,7 +49,7 @@ const SignInPage: React.FC<SignInPageProps> = ({ returnTo }) => {
   return (
     <div className="min-h-screen flex">
       {/* Left side with form */}
-      <div className="bg-black text-white p-10 overflow-y-scroll">
+      <div className="bg-black text-white p-10 overflow-y-scroll scrollbar-hide">
         <div className="bg-dark-purple p-8 rounded-lg shadow-lg max-w-md w-full mx-auto">
           <img src={logo} alt="Logo" className="w-36 mx-auto" />
           <h2 className="text-4xl font-bold text-center mb-6">

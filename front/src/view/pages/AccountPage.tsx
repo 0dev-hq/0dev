@@ -1,25 +1,78 @@
 import React, { useState } from "react";
-import { useQuery, useMutation } from "react-query";
-import { getAccountDetails, inviteMember } from "../../services/accountService"; // Import the inviteMember service
-import { toast } from "react-toastify"; // Assuming you're using react-toastify for toast notifications
+import { useQuery, useMutation, useQueryClient } from "react-query";
+import { activateUser, changeUserRole, deactivateUser, getAccountDetails, inviteMember } from "../../services/accountService"; 
+import { toast } from "react-toastify";
 
 const AccountPage: React.FC = () => {
+  const queryClient = useQueryClient(); // Initialize queryClient to refetch data
   const [activeTab, setActiveTab] = useState<"account" | "membership" | "payments">("account");
+  const [newMemberEmail, setNewMemberEmail] = useState<string>("");
+  const [newMemberRole, setNewMemberRole] = useState<string>("Editor"); 
 
   // Fetch account details using React Query
-  const { data: accountData, isLoading, isError } = useQuery("accountDetails", getAccountDetails);
+  const { data: accountData, isLoading: isFetchingAccount, isError } = useQuery("accountDetails", getAccountDetails);
   
-  const [newMemberEmail, setNewMemberEmail] = useState<string>("");
-  const [newMemberRole, setNewMemberRole] = useState<string>("Editor"); // Default role is Editor
+  // Track if any action is in progress
+  const [actionInProgress, setActionInProgress] = useState(false);
 
   // Mutation to invite a new member
   const mutation = useMutation(({ email, role }: { email: string; role: string }) => inviteMember(email, role), {
+    onMutate: () => setActionInProgress(true),
+    onSettled: () => {
+      setActionInProgress(false);
+      queryClient.invalidateQueries("accountDetails"); // Refetch account details
+    },
     onSuccess: () => {
       toast.success("Invitation sent to the new member!");
-      setNewMemberEmail(""); // Reset the input field
+      setNewMemberEmail(""); 
     },
     onError: () => {
       toast.error("Failed to send the invitation. Please try again.");
+    },
+  });
+
+  // Mutation to deactivate a member
+  const deactivateMutation = useMutation((userId: string) => deactivateUser(userId), {
+    onMutate: () => setActionInProgress(true),
+    onSettled: () => {
+      setActionInProgress(false);
+      queryClient.invalidateQueries("accountDetails"); // Refetch account details
+    },
+    onSuccess: () => {
+      toast.success("Member deactivated successfully!");
+    },
+    onError: () => {
+      toast.error("Failed to deactivate the member. Please try again.");
+    },
+  });
+
+  // Mutation to activate a member
+  const activateMutation = useMutation((userId: string) => activateUser(userId), {
+    onMutate: () => setActionInProgress(true),
+    onSettled: () => {
+      setActionInProgress(false);
+      queryClient.invalidateQueries("accountDetails"); // Refetch account details
+    },
+    onSuccess: () => {
+      toast.success("Member activated successfully!");
+    },
+    onError: () => {
+      toast.error("Failed to activate the member. Please try again.");
+    },
+  });
+
+  // Mutation to change user role
+  const changeUserRoleMutation = useMutation(({ userId, role }: { userId: string; role: string }) => changeUserRole(userId, role), {
+    onMutate: () => setActionInProgress(true),
+    onSettled: () => {
+      setActionInProgress(false);
+      queryClient.invalidateQueries("accountDetails"); // Refetch account details
+    },
+    onSuccess: () => {
+      toast.success("User role changed successfully!");
+    },
+    onError: () => {
+      toast.error("Failed to change user role. Please try again.");
     },
   });
 
@@ -28,22 +81,22 @@ const AccountPage: React.FC = () => {
       toast.error("Please enter a valid email.");
       return;
     }
-
-    // Trigger the mutation to invite the member
     mutation.mutate({ email: newMemberEmail, role: newMemberRole });
   };
 
   const handleChangeRole = (userId: string, newRole: string) => {
-    // Placeholder function to change user role
-    alert(`Change role for ${userId} to ${newRole}`);
+    changeUserRoleMutation.mutate({ userId, role: newRole });
   };
 
   const handleDeactivateMember = (userId: string) => {
-    // Placeholder function to deactivate member
-    alert(`Deactivate member: ${userId}`);
+    deactivateMutation.mutate(userId);
   };
 
-  if (isLoading) {
+  const handleActivateMember = (userId: string) => {
+    activateMutation.mutate(userId);
+  }
+
+  if (isFetchingAccount) {
     return <p>Loading account details...</p>;
   }
 
@@ -57,31 +110,19 @@ const AccountPage: React.FC = () => {
       <div className="flex justify-between items-center border-b border-black pb-2">
         <div className="flex space-x-4">
           <button
-            className={`${
-              activeTab === "account"
-                ? "text-black border-b-2 border-black"
-                : "text-gray-600"
-            } pb-2`}
+            className={`${activeTab === "account" ? "text-black border-b-2 border-black" : "text-gray-600"} pb-2`}
             onClick={() => setActiveTab("account")}
           >
             My Account
           </button>
           <button
-            className={`${
-              activeTab === "membership"
-                ? "text-black border-b-2 border-black"
-                : "text-gray-600"
-            } pb-2`}
+            className={`${activeTab === "membership" ? "text-black border-b-2 border-black" : "text-gray-600"} pb-2`}
             onClick={() => setActiveTab("membership")}
           >
             Membership
           </button>
           <button
-            className={`${
-              activeTab === "payments"
-                ? "text-black border-b-2 border-black"
-                : "text-gray-600"
-            } pb-2`}
+            className={`${activeTab === "payments" ? "text-black border-b-2 border-black" : "text-gray-600"} pb-2`}
             onClick={() => setActiveTab("payments")}
           >
             Payments
@@ -109,11 +150,13 @@ const AccountPage: React.FC = () => {
                 value={newMemberEmail}
                 onChange={(e) => setNewMemberEmail(e.target.value)}
                 className="border border-gray-300 rounded px-3 py-2 w-1/3 hover:border-black"
+                disabled={actionInProgress}
               />
               <select
                 value={newMemberRole}
                 onChange={(e) => setNewMemberRole(e.target.value)}
                 className="border border-gray-300 rounded px-3 py-2"
+                disabled={actionInProgress}
               >
                 <option value="Admin">Admin</option>
                 <option value="Editor">Editor</option>
@@ -122,6 +165,7 @@ const AccountPage: React.FC = () => {
               <button
                 onClick={handleAddMember}
                 className="bg-black text-white px-4 py-2 rounded hover:bg-gray-700 transition"
+                disabled={actionInProgress}
               >
                 Add Member
               </button>
@@ -139,13 +183,14 @@ const AccountPage: React.FC = () => {
               </thead>
               <tbody>
                 {accountData.members.map((member: any, index: number) => (
-                  <tr key={index}>
-                    <td className="py-2">{member.email}</td>
+                  <tr key={index} className={member.isActive == false ? "text-gray-400" : ""}>
+                    <td className="py-2">{member.username}</td>
                     <td className="py-2">
                       <select
                         value={member.role}
-                        onChange={(e) => handleChangeRole(member.userId, e.target.value)}
+                        onChange={(e) => handleChangeRole(member.id, e.target.value)}
                         className="border border-gray-300 rounded px-3 py-1"
+                        disabled={actionInProgress || member.isActive == false}
                       >
                         <option value="Admin">Admin</option>
                         <option value="Editor">Editor</option>
@@ -153,12 +198,23 @@ const AccountPage: React.FC = () => {
                       </select>
                     </td>
                     <td className="py-2">
-                      <button
-                        onClick={() => handleDeactivateMember(member.userId)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        Deactivate
-                      </button>
+                      {member.isActive == false ? (
+                        <button
+                          onClick={() => handleActivateMember(member.id)}
+                          className="text-green-600 hover:text-green-800"
+                          disabled={actionInProgress}
+                        >
+                          Activate
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleDeactivateMember(member.id)}
+                          className="text-red-600 hover:text-red-800"
+                          disabled={actionInProgress}
+                        >
+                          Deactivate
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

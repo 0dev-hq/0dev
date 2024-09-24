@@ -205,29 +205,60 @@ router.post("/accept-invite/:token", async (req, res) => {
 
 // Local login with passport local strategy
 router.post("/login", (req, res, next) => {
-  passport.authenticate("local", (err: any, user: IUser | false, info: any) => {
-    if (err) {
-      return next(err);
-    }
-    if (!user) {
-      return res.status(401).json({ message: "Login failed" });
-    }
-
-    req.logIn(user, (err) => {
+  passport.authenticate(
+    "local",
+    async (err: any, user: IUser | false, info: any) => {
       if (err) {
         return next(err);
       }
-      // Generate the JWT token
-      const token = jwt.sign(
-        { id: user._id, email: user.email, account: user.account },
-        process.env.JWT_SECRET!,
-        { expiresIn: process.env.JWT_EXPIRES_IN }
-      );
+      if (!user) {
+        return res.status(401).json({ message: "Login failed" });
+      }
 
-      // Return JSON with the token and redirect URL
-      res.json({ token });
-    });
-  })(req, res, next);
+      console.log(user);
+
+      // Check if user is logically deleted
+      if (!user.isActive) {
+        return res.status(403).json({ message: "User account is deactivated" });
+      }
+
+      req.logIn(user, async (err) => {
+        if (err) {
+          return next(err);
+        }
+
+        // Find the account, then find the user's role in the account
+        const account = await Account.findById(user.account);
+        if (!account) {
+          return res.status(500).send("Account not found");
+        }
+
+        if (account.subscription.status !== "active") {
+          return res.status(403).send("Subscription is inactive");
+        }
+
+        const member = account.members.find(
+          (member) => member.userId.toString() === user._id!.toString()
+        );
+
+        // Generate the JWT token
+        const token = jwt.sign(
+          {
+            id: user._id,
+            email: user.email,
+            account: user.account,
+            role: user.role,
+            plan: account.subscription.plan,
+          },
+          process.env.JWT_SECRET!,
+          { expiresIn: process.env.JWT_EXPIRES_IN }
+        );
+
+        // Return JSON with the token and redirect URL
+        res.json({ token });
+      });
+    }
+  )(req, res, next);
 });
 
 // Logout route
@@ -263,7 +294,6 @@ async function addMemberToAccount(user: IUser, invitation: IInvitation) {
   }
   account.members.push({
     userId: user._id as Types.ObjectId,
-    role: invitation.role,
   });
   await account.save();
 
@@ -273,6 +303,7 @@ async function addMemberToAccount(user: IUser, invitation: IInvitation) {
 
   // Link account to user›
   user.account = account._id as string;
+  user.role = invitation.role;
   await user.save();
 }
 

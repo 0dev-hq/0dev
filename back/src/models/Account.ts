@@ -6,7 +6,6 @@ interface AccountDocument extends Document {
   owner: Types.ObjectId;
   members: {
     userId: Types.ObjectId | IUser;
-    role: "Admin" | "Editor" | "Readonly";
   }[];
   subscription: {
     plan: string;
@@ -21,11 +20,6 @@ const accountSchema = new Schema<AccountDocument>({
   members: [
     {
       userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-      role: {
-        type: String,
-        enum: ["Admin", "Editor", "Readonly"],
-        default: "Readonly", // Set default role if not specified
-      },
     },
   ],
   subscription: {

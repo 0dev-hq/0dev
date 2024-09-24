@@ -8,6 +8,8 @@ export interface IUser extends Document {
   githubId?: string;
   account?: string;
   emailConfirmed: boolean;
+  isActive?: boolean; // This field allows logical deletion of users
+  role?: "Admin" | "Editor" | "Readonly"; // Adding role field to the user
 }
 
 const UserSchema: Schema = new Schema({
@@ -18,6 +20,12 @@ const UserSchema: Schema = new Schema({
   githubId: { type: String },
   account: { type: Schema.Types.ObjectId, ref: "Account", default: null },
   emailConfirmed: { type: Boolean, default: false },
+  isActive: { type: Boolean, default: true },
+  role: {
+    type: String,
+    enum: ["Admin", "Editor", "Readonly"],
+    default: "Readonly",
+  }, // Role field with default value
 });
 
 const User = mongoose.model<IUser>("User", UserSchema);
