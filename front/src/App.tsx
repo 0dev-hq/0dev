@@ -17,6 +17,7 @@ import ReportCanvasPage from "./view/pages/ReportCanvasPage";
 import ReportViewPage from "./view/pages/ReportViewPage";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; // Import Toastify styles
+import AccountPage from "./view/pages/AccountPage";
 
 const queryClient = new QueryClient(); // Initialize the QueryClient
 
@@ -56,6 +57,7 @@ const App: React.FC = () => {
                 <Route path="report/new" element={<ReportCanvasPage />} />
                 <Route path="report/edit/:id" element={<ReportCanvasPage />} />
                 <Route path="report/view/:id" element={<ReportViewPage />} />
+                <Route path="account" element={<AccountPage />} />
               </Route>
             </Routes>
           </AuthProvider>

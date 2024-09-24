@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import Logo from '../../assets/0dev-logo.png';
 
 const Sidebar: React.FC = () => {
   const { logout } = useAuth(); // Get the logout function from auth context
@@ -14,11 +15,12 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <div className="w-64 flex flex-col justify-between bg-gray-50">
-      <div className="p-6">
-        {/* Logo */}
-        <h1 className="text-3xl font-bold text-cream">0dev</h1>
-      </div>
+    <div className="w-64 flex flex-col justify-between bg-black text-white">
+        {/* Logo - background black - image at center */}
+        <div className=" px-6 flex items-center justify-start h-20 bg-black">
+          <img src={Logo} alt="Logo" className="w-12" />
+        </div>
+      
       <div className="flex-grow px-6">
         {/* Links */}
         <nav className="flex flex-col space-y-4">
@@ -35,8 +37,8 @@ const Sidebar: React.FC = () => {
       </div>
       {/* Footer Links */}
       <div className="flex flex-col p-6 border-t-2">
-        <Link to="/data-source" className="text-cream opacity-75 hover:opacity-100">
-          Settings
+        <Link to="/account" className="text-cream opacity-75 hover:opacity-100">
+          Account
         </Link>
         <Link to="/data-source" className="text-cream opacity-75 hover:opacity-100 mt-4">
           Help

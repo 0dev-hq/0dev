@@ -9,6 +9,7 @@ import authRoutes from "./routes/auth";
 import dataSourceRoutes from "./routes/dataSource";
 import queryRoutes from "./routes/queryRoutes";
 import reportRoutes from "./routes/reportRoutes";
+import accountRoutes from "./routes/accountRoutes";
 
 import "./config/passport"; // Initialize passport strategies
 import { sessionMiddleware } from "./middlewares/sessionMiddleware";
@@ -26,6 +27,11 @@ app.use(
     credentials: true, // Allow credentials (cookies, authorization headers, etc.)
   })
 );
+
+// Add timestamp to all schemas in Mongoose
+mongoose.plugin((schema) => {
+  schema.add({ timestamps: { type: Date, default: Date.now } });
+});
 
 const connectWithRetry = () => {
   console.log("Attempting MongoDB connection...");
@@ -75,6 +81,7 @@ app.use("/auth", authRoutes);
 app.use("/api/data-source", dataSourceRoutes);
 app.use("/api/query", queryRoutes);
 app.use("/api/report", reportRoutes);
+app.use("/api/account", accountRoutes);
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

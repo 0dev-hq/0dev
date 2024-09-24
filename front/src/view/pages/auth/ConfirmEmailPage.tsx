@@ -3,11 +3,15 @@ import { useNavigate, useParams } from "react-router-dom";
 import { confirmEmailRequest } from "../../../services/authService"; // Import the email confirmation request
 
 const ConfirmEmailPage: React.FC = () => {
-  const { token } = useParams<{ token: string }>(); // Get token from the URL
   const navigate = useNavigate();
+  const { token } = useParams<{ token: string }>(); // Get token from the URL
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
 
+  // for some reason, useEffect runs twice, so we need to prevent that. I know it shouldn't work like this, but it does.
+  let done = false;
   useEffect(() => {
+    if (done) return;
+    done = true;
     const confirmEmail = async () => {
       try {
         // Send the token to the backend for verification
@@ -18,7 +22,6 @@ const ConfirmEmailPage: React.FC = () => {
         setStatus("error");
       }
     };
-
     confirmEmail();
   }, [token]);
 
