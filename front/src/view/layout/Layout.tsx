@@ -2,7 +2,7 @@ import React from 'react';
 import Sidebar from './Sidebar';
 import Main from './Main';
 
-const Layout = () => {
+const Layout: React.FC = () => {
   return (
     <div className="h-screen flex">
       {/* Sidebar */}

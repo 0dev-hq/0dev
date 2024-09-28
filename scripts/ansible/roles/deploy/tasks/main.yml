@@ -1,0 +1,87 @@
+---
+- name: Read last deployed environment from deployment_info.txt
+  slurp:
+    src: /var/www/deployment_info.txt
+  register: last_deployment_file
+
+- name: Set deployment target to the opposite environment
+  set_fact:
+    deployment_target: "{{ 'green' if last_deployment_file.content | b64decode | trim == 'blue' else 'blue' }}"
+
+- name: Extract ZIP file name from the path
+  set_fact:
+    zip_file_name: "{{ zip_file_path | basename }}"
+
+# Delete node_modules and non-ZIP files in one step
+- name: Delete node_modules and all non-ZIP files in the destination directory
+  ansible.builtin.shell: |
+    rm -rf /var/www/{{ deployment_target }}/node_modules && find /var/www/{{ deployment_target }} -type f ! -name '*.zip' -exec rm -f {} +
+  become: true
+  become_user: www-data
+
+# Upload the ZIP file to the server
+- name: Upload the ZIP file to the server
+  ansible.builtin.copy:
+    src: "{{ zip_file_path }}"
+    dest: /var/www/{{ deployment_target }}/{{ zip_file_name }}
+    owner: www-data
+    group: www-data
+    mode: '0644'
+
+# Unzip the uploaded file
+- name: Unzip the uploaded file
+  ansible.builtin.unarchive:
+    src: /var/www/{{ deployment_target }}/{{ zip_file_name }}
+    dest: /var/www/{{ deployment_target }}
+    remote_src: yes
+    extra_opts: -o
+    creates: /var/www/{{ deployment_target }}/index.js
+    owner: www-data
+    group: www-data
+    mode: '0755'
+
+- name: Set the correct port in the .env file for {{ deployment_target }} environment
+  lineinfile:
+    path: /var/www/{{ deployment_target }}/.env
+    regexp: '^PORT='
+    line: "PORT={{ 3000 if deployment_target == 'blue' else 3001 }}"
+
+# Start the application using PM2 for the blue or green environment
+- name: Start the application using PM2
+  ansible.builtin.shell: |
+    pm2 describe app-{{ deployment_target }} > /dev/null || pm2 start index.js --name app-{{ deployment_target }}
+    pm2 restart app-{{ deployment_target }}
+  args:
+    chdir: /var/www/{{ deployment_target }}
+  become: true
+  become_user: www-data
+
+# Update deployment_info.txt with deployment details
+- name: Update deployment_info.txt with deployment details
+  lineinfile:
+    path: /var/www/deployment_info.txt
+    line: |
+      --- Deployment Log ---
+      Date: {{ ansible_date_time.iso8601 }}
+      Environment: {{ deployment_target }}
+      Git Branch: {{ git_branch }}
+      Commit SHA: {{ git_commit }}
+      Zip File: {{ zip_file_name }}
+    create: yes
+    insertafter: EOF
+
+# Overwrite last deployed environment info in deployment_info.txt
+- name: Overwrite last deployed environment in deployment_info.txt
+  copy:
+    content: "{{ deployment_target }}\n"
+    dest: /var/www/deployment_info.txt
+    owner: www-data
+    group: www-data
+    mode: '0644'
+
+# Gracefully stop the opposite environment after a 3-minute delay
+- name: Stop the opposite environment with a grace period of 3 minutes
+  ansible.builtin.shell: |
+    pm2 stop app-{{ 'blue' if deployment_target == 'green' else 'green' }} --kill-timeout 180000
+  become: true
+  become_user: www-data

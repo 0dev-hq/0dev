@@ -1,0 +1,63 @@
+# Makefile for deploying the landing page infrastructure
+
+
+AWS_REGION := us-east-1
+AWS_PROFILE ?= default
+
+DOMAIN_NAME ?= 0dev.io
+LANDING_TEMPLATE := landing-infra.yaml
+
+UI_DOMAIN_NAME ?= ui.0dev.io
+UI_TEMPLATE := ui-infra.yaml
+
+.PHONY: deploy-landing delete-landing describe-landing deploy-ui delete-ui describe-ui
+
+# Deploy the CloudFormation stack
+deploy-landing:
+	aws cloudformation deploy \
+		--template-file $(LANDING_TEMPLATE) \
+		--stack-name landing-buckets \
+		--parameter-overrides DomainName=$(DOMAIN_NAME) \
+		--capabilities CAPABILITY_NAMED_IAM \
+		--region $(AWS_REGION) \
+		--profile $(AWS_PROFILE)
+
+# Delete the CloudFormation stack
+delete-landing:
+	aws cloudformation delete-stack \
+		--stack-name landing-buckets \
+		--region $(AWS_REGION) \
+		--profile $(AWS_PROFILE)
+
+# Describe the stack outputs
+describe-landing:
+	aws cloudformation describe-stacks \
+		--stack-name landing-buckets \
+		--query "Stacks[0].Outputs" \
+		--region $(AWS_REGION) \
+		--profile $(AWS_PROFILE)
+
+
+deploy-ui:
+	aws cloudformation deploy \
+		--template-file $(UI_TEMPLATE) \
+		--stack-name ui-bucket \
+		--parameter-overrides DomainName=$(UI_DOMAIN_NAME) \
+		--capabilities CAPABILITY_NAMED_IAM \
+		--region $(AWS_REGION) \
+		--profile $(AWS_PROFILE)
+
+# Delete the CloudFormation stack
+delete-ui:
+	aws cloudformation delete-stack \
+		--stack-name ui-bucket \
+		--region $(AWS_REGION) \
+		--profile $(AWS_PROFILE)
+
+# Describe the stack outputs
+describe-ui:
+	aws cloudformation describe-stacks \
+		--stack-name ui-bucket \
+		--query "Stacks[0].Outputs" \
+		--region $(AWS_REGION) \
+		--profile $(AWS_PROFILE)

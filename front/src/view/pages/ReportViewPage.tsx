@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation } from "react-query";
 import { Bar, Pie, Line } from "react-chartjs-2";
@@ -44,12 +44,6 @@ interface BlockGroup {
   };
   queryResults?: any[];
   chartParams?: any; // For chart-specific parameters like labels, datasets, etc.
-}
-
-// Report type definition
-interface Report {
-  name: string;
-  blockGroups: BlockGroup[];
 }
 
 // Table component to render table data
@@ -108,10 +102,10 @@ const SingleValueComponent: React.FC<{ queryId: string }> = ({ queryId }) => {
   if (isLoading) return <div>Loading single value...</div>;
   if (error) return <div>Error loading single value</div>;
 
-  const singleValue =
+  const singleValue: any =
     data && data.length > 0 ? Object.values(data[0])[0] : "No data";
 
-  return <div className="text-center text-2xl font-bold">{singleValue}</div>;
+  return <div className="text-center text-2xl font-bold">{singleValue!}</div>;
 };
 
 // Define a type for chart parameters
@@ -120,28 +114,26 @@ const ChartComponent: React.FC<{
   blockGroupIndex: number;
   reportId: string;
 }> = ({ blockGroup, blockGroupIndex, reportId }) => {
-  const [params, setParams] = useState<{ data: any; options: any }>(null);
+  const [params, setParams] = useState<{ data: any; options: any }>();
 
-   // Mutation to analyze the block if chartParams are missing
-   const mutation = useMutation((blockData) =>
-    analyzeBlockGroup(
-      reportId,
-      blockGroupIndex,
-      blockData,
-      blockGroup.config.query
-    ), 
+  // Mutation to analyze the block if chartParams are missing
+  const mutation = useMutation(
+    (blockData) =>
+      analyzeBlockGroup(
+        reportId,
+        blockGroupIndex,
+        blockData,
+        blockGroup.config.query
+      ),
     {
       onSuccess: (data: any) => {
         try {
-          const transformFunction = new Function(
-            "rawData",
-            data.chartParams
-          );
+          const transformFunction = new Function("rawData", data.chartParams);
           setParams(transformFunction(JSON.stringify(data.data)));
         } catch (e) {
           console.error("Error executing transform function", e);
         }
-      }
+      },
     }
   );
 
@@ -150,8 +142,9 @@ const ChartComponent: React.FC<{
     data: raw,
     isLoading,
     error,
-  } = useQuery(["queryResults", blockGroup.config.query], () =>
-    executeQuery(blockGroup.config.query), 
+  } = useQuery(
+    ["queryResults", blockGroup.config.query],
+    () => executeQuery(blockGroup.config.query),
     {
       onSuccess: (data) => {
         if (!blockGroup.chartParams) {
@@ -167,11 +160,9 @@ const ChartComponent: React.FC<{
             console.error("Error executing transform function", e);
           }
         }
-      }
+      },
     }
   );
-
-
 
   if (isLoading) return <div>Loading chart data...</div>;
   if (!raw) return <div>No data...</div>;

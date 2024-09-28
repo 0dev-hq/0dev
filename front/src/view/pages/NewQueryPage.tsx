@@ -69,7 +69,7 @@ const NewQueryPage: React.FC = () => {
     }
   };
 
-  const { data: existingQuery, isLoading: loadingExistingQuery } = useQuery(
+  const { data: existingQuery } = useQuery(
     ["query", queryId],
     () => getQueryById(queryId!), // Function to fetch a query by its ID
     { enabled: isEditing } // Only run if we are in edit mode

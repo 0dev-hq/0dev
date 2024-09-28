@@ -10,6 +10,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { getDataSources } from "../../services/dataSourceService";
 import QueryBlock from "../components/QueryBlock";
 import { Query } from "../../models/Query";
+import { DataSource } from "../../models/DataSource";
 
 const QueriesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ const QueriesPage: React.FC = () => {
   >("recentQueries", getQueries);
 
   // Fetch data sources
-  const { data: dataSources, isLoading: isLoadingDataSources } = useQuery(
+  const { data: dataSources, isLoading: isLoadingDataSources } = useQuery<DataSource[]>(
     "dataSources",
     getDataSources
   );
@@ -178,7 +179,7 @@ const QueriesPage: React.FC = () => {
               className="p-3 border border-black rounded-md focus:outline-none"
             >
               <option value="">-- Select Data Source --</option>
-              {dataSources.map((source) => (
+              {dataSources?.map((source) => (
                 <option key={source._id} value={source._id}>
                   {source.name}
                 </option>

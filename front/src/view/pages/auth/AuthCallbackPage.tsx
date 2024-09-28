@@ -1,11 +1,10 @@
 import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { useAuth } from "../../../hooks/useAuth";
 
 const AuthCallback = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { setUser } = useAuth();
 
   useEffect(() => {

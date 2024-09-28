@@ -8,7 +8,7 @@ import {
 } from "../../services/dataSourceService";
 import { useParams } from "react-router-dom";
 import { DataSource } from "../../models/DataSource";
-import { useEffect, useState } from "react";
+import {  useState } from "react";
 
 // Component for adding/editing a Data Source
 const NewDataSourcePage = () => {
@@ -23,7 +23,7 @@ const NewDataSourcePage = () => {
     handleSubmit,
     watch,
     reset,
-    formState: { isDirty, errors },
+    formState: { errors },
   } = useForm<DataSource>();
 
   const selectedType = watch("type"); // Watch selected data source type

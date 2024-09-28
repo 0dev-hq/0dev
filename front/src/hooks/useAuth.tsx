@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const loginMutation = useMutation(
-    async ({ email, password, returnTo }: { email: string; password: string; returnTo?: string }) => {
+    async ({ email, password }: { email: string; password: string; returnTo?: string }) => {
       return loginRequest(email, password);
     },
     {

@@ -31,7 +31,7 @@ const SignInPage: React.FC<SignInPageProps> = ({ returnTo }) => {
         const returnTo = searchParams.get("returnTo") || "/data-source";
         navigate(returnTo);
       },
-      onError: (err) => setError("Login failed"),
+      onError: () => setError("Login failed"),
     }
   );
 

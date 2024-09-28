@@ -1,0 +1,46 @@
+global
+    log /dev/log    local0
+    log /dev/log    local1 notice
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy/admin.sock mode 660 level admin
+    stats timeout 30s
+    user haproxy
+    group haproxy
+    daemon
+
+defaults
+    log     global
+    option  httplog
+    option  dontlognull
+    timeout connect 5000ms
+    timeout client  50000ms
+    timeout server  50000ms
+    errorfile 400 /etc/haproxy/errors/400.http
+    errorfile 403 /etc/haproxy/errors/403.http
+    errorfile 408 /etc/haproxy/errors/408.http
+    errorfile 500 /etc/haproxy/errors/500.http
+    errorfile 502 /etc/haproxy/errors/502.http
+    errorfile 503 /etc/haproxy/errors/503.http
+    errorfile 504 /etc/haproxy/errors/504.http
+
+# Frontend Configuration
+frontend http-in
+    bind *:80
+    default_backend blue_green
+
+# Backend Configuration for Blue/Green deployment
+backend blue_green
+    balance roundrobin
+    option httpchk GET /health
+    server blue 127.0.0.1:3000 check inter 2000 rise 2 fall 3
+    server green 127.0.0.1:3001 check inter 2000 rise 2 fall 3
+
+# HAProxy Stats (Optional)
+frontend stats
+    mode http
+    bind *:8991
+    stats enable
+    stats uri /stats
+    stats hide-version
+    stats auth admin_zagool:asoQ887mvcbhpooO
+

@@ -3,7 +3,6 @@ import Modal from "react-modal";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
 import { getQueries } from "../../services/queryService";
 import { Query } from "../../models/Query";
-import { Report } from "../../models/Report";
 import { useNavigate, useParams } from "react-router-dom";
 import { getReport, saveReport } from "../../services/reportService";
 
@@ -12,18 +11,6 @@ Modal.setAppElement("#root");
 const GRID_COLUMNS = 12;
 const GRID_ROWS = 12;
 const BLOCK_SIZE = 80;
-const COLORS = [
-  "#FFC107",
-  "#17A2B8",
-  "#28A745",
-  "#DC3545",
-  "#FD7E14",
-  "#6F42C1",
-  "#20C997",
-  "#FF5733",
-  "#FF6F61",
-  "#1E7FCB",
-];
 
 // BlockGroup interface
 interface BlockGroup {
@@ -274,7 +261,7 @@ const ReportCanvasPage: React.FC = () => {
 
   const handleMouseUp = () => {
     if (selectionStart && selectionEnd) {
-      const blocks = [];
+      const blocks: { x: number; y: number }[] = [];
       const startX = Math.min(selectionStart.x, selectionEnd.x);
       const startY = Math.min(selectionStart.y, selectionEnd.y);
       const endX = Math.max(selectionStart.x, selectionEnd.x);
@@ -458,7 +445,7 @@ const ReportCanvasPage: React.FC = () => {
             <select
               value={modalState.type}
               onChange={(e) =>
-                setModalState((prev) => ({ ...prev, type: e.target.value }))
+                setModalState((prev) => ({ ...prev, type: e.target.value as "bar" | "pie" | "line" | "table" | "value" }))
               }
               className="w-full p-2 border rounded mt-1"
             >

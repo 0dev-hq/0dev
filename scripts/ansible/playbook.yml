@@ -1,0 +1,7 @@
+---
+- name: Setup and deploy API with blue/green deployment
+  hosts: api_servers
+  become: true
+  roles:
+    - setup
+    - deploy

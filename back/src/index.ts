@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config(); // This should be here
 
-import express from "express";
+import express, { Request, Response } from "express";
 import mongoose from "mongoose";
 import passport from "passport";
 import cors from "cors";
@@ -68,10 +68,8 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Root route for testing the server
-app.get("/", (req, res) => {
-  res.send(
-    "Hello, TypeScript with Express, Mongoose, Passport.js, and Nodemailer with SES!"
-  );
+app.get("/health", (_req: Request, res: Response) => {
+  res.status(200).send("OK");
 });
 
 // Authentication routes (login, signup, OAuth)
