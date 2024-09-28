@@ -27,8 +27,7 @@ deploy-landing:
 	@echo "Deploying landing page to $(LANDING_BUCKET)"
 	aws s3 sync ../landing s3://$(LANDING_BUCKET) \
 		--region $(AWS_REGION) \
-		--profile $(AWS_PROFILE) \
-		--acl public-read
+		--profile $(AWS_PROFILE) 
 
 # Copy .env.prod to .env for UI
 copy-ui-env:
