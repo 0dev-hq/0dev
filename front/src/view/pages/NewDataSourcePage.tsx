@@ -180,7 +180,7 @@ const NewDataSourcePage = () => {
                     type="text"
                     {...register("connectionString", { required: true })}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="postgres://localhost:5432/mydb"
+                    placeholder="localhost:5432/mydb"
                   />
                   {errors.connectionString && (
                     <span className="text-red-500">
@@ -220,17 +220,17 @@ const NewDataSourcePage = () => {
               <>
                 <div>
                   <label className="text-lg font-medium">
-                    MySQL Connection String
+                    Server URI
                   </label>
                   <input
                     type="text"
                     {...register("connectionString", { required: true })}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="mysql://localhost:3306/mydb"
+                    placeholder="localhost:3306/mydb"
                   />
                   {errors.connectionString && (
                     <span className="text-red-500">
-                      Connection string is required
+                      URI is required
                     </span>
                   )}
                 </div>

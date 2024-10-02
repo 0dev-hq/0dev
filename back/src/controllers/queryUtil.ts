@@ -1,7 +1,8 @@
 import { generateAIResponse } from "./aiUtil";
-import { Pool } from "pg"; // PostgreSQL
+import { Client as PGClient } from "pg"; // PostgreSQL Client
 import mysql from "mysql2/promise"; // MySQL
 import { MongoClient } from "mongodb";
+import logger from "../utils/logger";
 
 export const generateSQLQuery = async (
   description: string,
@@ -19,8 +20,8 @@ export const generateSQLQuery = async (
         I am using traditional SQL syntax to interact with the data.
         The schema is as follows: ${JSON.stringify(schema)}.
         Please generate a SQL query based on the description provided.
-        Make sure to include pagination using the SQL LIMIT and OFFSET clauses.
         IMPORTANT: Your answer should directly give the query without anything before or after that. No explanation, or comments.
+        IMPORTANT: Absolutely do not include pagination using the SQL LIMIT and OFFSET clauses.
       `;
       break;
     case "mongodb":
@@ -66,7 +67,7 @@ export const generateSQLQuery = async (
 
   let rawQuery = await generateAIResponse(model, prompt);
 
-  console.log(`rawQuery: ${rawQuery}`);
+  console.log(`rawQuery:: ${rawQuery}`);
 
   // Clean up unwanted formatting like ```sql, ```json, or any other extra text
   rawQuery = rawQuery
@@ -74,16 +75,30 @@ export const generateSQLQuery = async (
     .replace(/\s*```$/, "") // Remove trailing ```
     .trim(); // Clean up whitespace
 
+  console.log(`rawQuery-: ${rawQuery}`);
   // Validate the rawQuery
-  // todo: improve validation
-  try {
-    const { collection, query, projection } = JSON.parse(rawQuery);
-  } catch (error) {
-    console.error("Error parsing rawQuery:", error);
-    throw new Error("failed");
-  }
+  await validateRawQuery(rawQuery, dataSourceType);
 
   return rawQuery;
+};
+
+// todo: improve validation
+const validateRawQuery = async (rawQuery: string, dataSourceType: string) => {
+  switch (dataSourceType) {
+    case "mysql":
+    case "postgresql":
+      // todo: validate SQL query
+      break;
+    case "mongodb":
+      try {
+        const { collection, query, projection } = JSON.parse(rawQuery);
+      } catch (error) {
+        throw new Error("Invalid MongoDB query generated");
+      }
+      break;
+    default:
+      throw new Error("Unsupported data source type");
+  }
 };
 
 /**
@@ -109,10 +124,10 @@ export const executeMongoDBQuery = async (
     const { collection, query, projection } = JSON.parse(rawQuery);
 
     // Log collection, query, projection, and rawQuery
-    console.log("Collection:", collection);
-    console.log("Query:", query);
-    console.log("Projection:", projection);
-    console.log("Raw Query:", rawQuery);
+    logger.verbose(`Collection:  ${JSON.stringify(collection)}`);
+    logger.verbose(`Query:: , ${JSON.stringify(query)}`);
+    logger.verbose(`Projection:: , ${JSON.stringify(projection)}`);
+    logger.verbose(`Raw Query:: , ${JSON.stringify(rawQuery)}`);
 
     // Get the collection based on the name in the query
     const col = db.collection(collection);
@@ -129,7 +144,7 @@ export const executeMongoDBQuery = async (
       .toArray(); // Convert the cursor to an array
     return { data: result, total: totalDocuments };
   } catch (error) {
-    console.error("Error executing MongoDB query:", error);
+    logger.error("Error executing MongoDB query:", error);
     throw new Error("Query execution failed");
   } finally {
     await client.close();
@@ -149,15 +164,43 @@ export const executePostgresQuery = async (
   page: number,
   pageSize: number
 ) => {
-  const pool = new Pool({
-    connectionString: dataSource.connectionString,
+  const regex = /([^:]+):(\d+)\/(.+)/;
+  const match = dataSource.connectionString!.match(regex);
+  if (!match) {
+    return false;
+  }
+
+  // PostgreSQL connection
+  const pgClient = new PGClient({
+    user: dataSource.username,
+    password: dataSource.password,
+    host: match[1],
+    port: parseInt(match[2]),
+    database: match[3],
   });
+  try {
+    await pgClient.connect();
+    const offset = (page - 1) * pageSize;
+    // Remove the trailing semicolon if present
+    const trimmedQuery = rawQuery.trim();
+    const lastChar = trimmedQuery.charAt(trimmedQuery.length - 1);
+    const q = lastChar === ";" ? trimmedQuery.slice(0, -1) : trimmedQuery;
 
-  const offset = (page - 1) * pageSize;
-  const query = `${rawQuery} LIMIT ${pageSize} OFFSET ${offset}`; // Add pagination to SQL query
-  const result = await pool.query(query);
+    const query = `${q} LIMIT ${pageSize} OFFSET ${offset}`;
+    const result = await pgClient.query(query);
+    const totalResult = await pgClient.query(
+      `SELECT COUNT(*) as total FROM (${q}) AS totalCountQuery`
+    );
 
-  return result.rows;
+    const total = totalResult.rows[0]?.total;
+
+    return { data: result.rows, total };
+  } catch (error) {
+    logger.error("Error executing PostgreSQL query:", error);
+    throw new Error("Query execution failed");
+  } finally {
+    await pgClient.end();
+  }
 };
 
 /**
@@ -173,14 +216,40 @@ export const executeMySQLQuery = async (
   page: number,
   pageSize: number
 ) => {
+  if (!dataSource) {
+    return {};
+  }
+  const regex = /([^:]+):(\d+)\/(.+)/;
+  const match = dataSource.connectionString!.match(regex);
+  if (!match) {
+    throw new Error("Invalid MySQL connection string format");
+  }
+
+  // MySQL connection
   const connection = await mysql.createConnection({
-    uri: dataSource.connectionString,
+    host: match[1],
+    port: parseInt(match[2]),
+    database: match[3],
+    user: dataSource.username,
+    password: dataSource.password,
   });
 
   const offset = (page - 1) * pageSize;
-  const query = `${rawQuery} LIMIT ${pageSize} OFFSET ${offset}`;
+  // Remove the trailing semicolon if present
+  const trimmedQuery = rawQuery.trim();
+  const lastChar = trimmedQuery.charAt(trimmedQuery.length - 1);
+  const q = lastChar === ";" ? trimmedQuery.slice(0, -1) : trimmedQuery;
+
+  const query = `${q} LIMIT ${pageSize} OFFSET ${offset}`;
   const [rows] = await connection.execute(query);
 
+  // Create a total count query (wrapping the query in a COUNT(*) subquery)
+  const totalQuery = `SELECT COUNT(*) as total FROM (${q}) AS totalCountQuery`;
+  const [totalResult] = await connection.execute(totalQuery);
+
   await connection.end();
-  return rows;
+
+  const total = (totalResult as any[])[0]?.total;
+
+  return { data: rows, total };
 };

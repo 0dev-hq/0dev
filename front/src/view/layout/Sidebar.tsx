@@ -1,7 +1,7 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import Logo from '../../assets/0dev-logo.png';
+import React from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+import Logo from "../../assets/0dev-logo.png";
 
 const Sidebar: React.FC = () => {
   const { logout } = useAuth(); // Get the logout function from auth context
@@ -16,21 +16,27 @@ const Sidebar: React.FC = () => {
 
   return (
     <div className="w-64 flex flex-col justify-between bg-black text-white">
-        {/* Logo - background black - image at center */}
-        <div className=" px-6 flex items-center justify-start h-20 bg-black">
-          <img src={Logo} alt="Logo" className="w-12" />
-        </div>
-      
+      {/* Logo - background black - image at center */}
+      <div className=" px-6 flex items-center justify-start h-20 bg-black">
+        <img src={Logo} alt="Logo" className="w-12" />
+      </div>
+
       <div className="flex-grow px-6">
         {/* Links */}
         <nav className="flex flex-col space-y-4">
-          <Link to="/data-source" className="text-cream opacity-75 hover:opacity-100">
+          <Link
+            to="/data-source"
+            className="text-cream opacity-75 hover:opacity-100"
+          >
             Data Source
           </Link>
           <Link to="/query" className="text-cream opacity-75 hover:opacity-100">
             Queries
           </Link>
-          <Link to="/report" className="text-cream opacity-75 hover:opacity-100">
+          <Link
+            to="/report"
+            className="text-cream opacity-75 hover:opacity-100"
+          >
             Reports
           </Link>
         </nav>
@@ -40,7 +46,12 @@ const Sidebar: React.FC = () => {
         <Link to="/account" className="text-cream opacity-75 hover:opacity-100">
           Account
         </Link>
-        <Link to="/data-source" className="text-cream opacity-75 hover:opacity-100 mt-4">
+        <Link
+          to="https://discord.gg/GNSCWZm6kT"
+          target="_blank"
+          className="text-cream opacity-75 hover:opacity-100 mt-4"
+        >
+          <i className="fab fa-discord"></i>
           Help
         </Link>
         {/* Logout Link (Styled like other links) */}

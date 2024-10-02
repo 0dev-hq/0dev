@@ -10,3 +10,4 @@ dist/
 
 # Logs
 npm-debug.log*
+.DS_Store*

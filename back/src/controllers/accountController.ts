@@ -4,6 +4,7 @@ import User, { IUser } from "../models/User";
 import { sendInvitationEmail } from "../services/emailService";
 import { Request, Response } from "express";
 import { Types } from "mongoose";
+import logger from "../utils/logger";
 
 // Send an invitation to a new member
 export const sendInvitation = async (req: Request, res: Response) => {
@@ -75,7 +76,7 @@ export const getAccount = async (req: Request, res: Response) => {
 
     return res.status(200).json(response);
   } catch (error) {
-    console.error("Error fetching account:", error);
+    logger.error("Error fetching account:", error);
     return res.status(500).json({ message: "Error fetching account details" });
   }
 };
@@ -101,7 +102,7 @@ export const deactivateUser = async (req: Request, res: Response) => {
     await user.save();
     return res.status(200).json({ message: "User deactivated successfully" });
   } catch (error) {
-    console.error("Error deactivating user:", error);
+    logger.error("Error deactivating user:", error);
     return res.status(500).json({ message: "Error deactivating user" });
   }
 };
@@ -121,7 +122,7 @@ export const activateUser = async (req: Request, res: Response) => {
     await user.save();
     return res.status(200).json({ message: "User activated successfully" });
   } catch (error) {
-    console.error("Error activating user:", error);
+    logger.error("Error activating user:", error);
     return res.status(500).json({ message: "Error activating user" });
   }
 };
@@ -186,7 +187,7 @@ export const changeUserRole = async (req: Request, res: Response) => {
 
     return res.status(200).json({ message: "User role updated successfully" });
   } catch (error) {
-    console.error("Error changing user role:", error);
+    logger.error("Error changing user role:", error);
     return res.status(500).json({ message: "Error changing user role" });
   }
 };

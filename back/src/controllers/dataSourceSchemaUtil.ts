@@ -1,5 +1,5 @@
 import { MongoClient } from "mongodb";
-import { Pool } from "pg"; // PostgreSQL client
+import { Client as PGClient } from "pg"; // PostgreSQL Client
 import mysql from "mysql2/promise"; // MySQL client
 import { IDataSource } from "../models/DataSource";
 
@@ -23,7 +23,7 @@ export const fetchMongoDBSchema = async (dataSource: IDataSource) => {
         ? Object.keys(sampleDocs[0])
         : [];
     }
-
+    client.close();
     return schema;
   } catch (error: any) {
     throw new Error(`Failed to fetch MongoDB schema: ${error.message}`);
@@ -34,13 +34,23 @@ export const fetchMongoDBSchema = async (dataSource: IDataSource) => {
 
 // Function to fetch schema from PostgreSQL
 export const fetchPostgreSQLSchema = async (dataSource: IDataSource) => {
-  const pool = new Pool({
-    connectionString: dataSource.connectionString,
-  });
+  const regex = /([^:]+):(\d+)\/(.+)/;
+  const match = dataSource.connectionString!.match(regex);
+  if (!match) {
+    return false;
+  }
 
+  // PostgreSQL connection
+  const pgClient = new PGClient({
+    user: dataSource.username,
+    password: dataSource.password,
+    host: match[1],
+    port: parseInt(match[2]),
+    database: match[3],
+  });
   try {
-    const client = await pool.connect();
-    const result = await client.query(`
+    await pgClient.connect();
+    const result = await pgClient.query(`
       SELECT table_name, column_name, data_type 
       FROM information_schema.columns 
       WHERE table_schema = 'public'
@@ -61,14 +71,28 @@ export const fetchPostgreSQLSchema = async (dataSource: IDataSource) => {
   } catch (error: any) {
     throw new Error(`Failed to fetch PostgreSQL schema: ${error.message}`);
   } finally {
-    pool.end();
+    await pgClient.end();
   }
 };
 
 // Function to fetch schema from MySQL
 export const fetchMySQLSchema = async (dataSource: IDataSource) => {
+  if (!dataSource) {
+    return {};
+  }
+  const regex = /([^:]+):(\d+)\/(.+)/;
+  const match = dataSource.connectionString!.match(regex);
+  if (!match) {
+    throw new Error("Invalid MySQL connection string format");
+  }
+
+  // MySQL connection
   const connection = await mysql.createConnection({
-    uri: dataSource.connectionString,
+    host: match[1],
+    port: parseInt(match[2]),
+    database: match[3],
+    user: dataSource.username,
+    password: dataSource.password,
   });
 
   try {

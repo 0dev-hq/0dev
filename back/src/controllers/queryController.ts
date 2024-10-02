@@ -7,6 +7,7 @@ import {
   generateSQLQuery,
 } from "./queryUtil";
 import DataSource from "../models/DataSource";
+import logger from "../utils/logger";
 
 // Create a new query
 export const createQuery = async (req: Request, res: Response) => {
@@ -93,6 +94,7 @@ export const getQueries = async (req: Request, res: Response) => {
     );
     return res.status(200).json(queries);
   } catch (error) {
+    logger.error("Failed to fetch queries:", error);
     return res.status(500).json({ message: "Failed to fetch queries", error });
   }
 };
@@ -113,6 +115,7 @@ export const getQueryById = async (req: Request, res: Response) => {
 
     return res.status(200).json(query);
   } catch (error) {
+    logger.error("Failed to fetch query:", error);
     return res.status(500).json({ message: "Failed to fetch query", error });
   }
 };
@@ -136,6 +139,7 @@ export const getQueriesByDataSource = async (req: Request, res: Response) => {
 
     return res.status(200).json(queries);
   } catch (error) {
+    logger.error("Failed to fetch queries:", error);
     return res.status(500).json({ message: "Failed to fetch queries", error });
   }
 };
@@ -180,6 +184,7 @@ export const updateQuery = async (req: Request, res: Response) => {
 
     return res.sendStatus(200);
   } catch (error) {
+    logger.error("Failed to update query:", error);
     return res.status(500).json({ message: "Failed to update query", error });
   }
 };
@@ -200,6 +205,7 @@ export const deleteQuery = async (req: Request, res: Response) => {
 
     return res.status(200).json({ message: "Query deleted successfully" });
   } catch (error) {
+    logger.error("Failed to delete query:", error);
     return res.status(500).json({ message: "Failed to delete query", error });
   }
 };
@@ -252,7 +258,7 @@ export const executeQuery = async (req: Request, res: Response) => {
 
     return res.status(200).json({ data: result });
   } catch (error) {
-    console.error("Failed to execute query:", error);
+    logger.error("Failed to execute query:", error);
     return res.status(500).json({ message: "Failed to execute query", error });
   }
 };

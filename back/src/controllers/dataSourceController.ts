@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import DataSource from "../models/DataSource"; // Import your DataSource model
 
-import { Client as PGClient } from "pg"; // PostgreSQL Client
 import mongoose from "mongoose"; // MongoDB Client
 import mysql from "mysql2/promise"; // MySQL Client
 import {
@@ -9,6 +8,11 @@ import {
   fetchMySQLSchema,
   fetchPostgreSQLSchema,
 } from "./dataSourceSchemaUtil";
+import logger from "../utils/logger";
+import {
+  validateAndConnectMySql,
+  validateAndConnectPostgres,
+} from "./dataSourceTestUtil";
 // import axios from "axios"; // For WordPress and Google Sheets API requests
 
 // Test connection to the data source
@@ -19,11 +23,12 @@ export const testDataSourceConnection = async (req: Request, res: Response) => {
   try {
     switch (type) {
       case "postgresql":
-        // PostgreSQL connection
-        const pgClient = new PGClient({ connectionString });
-        await pgClient.connect();
-        await pgClient.end();
-        return res.json({ success: true });
+        const isPostgresConnected = await validateAndConnectPostgres(
+          connectionString,
+          username,
+          password
+        );
+        return res.json({ success: isPostgresConnected });
 
       case "mongodb":
         // MongoDB connection with isolated connection instance
@@ -37,12 +42,12 @@ export const testDataSourceConnection = async (req: Request, res: Response) => {
         return res.json({ success: true });
 
       case "mysql":
-        // MySQL connection
-        const mysqlConnection = await mysql.createConnection({
-          uri: connectionString,
-        });
-        await mysqlConnection.end();
-        return res.json({ success: true });
+        const isMySqlConnected = await validateAndConnectMySql(
+          connectionString,
+          username,
+          password
+        );
+        return res.json({ success: isMySqlConnected });
       // case "wordpress":
       //   // WordPress API connection
       //   const wpResponse = await axios.get(
@@ -83,6 +88,7 @@ export const testDataSourceConnection = async (req: Request, res: Response) => {
           .json({ message: "Unsupported data source type" });
     }
   } catch (error) {
+    logger.error("Failed to test data source connection:", error);
     return res.json({ success: false });
   }
 };
@@ -114,7 +120,7 @@ export const createDataSource = async (req: Request, res: Response) => {
     await newDataSource.save();
     return res.status(201).json(newDataSource);
   } catch (error: any) {
-    console.log(error.message);
+    logger.error("Failed to create data source:", error);
     return res
       .status(500)
       .json({ message: "Failed to create data source", error });
@@ -131,7 +137,7 @@ export const getDataSources = async (req: Request, res: Response) => {
 
     return res.status(200).json(dataSources);
   } catch (error) {
-    console.log(error);
+    logger.error("Failed to retrieve data sources:", error);
     return res
       .status(500)
       .json({ message: "Failed to retrieve data sources", error });
@@ -155,6 +161,7 @@ export const getDataSourceById = async (req: Request, res: Response) => {
 
     return res.status(200).json(dataSource);
   } catch (error) {
+    logger.error("Failed to fetch data source:", error);
     return res
       .status(500)
       .json({ message: "Failed to fetch data source", error });
@@ -178,6 +185,7 @@ export const updateDataSource = async (req: Request, res: Response) => {
 
     return res.status(200).json(updatedDataSource);
   } catch (error) {
+    logger.error("Failed to update data source:", error);
     return res
       .status(500)
       .json({ message: "Failed to update data source", error });
@@ -248,6 +256,7 @@ export const captureSchema = async (req: Request, res: Response) => {
 
     return res.sendStatus(200);
   } catch (error) {
+    logger.error("Failed to capture schema:", error);
     return res.status(500).json({ message: "Failed to capture schema", error });
   }
 };

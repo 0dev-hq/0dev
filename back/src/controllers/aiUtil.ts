@@ -1,4 +1,5 @@
 import axios from "axios";
+import logger from "../utils/logger";
 
 const apiClient = axios.create({
   baseURL: "https://api.openai.com/v1",
@@ -26,7 +27,7 @@ export const generateAIResponse = async (model: string, prompt: any) => {
 
     return response.data.choices[0].message.content.trim();
   } catch (error) {
-    console.error("Error generating response from OpenAI:", error);
+    logger.error("Error generating response from OpenAI:", error);
     throw new Error("Failed to generate AI response");
   }
 };
@@ -42,7 +43,7 @@ export const extractFormattedContent = (
     try {
       return matched[1].trim();
     } catch (error) {
-      console.error("Failed to parse JSON:", error);
+      logger.error("Failed to parse JSON:", error);
       return null;
     }
   }

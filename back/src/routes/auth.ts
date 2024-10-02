@@ -143,7 +143,7 @@ router.post("/signup", async (req, res) => {
   res.status(200).send("Confirmation email sent. Please check your inbox.");
 });
 
-// Email login flow
+// Email signup flow
 router.get("/confirm-email/:token", async (req, res) => {
   const { token } = req.params;
 
@@ -273,7 +273,7 @@ async function createNewAccountForUser(user: IUser) {
   const newAccount = new Account({
     name: `${user.username}'s Account`,
     owner: user._id,
-    members: [{ userId: user._id, role: "Admin" }],
+    members: [{ userId: user._id }],
     subscription: {
       plan: "free",
       status: "active",
@@ -283,6 +283,7 @@ async function createNewAccountForUser(user: IUser) {
 
   // Link account to user
   user.account = newAccount._id as string;
+  user.role = "Admin";
   await user.save();
   return newAccount._id as string;
 }

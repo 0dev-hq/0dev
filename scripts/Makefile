@@ -29,13 +29,8 @@ deploy-landing:
 		--region $(AWS_REGION) \
 		--profile $(AWS_PROFILE) 
 
-# Copy .env.prod to .env for UI
-copy-ui-env:
-	@echo "Copying .env.prod to .env for the UI"
-	cp $(UI_ENV_FILE) ../front/.env
-
-# Build UI front-end (builds ../front project after copying env)
-build-ui: copy-ui-env
+# Build UI front-end
+build-ui: 
 	@echo "Building UI project in ../front"
 	cd ../front && npm install && npm run build
 
@@ -44,8 +39,7 @@ deploy-ui: build-ui
 	@echo "Deploying UI to $(UI_BUCKET)"
 	aws s3 sync ../front/dist s3://$(UI_BUCKET) \
 		--region $(AWS_REGION) \
-		--profile $(AWS_PROFILE) \
-		--acl public-read
+		--profile $(AWS_PROFILE)
 
 # Build the API (npm install and prepare production build)
 build-api:
@@ -54,13 +48,9 @@ build-api:
 
 # Package the API into a zip file with Git branch and commit SHA, only if it doesn't already exist
 package-api: build-api
-	@if [ -f $(API_SRC_DIR)/$(ZIP_FILE) ]; then \
-		echo "ZIP file $(ZIP_FILE) already exists, skipping packaging."; \
-	else \
-		echo "Packaging the API with branch: $(GIT_BRANCH), commit: $(GIT_COMMIT)"; \
-		rm -f $(API_SRC_DIR)/$(ZIP_FILE); \
-		cd $(API_SRC_DIR) && zip -r $(ZIP_FILE) node_modules -x 'dist/*' && cp .env.prod dist/.env && cp package.json dist && cd dist && zip -r ../$(ZIP_FILE) .; \
-	fi
+	echo "Packaging the API with branch: $(GIT_BRANCH), commit: $(GIT_COMMIT)"; \
+	rm -f $(API_SRC_DIR)/$(ZIP_FILE); \
+	cd $(API_SRC_DIR) && zip -r $(ZIP_FILE) node_modules -x 'dist/*' && cp .env.prod dist/.env && cp package.json dist && cd dist && zip -r ../$(ZIP_FILE) .;
 
 # Deploy API using Ansible (blue/green setup) with branch and commit information
 deploy-api: package-api

@@ -3,6 +3,7 @@ import Report from "../models/Report";
 import { executeQuery } from "./queryController";
 import { extractFormattedContent, generateAIResponse } from "./aiUtil";
 import Query from "../models/Query";
+import logger from "../utils/logger";
 
 // Save or update a report
 export const saveReport = async (req: Request, res: Response) => {
@@ -39,7 +40,7 @@ export const saveReport = async (req: Request, res: Response) => {
 
     res.status(200).json(report);
   } catch (err) {
-    console.error("Error saving report:", err);
+    logger.error("Error saving report:", err);
     res.status(500).json({ error: "Error saving report" });
   }
 };
@@ -51,7 +52,7 @@ export const getReports = async (req: Request, res: Response) => {
     const reports = await Report.find({ createdBy: req.user!.id }, "_id name");
     res.status(200).json(reports);
   } catch (err) {
-    console.error("Error fetching reports:", err);
+    logger.error("Error fetching reports:", err);
     res.status(500).json({ error: "Failed to fetch reports" });
   }
 };
@@ -76,7 +77,7 @@ export const getReport = async (req: Request, res: Response) => {
 
     res.status(200).json(report);
   } catch (err) {
-    console.error("Error loading report:", err);
+    logger.error("Error loading report:", err);
     res.status(500).json({ error: "Error loading report" });
   }
 };
@@ -101,7 +102,7 @@ export const deleteReport = async (req: Request, res: Response) => {
 
     res.status(200).json({ message: "Report deleted successfully" });
   } catch (err) {
-    console.error("Error deleting report:", err);
+    logger.error("Error deleting report:", err);
     res.status(500).json({ error: "Error deleting report" });
   }
 };
@@ -201,7 +202,7 @@ export const analyzeBlock = async (req: Request, res: Response) => {
       .status(200)
       .json({ message: "Chart parameters generated", chartParams });
   } catch (error) {
-    console.error("Error analyzing block:", error);
+    logger.error("Error analyzing block:", error);
     return res.status(500).json({ message: "Failed to analyze block", error });
   }
 };

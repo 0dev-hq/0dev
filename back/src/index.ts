@@ -1,6 +1,8 @@
 import dotenv from "dotenv";
 dotenv.config(); // This should be here
 
+import logger from "./utils/logger";
+
 import express, { Request, Response } from "express";
 import mongoose from "mongoose";
 import passport from "passport";
@@ -43,10 +45,10 @@ const connectWithRetry = () => {
       family: 4,
     })
     .then(() => {
-      console.log("Connected to MongoDB");
+      logger.info("Connected to MongoDB");
     })
     .catch((err) => {
-      console.error(
+      logger.error(
         "Failed to connect to MongoDB, retrying in 5 seconds...",
         err
       );
@@ -89,7 +91,7 @@ app.listen(PORT, () => {
 
 // Handle unhandled rejections (like failed MongoDB connection)
 process.on("unhandledRejection", (reason: any, promise) => {
-  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+  logger.error("Unhandled Rejection at:", promise, "reason:", reason);
 
   // Reconnect if it's a MongoDB connection error
   if (
@@ -103,7 +105,7 @@ process.on("unhandledRejection", (reason: any, promise) => {
 
 // Handle uncaught exceptions
 process.on("uncaughtException", (err) => {
-  console.error("Uncaught Exception:", err);
+  logger.error("Uncaught Exception:", err);
 
   // If it's a MongoDB connection error, attempt to reconnect
   if (

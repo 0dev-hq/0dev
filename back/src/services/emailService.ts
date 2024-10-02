@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import logger from "../utils/logger";
 
 // Create a Nodemailer transporter using AWS SES SMTP
 const transporter = nodemailer.createTransport({
@@ -26,7 +27,7 @@ export const sendConfirmationEmail = async (email: string, token: string) => {
     await transporter.sendMail(mailOptions);
     console.log("Confirmation email sent to:", email);
   } catch (error) {
-    console.error("Error sending email:", error);
+    logger.error("Error sending email:", error);
   }
 };
 
@@ -47,6 +48,6 @@ export const sendInvitationEmail = async (
     await transporter.sendMail(mailOptions);
     console.log("Invitation email sent to:", email);
   } catch (error) {
-    console.error("Error sending email:", error);
+    logger.error("Error sending email:", error);
   }
 };
