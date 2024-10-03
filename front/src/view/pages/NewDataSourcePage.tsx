@@ -139,8 +139,13 @@ const NewDataSourcePage = () => {
             <option value="mongodb">MongoDB</option>
             <option value="postgresql">PostgreSQL</option>
             <option value="mysql">MySQL</option>
-            <option value="wordpress">WordPress</option>
-            <option value="googleSheet">Google Sheet</option>
+            <option value="supabase">Supabase</option>
+            {/* <option value="xano">Xano</option> */}
+            {/* <option value="firebase">Firebase</option> */}
+            {/* <option value="shopify">Shopify</option> */}
+            {/* <option value="wordpress">WordPress</option> */}
+            {/* <option value="googleSheet">Google Sheet</option> */}
+            {/* <option value="excel">Excel</option> */}
           </select>
           {errors.type && (
             <span className="text-red-500">Data source type is required</span>
@@ -181,6 +186,50 @@ const NewDataSourcePage = () => {
                     {...register("connectionString", { required: true })}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="localhost:5432/mydb"
+                  />
+                  {errors.connectionString && (
+                    <span className="text-red-500">
+                      Connection string is required
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <label className="text-lg font-medium">Username</label>
+                  <input
+                    type="text"
+                    {...register("username", { required: true })}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter PostgreSQL username"
+                  />
+                  {errors.username && (
+                    <span className="text-red-500">Username is required</span>
+                  )}
+                </div>
+                <div>
+                  <label className="text-lg font-medium">Password</label>
+                  <input
+                    type="password"
+                    {...register("password", { required: true })}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter PostgreSQL password"
+                  />
+                  {errors.password && (
+                    <span className="text-red-500">Password is required</span>
+                  )}
+                </div>
+              </>
+            )}
+            {selectedType === "supabase" && (
+              <>
+                <div>
+                  <label className="text-lg font-medium">
+                    Connection String
+                  </label>
+                  <input
+                    type="text"
+                    {...register("connectionString", { required: true })}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="aws-0-us-east-1.pooler.supabase.com:6543/postgres"
                   />
                   {errors.connectionString && (
                     <span className="text-red-500">

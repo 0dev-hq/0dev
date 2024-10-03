@@ -23,6 +23,7 @@ export const testDataSourceConnection = async (req: Request, res: Response) => {
   try {
     switch (type) {
       case "postgresql":
+      case "supabase":
         const isPostgresConnected = await validateAndConnectPostgres(
           connectionString,
           username,
@@ -237,6 +238,7 @@ export const captureSchema = async (req: Request, res: Response) => {
         schema = await fetchMongoDBSchema(dataSource);
         break;
       case "postgresql":
+      case "supabase":
         schema = await fetchPostgreSQLSchema(dataSource);
         break;
       case "mysql":

@@ -15,6 +15,7 @@ export const generateSQLQuery = async (
   switch (dataSourceType) {
     case "mysql":
     case "postgresql":
+    case "supabase":
       context = `
         The database is a ${dataSourceType} system. 
         I am using traditional SQL syntax to interact with the data.
@@ -85,6 +86,7 @@ const validateRawQuery = async (rawQuery: string, dataSourceType: string) => {
   switch (dataSourceType) {
     case "mysql":
     case "postgresql":
+    case "supabase":
       // todo: validate SQL query
       break;
     case "mongodb":
