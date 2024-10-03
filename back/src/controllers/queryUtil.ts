@@ -67,15 +67,13 @@ export const generateSQLQuery = async (
 
   let rawQuery = await generateAIResponse(model, prompt);
 
-  console.log(`rawQuery:: ${rawQuery}`);
-
   // Clean up unwanted formatting like ```sql, ```json, or any other extra text
   rawQuery = rawQuery
     .replace(/^\s*```[a-zA-Z]*\s*/, "") // Remove leading ```sql or ```json
     .replace(/\s*```$/, "") // Remove trailing ```
     .trim(); // Clean up whitespace
 
-  console.log(`rawQuery-: ${rawQuery}`);
+  logger.debug(`rawQuery: ${rawQuery}`);
   // Validate the rawQuery
   await validateRawQuery(rawQuery, dataSourceType);
 

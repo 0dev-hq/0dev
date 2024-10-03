@@ -65,30 +65,36 @@ const TableComponent: React.FC<{ queryId: string }> = ({ queryId }) => {
   const headers = Object.keys(data[0] || {});
 
   return (
-    <table className="w-full border">
-      <thead>
-        <tr>
-          {headers.map((header) => (
-            <th key={header} className="border p-2">
-              {header}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {data.map((row: any, idx: number) => (
-          <tr key={idx}>
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm text-left text-gray-500 border-collapse">
+        <thead className="bg-gray-100 text-gray-700 uppercase text-xs font-bold">
+          <tr>
             {headers.map((header) => (
-              <td key={header} className="border p-2">
-                {row[header]}
-              </td>
+              <th key={header} className="px-6 py-3 border-b">
+                {header}
+              </th>
             ))}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {data.map((row: any, idx: number) => (
+            <tr
+              key={idx}
+              className={`hover:bg-gray-50 ${idx % 2 === 0 ? "bg-gray-50" : ""}`}
+            >
+              {headers.map((header) => (
+                <td key={header} className="px-6 py-4 border-b">
+                  {row[header]}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 };
+
 
 // Single value component to render a KPI or single number
 const SingleValueComponent: React.FC<{ queryId: string }> = ({ queryId }) => {
@@ -99,8 +105,8 @@ const SingleValueComponent: React.FC<{ queryId: string }> = ({ queryId }) => {
   } = useQuery(["singleValueResults", queryId], () => executeQuery(queryId));
   const data = raw?.data;
 
-  if (isLoading) return <div>Loading single value...</div>;
-  if (error) return <div>Error loading single value</div>;
+  if (isLoading) return <div>Loading ...</div>;
+  if (error) return <div>Error loading data</div>;
 
   const singleValue: any =
     data && data.length > 0 ? Object.values(data[0])[0] : "No data";
@@ -155,7 +161,7 @@ const ChartComponent: React.FC<{
               "rawData",
               blockGroup.chartParams
             );
-            setParams(transformFunction(JSON.stringify(data?.data)));
+            setParams(transformFunction(data?.data));
           } catch (e) {
             console.error("Error executing transform function", e);
           }
@@ -308,7 +314,7 @@ const ReportViewPage: React.FC = () => {
           {report?.blockGroups.map((blockGroup, idx) => (
             <div
               key={idx}
-              className="block-group p-4 border rounded-md"
+              className="block-group p-4 border rounded-md overflow-y-auto"
               style={getGridPosition(blockGroup)}
             >
               <h2 className="text-lg font-semibold mb-2">
