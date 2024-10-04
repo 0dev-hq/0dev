@@ -9,22 +9,21 @@ import {
 import { isAuthenticated } from "../middlewares/authMiddleware";
 
 const router = Router();
-router.use(isAuthenticated);
 
 // Route to get all reports
-router.get("/", getReports);
+router.get("/", isAuthenticated(), getReports);
 
 // Save or update a report
-router.post("/", saveReport);
-router.put("/:id", saveReport);
+router.post("/", isAuthenticated(["editor"]), saveReport);
+router.put("/:id", isAuthenticated(["editor"]), saveReport);
 
 // Analyze a block group
-router.post("/:id/analyze/:index", analyzeBlock);
+router.post("/:id/analyze/:index", isAuthenticated(["editor"]), analyzeBlock);
 
 // Get a report by ID
-router.get("/:id", getReport);
+router.get("/:id", isAuthenticated(), getReport);
 
 // Delete a report by ID
-router.delete("/:id", deleteReport);
+router.delete("/:id", isAuthenticated(["editor"]), deleteReport);
 
 export default router;

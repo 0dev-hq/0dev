@@ -13,30 +13,32 @@ import {
 
 const router = express.Router();
 
-router.use(isAuthenticated);
-
 // Create a new query
-router.post("/", createQuery);
+router.post("/", isAuthenticated(["editor"]), createQuery);
 
 // Generate the raw query
-router.post("/build/:id", buildQuery);
+router.post("/build/:id", isAuthenticated(), buildQuery);
 
 // Execute a query
-router.post("/execute/:id", executeQuery);
+router.post("/execute/:id", isAuthenticated(), executeQuery);
 
 // Get all queries for the authenticated user
-router.get("/", getQueries);
+router.get("/", isAuthenticated(), getQueries);
 
 // Get a single query by ID
-router.get("/:id", getQueryById);
+router.get("/:id", isAuthenticated(), getQueryById);
 
 // Get all queries for a specified data source
-router.get("/data-source/:dataSourceId", getQueriesByDataSource);
+router.get(
+  "/data-source/:dataSourceId",
+  isAuthenticated(),
+  getQueriesByDataSource
+);
 
 // Update a query
-router.put("/:id", updateQuery);
+router.put("/:id", isAuthenticated(["editor"]), updateQuery);
 
 // Delete a query
-router.delete("/:id", deleteQuery);
+router.delete("/:id", isAuthenticated(["editor"]), deleteQuery);
 
 export default router;

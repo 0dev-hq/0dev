@@ -158,9 +158,9 @@ const AccountPage: React.FC = () => {
                 className="border border-gray-300 rounded px-3 py-2"
                 disabled={actionInProgress}
               >
-                <option value="Admin">Admin</option>
-                <option value="Editor">Editor</option>
-                <option value="Readonly">Readonly</option>
+                <option value="admin">Admin</option>
+                <option value="editor">Editor</option>
+                <option value="readonly">Readonly</option>
               </select>
               <button
                 onClick={handleAddMember}

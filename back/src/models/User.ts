@@ -23,8 +23,8 @@ const UserSchema: Schema = new Schema({
   isActive: { type: Boolean, default: true },
   role: {
     type: String,
-    enum: ["Admin", "Editor", "Readonly"],
-    default: "Readonly",
+    enum: ["admin", "editor", "readonly"],
+    default: "readonly",
   }, // Role field with default value
 });
 

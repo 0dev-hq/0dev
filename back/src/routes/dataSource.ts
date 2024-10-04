@@ -12,27 +12,29 @@ import {
 
 const router = express.Router();
 
-router.use(isAuthenticated);
-
 // Create a new data source
-router.post("/", createDataSource);
+router.post("/", isAuthenticated(["editor"]), createDataSource);
 
 // Get all data sources for the authenticated user
-router.get("/", getDataSources);
+router.get("/", isAuthenticated(), getDataSources);
 
 // Get a single data source by ID
-router.get("/:id", getDataSourceById);
+router.get("/:id", isAuthenticated(), getDataSourceById);
 
 // Update an existing data source
-router.put("/:id", updateDataSource);
+router.put("/:id", isAuthenticated(["editor"]), updateDataSource);
 
 // Delete a data source
-router.delete("/:id", deleteDataSource);
+router.delete("/:id", isAuthenticated(["editor"]), deleteDataSource);
 
 // Test connection to a data source
-router.post("/test-connection", testDataSourceConnection);
+router.post(
+  "/test-connection",
+  isAuthenticated(["editor"]),
+  testDataSourceConnection
+);
 
 // Capture schema for the specified data source
-router.post("/analyze/:id", captureSchema);
+router.post("/analyze/:id", isAuthenticated(["editor"]), captureSchema);
 
 export default router;

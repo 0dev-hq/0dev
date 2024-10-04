@@ -1,4 +1,5 @@
 import axios, { InternalAxiosRequestConfig } from "axios";
+import { toast } from "react-toastify";
 
 // API client for general API routes (e.g., /api)
 const apiClient = axios.create({
@@ -8,6 +9,17 @@ const apiClient = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+// if the response of any requests via apiClient is 403 show a notification with toastify
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response.status === 403) {
+      toast.error("You are not authorized to perform this action.");
+    }
+    return Promise.reject(error);
+  }
+);
 
 // API client for auth routes (e.g., /auth)
 const authClient = axios.create({

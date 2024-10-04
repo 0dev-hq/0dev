@@ -10,7 +10,7 @@ import {
 
 const router = express.Router();
 
-router.use(isAuthenticated);
+router.use(isAuthenticated(["admin"]));
 
 // Get account details
 router.get("/", getAccount);
