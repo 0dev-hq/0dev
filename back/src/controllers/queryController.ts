@@ -89,7 +89,6 @@ export const buildQuery = async (req: Request, res: Response) => {
 // Get all queries for the authenticated user
 export const getQueries = async (req: Request, res: Response) => {
   try {
-    // Fetch queries created by the authenticated user and populate the data source's name
     const queries = await Query.find({ createdBy: req.user!.id })
       .populate("dataSource", "name")
       .select("-raw");

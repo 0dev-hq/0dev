@@ -142,85 +142,86 @@ const AccountPage: React.FC = () => {
 
         {activeTab === "membership" && accountData && accountData.members && (
           <div className="space-y-4">
-            {/* Add New Member */}
-            <div className="flex items-center space-x-4">
-              <input
-                type="email"
-                placeholder="New member email"
-                value={newMemberEmail}
-                onChange={(e) => setNewMemberEmail(e.target.value)}
-                className="border border-gray-300 rounded px-3 py-2 w-1/3 hover:border-black"
-                disabled={actionInProgress}
-              />
-              <select
-                value={newMemberRole}
-                onChange={(e) => setNewMemberRole(e.target.value)}
-                className="border border-gray-300 rounded px-3 py-2"
-                disabled={actionInProgress}
-              >
-                <option value="admin">Admin</option>
-                <option value="editor">Editor</option>
-                <option value="readonly">Readonly</option>
-              </select>
-              <button
-                onClick={handleAddMember}
-                className="bg-black text-white px-4 py-2 rounded hover:bg-gray-700 transition"
-                disabled={actionInProgress}
-              >
-                Add Member
-              </button>
-            </div>
-
-            {/* Membership List */}
-            <p className="text-gray-600">Current members: {accountData.members.length}</p>
-            <table className="min-w-full bg-white">
-              <thead>
-                <tr>
-                  <th className="py-2 text-left">Email</th>
-                  <th className="py-2 text-left">Role</th>
-                  <th className="py-2 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {accountData.members.map((member: any, index: number) => (
-                  <tr key={index} className={member.isActive == false ? "text-gray-400" : ""}>
-                    <td className="py-2">{member.username}</td>
-                    <td className="py-2">
-                      <select
-                        value={member.role}
-                        onChange={(e) => handleChangeRole(member.id, e.target.value)}
-                        className="border border-gray-300 rounded px-3 py-1"
-                        disabled={actionInProgress || member.isActive == false}
-                      >
-                        <option value="Admin">Admin</option>
-                        <option value="Editor">Editor</option>
-                        <option value="Readonly">Readonly</option>
-                      </select>
-                    </td>
-                    <td className="py-2">
-                      {member.isActive == false ? (
-                        <button
-                          onClick={() => handleActivateMember(member.id)}
-                          className="text-green-600 hover:text-green-800"
-                          disabled={actionInProgress}
-                        >
-                          Activate
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleDeactivateMember(member.id)}
-                          className="text-red-600 hover:text-red-800"
-                          disabled={actionInProgress}
-                        >
-                          Deactivate
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Add New Member */}
+          <div className="flex items-center space-x-4">
+            <input
+              type="email"
+              placeholder="New member email"
+              value={newMemberEmail}
+              onChange={(e) => setNewMemberEmail(e.target.value)}
+              className="border border-gray-300 rounded px-3 py-2 w-1/3 hover:border-black"
+              disabled={actionInProgress}
+            />
+            <select
+              value={newMemberRole}
+              onChange={(e) => setNewMemberRole(e.target.value)}
+              className="border border-gray-300 rounded px-3 py-2"
+              disabled={actionInProgress}
+            >
+              <option value="admin">Admin</option>
+              <option value="editor">Editor</option>
+              <option value="readonly">Readonly</option>
+            </select>
+            <button
+              onClick={handleAddMember}
+              className="bg-black text-white px-4 py-2 rounded hover:bg-gray-700 transition"
+              disabled={actionInProgress}
+            >
+              Add Member
+            </button>
           </div>
+        
+          {/* Membership List with Horizontal Layout on Desktop */}
+          <p className="text-gray-600">Current members: {accountData.members.length}</p>
+          <div className="space-y-4">
+            {accountData.members.map((member: any, index: number) => (
+              <div
+                key={index}
+                className={`p-4 bg-white shadow-md rounded-lg border flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-4 ${member.isActive ? '' : 'opacity-50'}`}
+              >
+                {/* User Information */}
+                <div className="flex flex-col md:flex-row md:items-center md:space-x-4 flex-grow">
+                  <p className="text-gray-700 font-semibold">{member.username}</p>
+                  <div className="flex items-center space-x-2 mt-2 md:mt-0">
+                    <span className="text-gray-500">Role:</span>
+                    <select
+                      value={member.role}
+                      onChange={(e) => handleChangeRole(member.id, e.target.value)}
+                      className="border border-gray-300 rounded px-3 py-1"
+                      disabled={actionInProgress || !member.isActive}
+                    >
+                      <option value="Admin">Admin</option>
+                      <option value="Editor">Editor</option>
+                      <option value="Readonly">Readonly</option>
+                    </select>
+                  </div>
+                </div>
+        
+                {/* Actions */}
+                <div className="flex space-x-4">
+                  {member.isActive ? (
+                    <button
+                      onClick={() => handleDeactivateMember(member.id)}
+                      className="text-red-600 hover:text-red-800 transition"
+                      disabled={actionInProgress}
+                    >
+                      Deactivate
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleActivateMember(member.id)}
+                      className="text-green-600 hover:text-green-800 transition"
+                      disabled={actionInProgress}
+                    >
+                      Activate
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
         )}
 
         {activeTab === "payments" && (

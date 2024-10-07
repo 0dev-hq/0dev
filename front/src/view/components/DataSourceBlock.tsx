@@ -1,5 +1,11 @@
 import React from "react";
-import { FiEdit, FiTrash2, FiFileText, FiDatabase, FiRefreshCw } from "react-icons/fi";
+import {
+  FiEdit,
+  FiTrash2,
+  FiFileText,
+  FiDatabase,
+  FiRefreshCw,
+} from "react-icons/fi";
 import { Link } from "react-router-dom";
 
 interface DataSourceBlockProps {
@@ -42,11 +48,11 @@ const DataSourceBlock: React.FC<DataSourceBlockProps> = ({
           <span>Analyze</span>
         </button>
       </div>
-      <div className="border-t border-gray-200 flex">
+      <div className="border-t border-gray-200 flex flex-wrap md:flex-nowrap">
         {/* List Queries */}
         <Link
           to={`/data-source/${id}/queries`}
-          className="flex-1 flex items-center justify-center space-x-2 text-gray-600 hover:text-black p-3 transition"
+          className="flex-grow md:basis-1/4 flex items-center justify-center space-x-2 text-gray-600 hover:text-black p-3 transition"
         >
           <FiDatabase size={18} />
           <span className="text-sm font-medium">Queries</span>
@@ -55,7 +61,7 @@ const DataSourceBlock: React.FC<DataSourceBlockProps> = ({
         {/* List Reports */}
         <Link
           to={`/data-source/${id}/reports`}
-          className="flex-1 flex items-center justify-center space-x-2 text-gray-600 hover:text-black p-3 transition"
+          className="flex-grow md:basis-1/4 flex items-center justify-center space-x-2 text-gray-600 hover:text-black p-3 transition"
         >
           <FiFileText size={18} />
           <span className="text-sm font-medium">Reports</span>
@@ -64,7 +70,7 @@ const DataSourceBlock: React.FC<DataSourceBlockProps> = ({
         {/* Edit */}
         <button
           onClick={() => onEdit(id)}
-          className="flex-1 flex items-center justify-center space-x-2 text-gray-600 hover:text-black p-3 transition"
+          className="flex-grow md:basis-1/4 flex items-center justify-center space-x-2 text-gray-600 hover:text-black p-3 transition"
         >
           <FiEdit size={18} />
           <span className="text-sm font-medium">Edit</span>
@@ -73,7 +79,7 @@ const DataSourceBlock: React.FC<DataSourceBlockProps> = ({
         {/* Delete */}
         <button
           onClick={() => onDelete(id)}
-          className="flex-1 flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white p-3 transition"
+          className="flex-grow md:basis-1/4 flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white p-3 transition"
         >
           <FiTrash2 size={18} />
           <span className="text-sm font-medium">Delete</span>
