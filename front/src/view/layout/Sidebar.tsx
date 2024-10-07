@@ -15,7 +15,7 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <div className="w-64 flex flex-col justify-between bg-black text-white">
+    <div className="w-64 flex flex-col justify-between bg-black text-white h-screen">
       {/* Logo - background black - image at center */}
       <div className=" px-6 flex items-center justify-start h-20 bg-black">
         <img src={Logo} alt="Logo" className="w-12" />

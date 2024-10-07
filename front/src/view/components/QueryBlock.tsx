@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { FiEdit, FiTrash2, FiPlay, FiRefreshCw, FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { FiEdit, FiTrash2, FiPlay, FiRefreshCw, FiChevronDown, FiChevronUp, FiDatabase } from "react-icons/fi";
 
 // Define the props for the QueryBlock component
 interface QueryBlockProps {
   name: string;
   description: string;
+  dataSourceName: string;
   onEdit: () => void;
   onDelete: () => void;
   onRun: () => void;
@@ -15,6 +16,7 @@ interface QueryBlockProps {
 const QueryBlock: React.FC<QueryBlockProps> = ({
   name,
   description,
+  dataSourceName,
   onEdit,
   onDelete,
   onRun,
@@ -52,6 +54,13 @@ const QueryBlock: React.FC<QueryBlockProps> = ({
             <div className="flex-grow">
               {mode === "standard" && (<p className="text-lg font-medium text-gray-700">{name}</p>)}
               <p className="text-sm text-gray-500">{description}</p>
+              <p className="text-sm text-gray-500 flex items-center pt-4">
+                {/* database icon from react icons */}
+                <span className="inline-block mr-1">
+                  <FiDatabase size={16} />
+                </span>
+
+                {dataSourceName}</p>
             </div>
 
             {/* Actions (Run, Edit, Delete, Rebuild) */}

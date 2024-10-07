@@ -89,9 +89,10 @@ export const buildQuery = async (req: Request, res: Response) => {
 // Get all queries for the authenticated user
 export const getQueries = async (req: Request, res: Response) => {
   try {
-    const queries = await Query.find({ createdBy: req.user!.id }).select(
-      "-raw"
-    );
+    // Fetch queries created by the authenticated user and populate the data source's name
+    const queries = await Query.find({ createdBy: req.user!.id })
+      .populate("dataSource", "name")
+      .select("-raw");
     return res.status(200).json(queries);
   } catch (error) {
     logger.error("Failed to fetch queries:", error);
@@ -240,6 +241,7 @@ export const executeQuery = async (req: Request, res: Response) => {
         );
         break;
       case "postgresql":
+      case "supabase":
         result = await executePostgresQuery(
           query.raw,
           dataSource,

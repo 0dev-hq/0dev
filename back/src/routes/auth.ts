@@ -35,6 +35,7 @@ router.get("/google", (req, res, next) => {
   );
 });
 
+// This controller handles Sign up, Invitation acceptance, and Login flows
 router.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
@@ -42,7 +43,9 @@ router.get(
     if (req.user) {
       // Check if the user already has an account
       const user = req.user as IUser;
-      let account: string = req.user.account ? req.user.account : "";
+      let [account, role] = ["", ""]; // account and roll will be set based on the invitation or creating a new account
+
+      // Sign up flow
       if (!user.account) {
         // if inviteToken is present in the session and is valid, add the user to the account
         if (req.session.inviteToken) {
@@ -59,6 +62,7 @@ router.get(
           try {
             await addMemberToAccount(user, invitation as IInvitation);
             account = invitation!.accountId.toString();
+            role = invitation!.role;
           } catch (error: any) {
             if (error.message === "Account not found") {
               // If the account was not found, create a new account for the user
@@ -71,14 +75,23 @@ router.get(
         } else {
           try {
             account = await createNewAccountForUser(user);
+            role = "Admin";
           } catch (error: any) {
             res.status(500).send("Error creating account");
             return;
           }
         }
       }
+
+      const ac = await Account.findById(account ?? req.user.account);
       const token = jwt.sign(
-        { id: req.user._id, email: req.user.email, account },
+        {
+          id: req.user._id,
+          email: req.user.email,
+          account,
+          role: role ?? req.user.role,
+          plan: ac!.subscription.plan,
+        },
         process.env.JWT_SECRET!,
         { expiresIn: process.env.JWT_EXPIRES_IN }
       );
@@ -265,7 +278,7 @@ router.post("/login", (req, res, next) => {
 router.get("/logout", (req, res) => {
   req.logout((err) => {
     if (err) return res.status(500).send("Error logging out");
-    res.redirect("/");
+    return res.status(200).send("Logged out successfully");
   });
 });
 

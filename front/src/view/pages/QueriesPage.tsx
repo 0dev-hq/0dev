@@ -9,7 +9,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { getDataSources } from "../../services/dataSourceService";
 import QueryBlock from "../components/QueryBlock";
-import { Query } from "../../models/Query";
+import { Query, QueryList } from "../../models/Query";
 import { DataSource } from "../../models/DataSource";
 
 const QueriesPage: React.FC = () => {
@@ -23,7 +23,7 @@ const QueriesPage: React.FC = () => {
   // Fetch all queries for the recent tab
   const queryClient = useQueryClient();
   const { data: recentQueries, isLoading: loadingRecentQueries } = useQuery<
-    Query[]
+    QueryList[]
   >("recentQueries", getQueries);
 
   // Fetch data sources
@@ -151,12 +151,13 @@ const QueriesPage: React.FC = () => {
         {activeTab === "recent" && (
           <>
             {recentQueries && recentQueries?.length > 0 ? (
-              recentQueries.map((query: Query) => (
+              recentQueries.map((query: QueryList) => (
                 <QueryBlock
                   mode={displayMode}
                   key={query._id}
                   description={query.description}
                   name={query.name}
+                  dataSourceName={query.dataSource?.name}
                   onEdit={() => navigate(`/query/edit/${query._id}`)}
                   onRun={() => handleRunQuery(query._id!)}
                   onDelete={() => handleDelete(query._id!)}

@@ -1,9 +1,9 @@
-import { Query } from "../models/Query";
+import { Query, QueryList } from "../models/Query";
 import { apiClient } from "./apiClient";
 
 // Fetch all queries
 export const getQueries = async () => {
-  const response = await apiClient.get<Query[]>("query");
+  const response = await apiClient.get<QueryList[]>("query");
   return response.data;
 };
 
