@@ -22,6 +22,7 @@
     "express-session": "^1.18.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.6.1",
+    "mongoose-encryption": "^2.1.2",
     "mysql2": "^3.11.2",
     "nodemailer": "^6.9.15",
     "passport": "^0.7.0",

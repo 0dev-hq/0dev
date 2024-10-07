@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+import encrypt from "mongoose-encryption";
 
 export interface IDataSource extends Document {
   name: string;
@@ -30,6 +31,14 @@ const DataSourceSchema: Schema = new Schema({
     ref: "User",
     required: true,
   },
+});
+
+const encryptionKey = process.env.DATA_SOURCE_ENCRYPTION_KEY!;
+
+// Encrypt the sensitive fields
+DataSourceSchema.plugin(encrypt, {
+  secret: encryptionKey,
+  encryptedFields: ["password", "apiKey", "connectionString"],
 });
 
 const DataSource = mongoose.model<IDataSource>("DataSource", DataSourceSchema);
