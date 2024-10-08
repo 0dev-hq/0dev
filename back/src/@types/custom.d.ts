@@ -4,6 +4,6 @@ import session from "express-session";
 declare module "express-session" {
   interface SessionData {
     returnTo?: string; // Add the returnTo property
-    inviteToken?: string; // Add the inviteToken property
+    invitationToken?: string; // Add the invitationToken property
   }
 }

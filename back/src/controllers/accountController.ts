@@ -57,7 +57,7 @@ export const getAccount = async (req: Request, res: Response) => {
     }
 
     // Check if the current user is the account owner or admin
-    const isAdmin = account.owner == userId || user?.role === "Admin";
+    const isAdmin = account.owner == userId || user?.role === "admin";
 
     // Prepare the response
     const response = {
@@ -157,7 +157,7 @@ export const changeUserRole = async (req: Request, res: Response) => {
     // Check if the requesting user is an admin or the owner
     const isAdmin =
       account.owner.toString() === requestingUser._id!.toString() ||
-      requestingUser.role === "Admin";
+      requestingUser.role === "admin";
 
     if (!isAdmin) {
       return res

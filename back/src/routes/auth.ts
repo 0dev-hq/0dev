@@ -23,16 +23,17 @@ router.get("/google", (req, res, next) => {
   req.session.returnTo = returnTo as string;
 
   // Get the invite token from the query string if present and store it in the session
-  if (req.query.inviteToken) {
-    req.session.inviteToken = req.query.inviteToken as string;
+  if (req.query.invitationToken) {
+    req.session.invitationToken = req.query.invitationToken as string;
   }
 
   // Start Google authentication
-  passport.authenticate("google", { scope: ["profile", "email"] })(
-    req,
-    res,
-    next
-  );
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    state: req.session.invitationToken
+      ? req.session.invitationToken
+      : undefined,
+  })(req, res, next);
 });
 
 // This controller handles Sign up, Invitation acceptance, and Login flows
@@ -47,11 +48,11 @@ router.get(
 
       // Sign up flow
       if (!user.account) {
-        // if inviteToken is present in the session and is valid, add the user to the account
-        if (req.session.inviteToken) {
-          // Fetch and validate the invitation using the inviteToken
+        const invitationToken = req.query.state;
+        if (invitationToken) {
+          // Fetch and validate the invitation using the invitationToken
           const invitation = await Invitation.findOne({
-            token: req.session.inviteToken,
+            token: invitationToken,
             status: "pending",
           });
           if (!invitation) {
@@ -70,12 +71,10 @@ router.get(
               return;
             }
           }
-          // Clear the inviteToken from the session
-          delete req.session.inviteToken;
         } else {
           try {
             account = await createNewAccountForUser(user);
-            role = "Admin";
+            role = "admin";
           } catch (error: any) {
             res.status(500).send("Error creating account");
             return;
@@ -83,7 +82,8 @@ router.get(
         }
       }
 
-      const ac = await Account.findById(account ?? req.user.account);
+      const ac = await Account.findById(account ?? user.account);
+      console.log(`ac: ${JSON.stringify(ac)}`);
       const token = jwt.sign(
         {
           id: req.user._id,
@@ -187,7 +187,7 @@ router.post("/accept-invite/:token", async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
 
-  // Fetch and validate the invitation using the inviteToken
+  // Fetch and validate the invitation using the invitationToken
   const invitation = await Invitation.findOne({
     token,
     status: "pending",
@@ -296,7 +296,7 @@ async function createNewAccountForUser(user: IUser) {
 
   // Link account to user
   user.account = newAccount._id as string;
-  user.role = "Admin";
+  user.role = "admin";
   await user.save();
   return newAccount._id as string;
 }

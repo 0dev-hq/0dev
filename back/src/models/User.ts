@@ -9,7 +9,7 @@ export interface IUser extends Document {
   account?: string;
   emailConfirmed: boolean;
   isActive?: boolean; // This field allows logical deletion of users
-  role?: "Admin" | "Editor" | "Readonly"; // Adding role field to the user
+  role?: "admin" | "editor" | "readonly"; // Adding role field to the user
 }
 
 const UserSchema: Schema = new Schema({

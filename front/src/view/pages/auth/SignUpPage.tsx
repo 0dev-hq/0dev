@@ -43,7 +43,7 @@ const SignUpPage: React.FC = () => {
   };
 
   const handleGoogleSignUp = () => {
-    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google`;
+    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google${invitationToken ? `?invitationToken=${invitationToken}` : ""}`;
   };
 
   const invitationMessage = (

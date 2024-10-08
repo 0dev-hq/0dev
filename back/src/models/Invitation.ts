@@ -4,7 +4,7 @@ export interface IInvitation extends Document {
   email: string;
   invitingUserId: Types.ObjectId;
   accountId: Types.ObjectId;
-  role: "Admin" | "Editor" | "Readonly";
+  role: "admin" | "editor" | "readonly";
   token: string;
   expiresAt: Date;
   status: "pending" | "accepted" | "expired";
@@ -21,7 +21,7 @@ const invitationSchema = new Schema<IInvitation>(
     accountId: { type: Schema.Types.ObjectId, ref: "Account", required: true },
     role: {
       type: String,
-      enum: ["Admin", "Editor", "Readonly"],
+      enum: ["admin", "editor", "readonly"],
       required: true,
     },
     token: { type: String, required: true },
