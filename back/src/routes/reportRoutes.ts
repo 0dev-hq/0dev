@@ -26,4 +26,7 @@ router.get("/:id", isAuthenticated(), getReport);
 // Delete a report by ID
 router.delete("/:id", isAuthenticated(["editor"]), deleteReport);
 
-export default router;
+export default {
+  path: "/api/report",
+  router,
+};

@@ -37,4 +37,7 @@ router.post(
 // Capture schema for the specified data source
 router.post("/analyze/:id", isAuthenticated(["editor"]), captureSchema);
 
-export default router;
+export default {
+  path: "/api/data-source",
+  router,
+};

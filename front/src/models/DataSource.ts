@@ -1,6 +1,7 @@
 export interface DataSource {
   _id?: string;
   id?: string;
+  dataHub?: string;
   name: string;
   type: string;
   lastTimeAnalyzed?: string;

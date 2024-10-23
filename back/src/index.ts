@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+// Load environment variables from .env file
 dotenv.config(); // This should be here
 
 import logger from "./utils/logger";
@@ -7,25 +8,20 @@ import express, { Request, Response } from "express";
 import mongoose from "mongoose";
 import passport from "passport";
 import cors from "cors";
-import authRoutes from "./routes/auth";
-import dataSourceRoutes from "./routes/dataSource";
-import queryRoutes from "./routes/queryRoutes";
-import reportRoutes from "./routes/reportRoutes";
-import accountRoutes from "./routes/accountRoutes";
 
 import "./config/passport"; // Initialize passport strategies
-import { sessionMiddleware } from "./middlewares/sessionMiddleware";
 
-// Load environment variables from .env file
+import { sessionMiddleware } from "./middlewares/sessionMiddleware";
+import { importAndRegisterRoutes } from "./routes/util/routeUtil";
 
 // Initialize Express app
-const app = express();
+const app: express.Application = express();
 const PORT = process.env.PORT || 3000;
 
-// CORS configuration (example: allowing requests from a specific frontend URL)
+// CORS configuration
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL, // Allow only the frontend URL defined in the .env file
+    origin: process.env.FRONTEND_URL,
     credentials: true, // Allow credentials (cookies, authorization headers, etc.)
   })
 );
@@ -69,19 +65,13 @@ app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Root route for testing the server
+// Health check endpoint
 app.get("/health", (_req: Request, res: Response) => {
   res.status(200).send("OK");
 });
 
-// Authentication routes (login, signup, OAuth)
-app.use("/auth", authRoutes);
+importAndRegisterRoutes(app);
 
-// Mount other routes under '/api/'
-app.use("/api/data-source", dataSourceRoutes);
-app.use("/api/query", queryRoutes);
-app.use("/api/report", reportRoutes);
-app.use("/api/account", accountRoutes);
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

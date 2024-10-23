@@ -27,4 +27,7 @@ router.put("/user/:id/activate", activateUser);
 // Change user role
 router.put("/user/:id/role", changeUserRole);
 
-export default router;
+export default {
+  path: "/api/account",
+  router,
+};

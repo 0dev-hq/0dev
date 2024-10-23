@@ -1,13 +1,12 @@
 import nodemailer from "nodemailer";
 import logger from "../utils/logger";
 
-// Create a Nodemailer transporter using AWS SES SMTP
 const transporter = nodemailer.createTransport({
-  host: process.env.SES_SMTP_HOST!,
-  port: Number(process.env.SES_SMTP_PORT!),
+  host: process.env.SMTP_HOST!,
+  port: Number(process.env.SMTP_PORT!),
   auth: {
-    user: process.env.SES_SMTP_USER!,
-    pass: process.env.SES_SMTP_PASS!,
+    user: process.env.SMTP_USER!,
+    pass: process.env.SMTP_PASS!,
   },
 });
 
@@ -16,7 +15,7 @@ export const sendConfirmationEmail = async (email: string, token: string) => {
   const confirmationUrl = `${process.env.FRONTEND_URL}/auth/confirm-email/${token}`;
 
   const mailOptions = {
-    from: process.env.SES_EMAIL_SOURCE!,
+    from: process.env.EMAIL_SOURCE!,
     to: email,
     subject: "0dev.io - Confirm your email",
     text: `Please confirm your email by clicking the following link: ${confirmationUrl}`,
@@ -37,7 +36,7 @@ export const sendInvitationEmail = async (
   invitationLink: string
 ) => {
   const mailOptions = {
-    from: process.env.SES_EMAIL_SOURCE!,
+    from: process.env.EMAIL_SOURCE!,
     to: email,
     subject: "You're invited to join 0dev.io",
     text: `You're invited to join 0dev.io! Click the following link to sign up: ${invitationLink}`,

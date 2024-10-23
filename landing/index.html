@@ -10,6 +10,15 @@
   <script src="index.js" defer></script>
   <link rel="stylesheet" href="index.css">
 </head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-M4TVZLV5Z4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-M4TVZLV5Z4');
+</script>
 <body class="bg-black text-white font-sans md:px-10 lg:px-20">
 
   <!-- Header Section -->
@@ -41,11 +50,11 @@
 
   <!-- Main Section -->
   <main class="relative text-center py-20">
-    <!-- Adjust z-index and position for the background and overlays -->
+    <!-- Background image -->
     <div style="background-image: url('/assets/background.jpg');" class="absolute inset-0 z-0 bg-cover bg-center opacity-20"></div>
     <div id="background-image" class="absolute inset-0 z-0 bg-cover bg-center opacity-5"></div>
 
-    <!-- Main content with higher z-index to ensure buttons are clickable -->
+    <!-- Main content -->
     <div class="relative z-10">
       <h1 class="text-5xl font-bold mb-6">Take Informed Decisions!</h1>
       <p class="text-lg mb-10">Your data should empower your decisions and be accessible as easily as possible</p>
@@ -92,6 +101,13 @@
         <div class="w-1 h-8 bg-purple-500 ml-auto"></div>
       </div>
     </section>
+
+    <!-- Video Section -->
+    <section class="my-20 relative z-10 px-6 md:px-16 min-h-96">
+      <div class="max-w-3xl mx-auto h-96">
+        <iframe class="w-full h-full rounded-lg shadow-lg" src="https://www.youtube.com/embed/K9B3AWI8uIE" title="0dev.io Overview" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+    </section>
   </main>
 
   <!-- Join Discord Section -->
@@ -118,8 +134,4 @@
   </footer>
 
 </body>
-
-
-
-
 </html>

@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import Modal from "react-modal";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
 import { getQueries } from "../../services/queryService";
-import { Query } from "../../models/Query";
+import { QueryList } from "../../models/Query";
 import { useNavigate, useParams } from "react-router-dom";
 import { getReport, saveReport } from "../../services/reportService";
 
@@ -90,7 +90,7 @@ const ReportCanvasPage: React.FC = () => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [activeGroup, setActiveGroup] = useState<BlockGroup | null>(null);
   const [activeGroupIndex, setActiveGroupIndex] = useState<number | null>(null);
-  const [queries, setQueries] = useState<Query[]>([]);
+  const [queries, setQueries] = useState<QueryList[]>([]);
   const [modalState, setModalState] = useState<{
     title: string;
     query: string;

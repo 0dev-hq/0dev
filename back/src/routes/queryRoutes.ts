@@ -41,4 +41,6 @@ router.put("/:id", isAuthenticated(["editor"]), updateQuery);
 // Delete a query
 router.delete("/:id", isAuthenticated(["editor"]), deleteQuery);
 
-export default router;
+export default {
+  path: "/api/query",
+  router};

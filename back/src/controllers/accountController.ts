@@ -132,8 +132,6 @@ export const changeUserRole = async (req: Request, res: Response) => {
   const { id } = req.params; // User ID whose role is being changed
   const { role } = req.body; // New role to be assigned
 
-  console.log(id, role);
-
   try {
     // Find the user making the request
     const requestingUser = await User.findOne({
@@ -144,15 +142,11 @@ export const changeUserRole = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Requesting user not found" });
     }
 
-    console.log(requestingUser);
-
     // Find the account to which the user belongs
     const account = await Account.findById(requestingUser.account);
     if (!account) {
       return res.status(404).json({ message: "Account not found" });
     }
-
-    console.log(account);
 
     // Check if the requesting user is an admin or the owner
     const isAdmin =
@@ -177,9 +171,6 @@ export const changeUserRole = async (req: Request, res: Response) => {
     if (!user) {
       return res.status(400).json({ message: "User not found" });
     }
-
-    console.log(`changing user:`);
-    console.log(user);
 
     // Update the user's role
     user.role = role;

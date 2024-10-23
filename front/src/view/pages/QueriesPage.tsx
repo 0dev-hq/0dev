@@ -9,7 +9,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { getDataSources } from "../../services/dataSourceService";
 import QueryBlock from "../components/QueryBlock";
-import { Query, QueryList } from "../../models/Query";
+import { QueryList } from "../../models/Query";
 import { DataSource } from "../../models/DataSource";
 
 const QueriesPage: React.FC = () => {
@@ -33,7 +33,7 @@ const QueriesPage: React.FC = () => {
   );
 
   // Fetch queries by data source
-  const { data: dataSourceQueries, refetch: fetchDataSourceQueries } = useQuery(
+  const { data: dataSourceQueries, refetch: fetchDataSourceQueries } = useQuery<QueryList[]>(
     ["dataSourceQueries", selectedDataSource],
     () => getQueriesByDataSource(selectedDataSource),
     {
@@ -157,7 +157,7 @@ const QueriesPage: React.FC = () => {
                   key={query._id}
                   description={query.description}
                   name={query.name}
-                  dataSourceName={query.dataSource?.name}
+                  dataSourceName={query.dataSource?.name || ""}
                   onEdit={() => navigate(`/query/edit/${query._id}`)}
                   onRun={() => handleRunQuery(query._id!)}
                   onDelete={() => handleDelete(query._id!)}
@@ -190,13 +190,14 @@ const QueriesPage: React.FC = () => {
             {/* Show Queries for the selected data source */}
             {selectedDataSource && (
               <>
-                {dataSourceQueries?.length > 0 ? (
-                  dataSourceQueries.map((query: Query) => (
+                {dataSourceQueries ? (
+                  dataSourceQueries.map((query: QueryList) => (
                     <QueryBlock
                       mode={displayMode}
                       key={query._id}
                       description={query.description}
                       name={query.name}
+                      dataSourceName={query.dataSource?.name || ""}
                       onEdit={() => navigate(`/query/edit/${query._id}`)}
                       onRun={() => handleRunQuery(query._id!)}
                       onDelete={() => handleDelete(query._id!)}
