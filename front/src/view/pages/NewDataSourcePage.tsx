@@ -9,8 +9,23 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import { DataSource } from "../../models/DataSource";
 import { useState } from "react";
-import { FaDatabase, FaGoogle, FaWordpress, FaServer, FaShopify, FaFacebook, FaInstagram, FaTwitter } from "react-icons/fa";
-import { SiMongodb, SiPostgresql, SiMysql, SiSupabase, SiMagento, SiWoocommerce } from "react-icons/si";
+import {
+  FaGoogle,
+  FaWordpress,
+  FaServer,
+  FaShopify,
+  FaFacebook,
+  FaInstagram,
+  FaTwitter,
+} from "react-icons/fa";
+import {
+  SiMongodb,
+  SiPostgresql,
+  SiMysql,
+  SiSupabase,
+  SiMagento,
+  SiWoocommerce,
+} from "react-icons/si";
 
 const dataSourceIcons: { [key: string]: JSX.Element } = {
   mongodb: <SiMongodb />,
@@ -30,23 +45,30 @@ const dataSourceIcons: { [key: string]: JSX.Element } = {
 
 // Define categories for the data sources
 const dataSourceCategories: { [key: string]: string[] } = {
-  misc: ["mongodb", "postgresql", "mysql", "supabase", "googleSheet", "wordpress"],
+  misc: [
+    "mongodb",
+    "postgresql",
+    "mysql",
+    "supabase",
+    "googleSheet",
+    "wordpress",
+  ],
   ecommerce: ["shopify", "woocommerce", "magento"],
   social: ["facebook", "instagram", "twitter"],
 };
 
-
 const NewDataSourcePage = () => {
-  const [testStatus, setTestStatus] = useState<"success" | "fail" | "none">("none");
+  const [testStatus, setTestStatus] = useState<"success" | "fail" | "none">(
+    "none"
+  );
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedType, setSelectedType] = useState<string | null>(null);
 
-    // Extract the query parameter for category
-    const queryParams = new URLSearchParams(location.search);
-    const category = queryParams.get("category") || "all"; // Default to "all" if no query param
-    const returnTo = queryParams.get("returnTo") || "/data-source";
-    const dataHub = queryParams.get("dataHub") || "";
-  
+  // Extract the query parameter for category
+  const queryParams = new URLSearchParams(location.search);
+  const category = queryParams.get("category") || "all"; // Default to "all" if no query param
+  const returnTo = queryParams.get("returnTo") || "/data-source";
+  const dataHub = queryParams.get("dataHub") || "";
 
   const queryClient = useQueryClient();
   const { id } = useParams<{ id?: string }>();
@@ -96,14 +118,11 @@ const NewDataSourcePage = () => {
     },
   });
 
-  const {
-    refetch: testConnection,
-    isFetching: isTestingConnection,
-  } = useQuery(
+  const { refetch: testConnection, isFetching: isTestingConnection } = useQuery(
     "testConnection",
     () => {
-      testDataSourceConnection(watch()).then((value) =>
-        setTestStatus(value ? "success" : "fail")
+      testDataSourceConnection({ ...watch(), type: selectedType! }).then(
+        (value) => setTestStatus(value ? "success" : "fail")
       );
     },
     {
@@ -115,7 +134,7 @@ const NewDataSourcePage = () => {
     const newDataSource: DataSource = {
       ...(id ? {} : { dataHub }), // Update should not change the data hub
       name: data.name,
-      type: data.type,
+      type: data.type || selectedType!,
       connectionString: data.connectionString,
       username: data.username,
       password: data.password,
@@ -140,13 +159,12 @@ const NewDataSourcePage = () => {
     navigate(returnTo);
   };
 
-    // Filter the data sources based on the category
-    // if the category is "all", return all data sources in dataSourceCategories
-    const filteredTypes =
-    category === "all" ?
-    Object.values(dataSourceCategories).flat() :
-    dataSourceCategories[category] || [];
-      
+  // Filter the data sources based on the category
+  // if the category is "all", return all data sources in dataSourceCategories
+  const filteredTypes =
+    category === "all"
+      ? Object.values(dataSourceCategories).flat()
+      : dataSourceCategories[category] || [];
 
   return (
     <div className="flex flex-col items-center space-y-8">
@@ -166,7 +184,9 @@ const NewDataSourcePage = () => {
                   key={type}
                   onClick={() => handleTypeSelection(type)}
                   className={`p-4 border rounded-lg flex flex-col items-center space-y-2 ${
-                    selectedType === type ? "border-blue-500" : "border-gray-300"
+                    selectedType === type
+                      ? "border-blue-500"
+                      : "border-gray-300"
                   }`}
                 >
                   {dataSourceIcons[type] || dataSourceIcons["default"]}
@@ -403,7 +423,9 @@ const NewDataSourcePage = () => {
               {selectedType === "googleSheet" && (
                 <>
                   <div>
-                    <label className="text-lg font-medium">Google Sheet ID</label>
+                    <label className="text-lg font-medium">
+                      Google Sheet ID
+                    </label>
                     <input
                       type="text"
                       {...register("googleSheetId", { required: true })}
@@ -473,8 +495,14 @@ const NewDataSourcePage = () => {
             </button>
           </div>
           {testStatus !== "none" && (
-            <p className={`text-${testStatus === "success" ? "green" : "red"}-600 mt-4`}>
-              {testStatus === "success" ? "Connection Successful" : "Connection Failed"}
+            <p
+              className={`text-${
+                testStatus === "success" ? "green" : "red"
+              }-600 mt-4`}
+            >
+              {testStatus === "success"
+                ? "Connection Successful"
+                : "Connection Failed"}
             </p>
           )}
           {(addSuccess || updateSuccess) && (

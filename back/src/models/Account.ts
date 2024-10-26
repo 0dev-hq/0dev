@@ -1,7 +1,7 @@
 import { Schema, model, Document, Types } from "mongoose";
 import { IUser } from "./User";
 
-interface AccountDocument extends Document {
+interface IAccount extends Document {
   name: string;
   owner: Types.ObjectId;
   members: {
@@ -14,7 +14,7 @@ interface AccountDocument extends Document {
   };
 }
 
-const accountSchema = new Schema<AccountDocument>({
+const accountSchema = new Schema<IAccount>({
   name: { type: String, required: true },
   owner: { type: Schema.Types.ObjectId, ref: "User", required: true },
   members: [
@@ -29,5 +29,5 @@ const accountSchema = new Schema<AccountDocument>({
   },
 });
 
-const Account = model<AccountDocument>("Account", accountSchema);
+const Account = model<IAccount>("Account", accountSchema);
 export default Account;

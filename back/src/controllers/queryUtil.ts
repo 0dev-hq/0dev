@@ -3,11 +3,12 @@ import { Client as PGClient } from "pg"; // PostgreSQL Client
 import mysql from "mysql2/promise"; // MySQL
 import { MongoClient } from "mongodb";
 import logger from "../utils/logger";
+import { DataSourceType } from "../models/DataSource";
 
 export const generateSQLQuery = async (
   description: string,
-  schema: any, // Schema information for the data source
-  dataSourceType: string, // Type of data source (e.g., mysql, postgresql, mongodb)
+  analysisInfo: any,
+  dataSourceType: DataSourceType,
   model: string = "gpt-4o-mini"
 ) => {
   // Provide context based on the data source type
@@ -19,7 +20,7 @@ export const generateSQLQuery = async (
       context = `
         The database is a ${dataSourceType} system. 
         I am using traditional SQL syntax to interact with the data.
-        The schema is as follows: ${JSON.stringify(schema)}.
+        This is the analysis of the database: ${JSON.stringify(analysisInfo)}.
         Please generate a SQL query based on the description provided.
         IMPORTANT: Your answer should directly give the query without anything before or after that. No explanation, or comments.
         IMPORTANT: Absolutely do not include pagination using the SQL LIMIT and OFFSET clauses.
@@ -29,7 +30,7 @@ export const generateSQLQuery = async (
       context = `
         The database is a MongoDB system.
         I am using the MongoDB query language (not Mongoose) to interact with the MongoDB collections.
-        The schema is as follows: ${JSON.stringify(schema)}.
+        This is the analysis of the database: ${JSON.stringify(analysisInfo)}.
         Please generate a MongoDB query object based on the description provided.
         The query should include proper MongoDB syntax and pagination using skip() and limit().
         The output must be a valid MongoDB query in JSON format, including collection, fields for projection.
