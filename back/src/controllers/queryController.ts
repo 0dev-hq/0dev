@@ -20,24 +20,23 @@ export const createQuery = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Data source not found" });
     }
 
-    const schema = dataSourceDoc.schemaInfo; // Assuming schemaInfo contains the schema
-    const dataSourceType = dataSourceDoc.type;
-
-    // Generate the raw query based on the description and schema
-    const rawQuery = await generateSQLQuery(
-      description,
-      schema,
-      dataSourceType
-    );
-
-    const newQuery = new Query({
+    let newQuery = new Query({
       name,
       description,
-      raw: rawQuery, // Save the generated query
       dataSource,
       createdBy: req.user!.id,
       operation: "read", // Hardcoded to 'read' for now
     });
+
+    if (dataSource.analysisInfo) {
+      // Generate the new raw query based on the updated description and schema
+      const rawQuery = await generateSQLQuery(
+        description,
+        dataSource.analysisInfo,
+        dataSource.type
+      );
+      newQuery.raw = rawQuery;
+    }
 
     await newQuery.save();
     return res.sendStatus(200);
@@ -59,19 +58,15 @@ export const buildQuery = async (req: Request, res: Response) => {
 
     // Fetch the associated data source
     const dataSource = await DataSource.findById(query.dataSource);
-    if (!dataSource) {
+    if (!dataSource || !dataSource.analysisInfo) {
       return res.status(404).json({ message: "Data source not found" });
     }
-
-    // Fetch the data source schema
-    const schema = dataSource.schemaInfo; // Assuming schemaInfo contains the schema
-    const dataSourceType = dataSource.type;
 
     // Generate the raw query based on the description and schema
     const rawQuery = await generateSQLQuery(
       query.description,
-      schema,
-      dataSourceType
+      dataSource.analysisInfo,
+      dataSource.type
     );
 
     // Update the query with the new raw query
@@ -165,17 +160,15 @@ export const updateQuery = async (req: Request, res: Response) => {
         return res.status(404).json({ message: "Data source not found" });
       }
 
-      // Fetch the data source schema
-      const schema = dataSource.schemaInfo; // Assuming schemaInfo contains the schema
-      const dataSourceType = dataSource.type;
-
-      // Generate the new raw query based on the updated description and schema
-      const rawQuery = await generateSQLQuery(
-        description,
-        schema,
-        dataSourceType
-      );
-      query.raw = rawQuery;
+      if (dataSource.analysisInfo) {
+        // Generate the new raw query based on the updated description and schema
+        const rawQuery = await generateSQLQuery(
+          description,
+          dataSource.analysisInfo,
+          dataSource.type
+        );
+        query.raw = rawQuery;
+      }
     } else {
       query.name = name;
     }
