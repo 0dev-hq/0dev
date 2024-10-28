@@ -196,7 +196,7 @@ export const captureSchema = async (req: Request, res: Response) => {
 
     console.log(`Semantic Layer: ${JSON.stringify(semanticLayer, null, 2)}`);
 
-    dataSource.analysisInfo = { schema };
+    dataSource.analysisInfo = { schema, semanticLayer };
     dataSource.lastTimeAnalyzed = new Date(); // Set UTC time
     await dataSource.save();
 

@@ -41,7 +41,6 @@ export class OpenAIgenerativeAIProvider extends GenerativeAIProvider {
 
       // Parse response based on expected output format
       const content = response.data.choices[0].message.content.trim();
-      console.log(`AI Response: ${content}`);
       if (format === "json") {
         return JSON.parse(content) as GenerativeAIResponse<T>;
       }

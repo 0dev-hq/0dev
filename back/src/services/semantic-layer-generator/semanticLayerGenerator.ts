@@ -1,7 +1,10 @@
 import { GenerativeAIProvider } from "../generative-ai-providers/generativeAIProvider";
 import { SemanticLayer } from "./semanticLayer";
 
-export type DataSourceSchema = any;
+export type DataSourceSchema = Record<
+  string,
+  { column: string; type: string }[]
+>;
 
 export abstract class SemanticLayerGenerator {
   protected aiProvider: GenerativeAIProvider;

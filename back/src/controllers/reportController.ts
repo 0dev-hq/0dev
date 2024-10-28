@@ -183,8 +183,6 @@ export const analyzeBlock = async (req: Request, res: Response) => {
     // Call OpenAI to generate chart parameters
     const aiResponse = await generateAIResponse("gpt-4o-mini", prompt);
 
-    console.log("AI response:", aiResponse);
-
     // Extract and clean the JSON object from the AI response
     const chartParams = extractFormattedContent("javascript", aiResponse);
 

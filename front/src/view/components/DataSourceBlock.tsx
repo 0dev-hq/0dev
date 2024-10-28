@@ -3,10 +3,26 @@ import {
   FiEdit,
   FiTrash2,
   FiFileText,
-  FiDatabase,
   FiRefreshCw,
 } from "react-icons/fi";
+import { FaDatabase, FaTable, FaServer } from "react-icons/fa";
+import { SiMongodb, SiOracle, SiMysql, SiPostgresql } from "react-icons/si";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Clock } from "lucide-react";
 
 interface DataSourceBlockProps {
   id: string;
@@ -18,6 +34,34 @@ interface DataSourceBlockProps {
   onCaptureSchema: (id: string) => void;
 }
 
+const formatDate = (date: Date) => {
+  return date.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+};
+
+const getDataSourceIcon = (type: string) => {
+  switch (type.toLowerCase()) {
+    case "mongodb":
+      return <SiMongodb className="h-6 w-6 text-primary" />;
+    case "mysql":
+      return <SiMysql className="h-6 w-6 text-primary" />;
+    case "postgresql":
+      return <SiPostgresql className="h-6 w-6 text-primary" />;
+    case "oracle":
+      return <SiOracle className="h-6 w-6 text-primary" />;
+    case "sqlserver":
+      return <FaServer className="h-6 w-6 text-primary" />;
+    default:
+      return <FaDatabase className="h-6 w-6 text-primary" />;
+  }
+};
+
 const DataSourceBlock: React.FC<DataSourceBlockProps> = ({
   id,
   name,
@@ -28,64 +72,93 @@ const DataSourceBlock: React.FC<DataSourceBlockProps> = ({
   onDelete,
 }) => {
   return (
-    <div className="border border-gray-200 rounded-lg bg-white shadow-md flex flex-col">
-      <div className="p-4 flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">{name}</h3>
-          <p className="text-gray-500">{type}</p>
-          <p className="text-xs text-gray-400 mt-1">
-            Last Analyzed:{" "}
-            {lastTimeAnalyzed
-              ? `${new Date(lastTimeAnalyzed).toLocaleString()} (Local TZ)`
-              : "Never"}
-          </p>
+    <Card className="overflow-hidden transition-all hover:shadow-lg max-w-96">
+      <CardHeader className="flex flex-row items-center gap-4 pb-2">
+        <div className="rounded-full bg-primary/10 p-2">
+          {getDataSourceIcon(type)}
         </div>
-        <button
-          onClick={() => onCaptureSchema(id)}
-          className="flex items-center px-4 py-2 space-x-2 bg-black hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition"
-        >
-          <FiRefreshCw size={16} />
-          <span>Analyze</span>
-        </button>
-      </div>
-      <div className="border-t border-gray-200 flex flex-wrap md:flex-nowrap">
-        {/* List Queries */}
-        <Link
-          to={`/data-source/${id}/queries`}
-          className="flex-grow md:basis-1/4 flex items-center justify-center space-x-2 text-gray-600 hover:text-black p-3 transition"
-        >
-          <FiDatabase size={18} />
-          <span className="text-sm font-medium">Queries</span>
-        </Link>
-
-        {/* List Reports */}
-        <Link
-          to={`/data-source/${id}/reports`}
-          className="flex-grow md:basis-1/4 flex items-center justify-center space-x-2 text-gray-600 hover:text-black p-3 transition"
-        >
-          <FiFileText size={18} />
-          <span className="text-sm font-medium">Reports</span>
-        </Link>
-
-        {/* Edit */}
-        <button
-          onClick={() => onEdit(id)}
-          className="flex-grow md:basis-1/4 flex items-center justify-center space-x-2 text-gray-600 hover:text-black p-3 transition"
-        >
-          <FiEdit size={18} />
-          <span className="text-sm font-medium">Edit</span>
-        </button>
-
-        {/* Delete */}
-        <button
-          onClick={() => onDelete(id)}
-          className="flex-grow md:basis-1/4 flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white p-3 transition"
-        >
-          <FiTrash2 size={18} />
-          <span className="text-sm font-medium">Delete</span>
-        </button>
-      </div>
-    </div>
+        <div>
+          <CardTitle className="text-xl">{name}</CardTitle>
+          <p className="text-sm text-muted-foreground capitalize">{type}</p>
+        </div>
+      </CardHeader>
+      <CardContent className="pb-2">
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1"
+          >
+            <FiFileText className="h-4 w-4" />
+            Queries
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1"
+          >
+            <FiFileText className="h-4 w-4" />
+            Reports
+          </Button>
+        </div>
+      </CardContent>
+      <CardFooter className="flex justify-between items-center">
+        <div className="flex gap-2">
+          <Button
+            onClick={() => onEdit(id)}
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+          >
+            <FiEdit className="h-4 w-4" />
+            <span className="sr-only">Edit</span>
+          </Button>
+          <Button
+            onClick={() => onEdit(id)}
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+          >
+            <FiEdit className="h-4 w-4" />
+            <span className="sr-only">Edit</span>
+          </Button>
+          <Button
+            onClick={() => onDelete(id)}
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive"
+          >
+            <FiTrash2 className="h-4 w-4" />
+            <span className="sr-only">Delete</span>
+          </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3 inline mr-1" />
+                  <span className="sr-only">Last analyzed:</span>
+                  <span>{formatDate(new Date(lastTimeAnalyzed))}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Last analyzed: {formatDate(new Date(lastTimeAnalyzed))}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <Button
+            onClick={() => onCaptureSchema(id)}
+            variant="default"
+            size="sm"
+            className="flex items-center gap-1"
+          >
+            Analyze
+            <FiRefreshCw className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardFooter>
+    </Card>
   );
 };
 

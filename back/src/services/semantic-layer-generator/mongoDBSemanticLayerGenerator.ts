@@ -3,7 +3,6 @@ import {
   Entity,
   EntityAttribute,
   Relationship,
-  SynonymMapping,
 } from "./semanticLayer";
 import {
   SemanticLayerGenerator,
@@ -91,11 +90,8 @@ export class MongoDBSemanticLayerGenerator extends SemanticLayerGenerator {
         description: entityData[collectionName]?.description || "",
         synonyms: [], // User-defined
       }));
-      console.log(`Entities: ${JSON.stringify(entities, null, 2)}`);
       return entities;
     } catch (error) {
-      console.error("Error generating entity names and descriptions:", error);
-      // Fallback to using collection names if AI fails
       return collectionNames.map((collectionName) => ({
         name: collectionName,
         table: collectionName,
@@ -110,11 +106,7 @@ export class MongoDBSemanticLayerGenerator extends SemanticLayerGenerator {
   ): Promise<EntityAttribute[]> {
     const entityAttributes: EntityAttribute[] = [];
 
-    for (const [collectionName, fields] of Object.entries(schema) as [
-      string,
-      { [key: string]: string }
-    ][]) {
-      // Get a dictionary of field descriptions keyed by field names
+    for (const [collectionName, fields] of Object.entries(schema)) {
       const fieldDescriptions = await this.generateAttributeDescriptions(
         collectionName,
         fields
@@ -122,10 +114,10 @@ export class MongoDBSemanticLayerGenerator extends SemanticLayerGenerator {
 
       entityAttributes.push({
         entity: collectionName,
-        attributes: Object.entries(fields).map(([fieldName, fieldType]) => ({
-          name: fieldName,
-          type: this.mapMongoTypeToSemanticType(fieldType),
-          description: fieldDescriptions[fieldName] || "", // Fallback to empty if no description is available
+        attributes: fields.map(({ column, type }) => ({
+          name: column,
+          type: this.mapMongoTypeToSemanticType(type),
+          description: fieldDescriptions[column] || "",
         })),
       });
     }
@@ -136,10 +128,10 @@ export class MongoDBSemanticLayerGenerator extends SemanticLayerGenerator {
   // Helper function to generate descriptions for all attributes of a single entity
   private async generateAttributeDescriptions(
     collectionName: string,
-    fields: { [key: string]: string }
+    fields: { column: string; type: string }[]
   ): Promise<Record<string, string>> {
-    const fieldNames = Object.keys(fields);
-    const fieldTypes = Object.values(fields);
+    const fieldNames = fields.map((field) => field.column);
+    const fieldTypes = fields.map((field) => field.type);
 
     const prompt: Prompt = [
       {
@@ -171,13 +163,6 @@ export class MongoDBSemanticLayerGenerator extends SemanticLayerGenerator {
       // AI response is expected to be an object with descriptions for each field
       const fieldDescriptions = aiResponse as Record<string, string>;
 
-      console.log(
-        `Generated field descriptions: ${JSON.stringify(
-          fieldDescriptions,
-          null,
-          2
-        )}`
-      );
       return fieldDescriptions;
     } catch (error) {
       console.error(
@@ -216,8 +201,8 @@ export class MongoDBSemanticLayerGenerator extends SemanticLayerGenerator {
   ): Promise<Relationship[]> {
     const relationshipPromises = Object.entries(schema).flatMap(
       ([collectionName, fields]) => {
-        return Object.entries(fields as { [key: string]: string })
-          .map(async ([fieldName, fieldType]) => {
+        return fields
+          .map(async ({ column: fieldName, type: fieldType }) => {
             if (fieldName.endsWith("_id")) {
               const relatedEntity = fieldName.replace("_id", "");
               if (schema[relatedEntity]) {
