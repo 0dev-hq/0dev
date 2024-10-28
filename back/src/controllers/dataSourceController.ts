@@ -3,6 +3,8 @@ import DataSource, { DataSourceType } from "../models/DataSource"; // Import you
 import logger from "../utils/logger";
 import { SchemaAnalyzerFactory } from "../services/schema-analyzers/schemaAnalyzerFactory";
 import { DataSourceConnectionValidatorFactory } from "../services/data-source-connection-validator/dataSourceConnectionValidatorFactory";
+import { GenerativeAIProviderFactory } from "../services/generative-ai-providers/generativeAIProviderFactory";
+import { SemanticLayerGeneratorFactory } from "../services/semantic-layer-generator/semanticLayerGeneratorFactory";
 
 // Test connection to the data source
 export const testDataSourceConnection = async (req: Request, res: Response) => {
@@ -168,11 +170,31 @@ export const captureSchema = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Data source not found" });
     }
 
-    // Fetch schema based on data source type
+    // 1. Fetch schema based on data source type
     const schemaAnalyzer = SchemaAnalyzerFactory.getSchemaAnalyzer(
       dataSource.type
     );
     const schema = await schemaAnalyzer.fetchSchema(dataSource);
+
+    console.log(`Schema: ${JSON.stringify(schema, null, 2)}`);
+
+    const generativeAIProvider =
+      GenerativeAIProviderFactory.getGenerativeAIProvider({
+        provider: "openai",
+        modelName: "gpt-4o-mini",
+      });
+
+    // 2. Generate the Semantic Layer
+    const semanticLayerGenerator =
+      SemanticLayerGeneratorFactory.getSemanticLayerGenerator(
+        dataSource.type,
+        generativeAIProvider
+      );
+    const semanticLayer = await semanticLayerGenerator.generateSemanticLayer(
+      schema
+    );
+
+    console.log(`Semantic Layer: ${JSON.stringify(semanticLayer, null, 2)}`);
 
     dataSource.analysisInfo = { schema };
     dataSource.lastTimeAnalyzed = new Date(); // Set UTC time

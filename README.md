@@ -1,7 +1,16 @@
 
 # 0DEV 🚀
 
-**0dev** is a powerful, open-source platform designed to let users connect data sources, run queries, and generate reports effortlessly. With a focus on simplicity and functionality, 0dev provides a flexible environment to work with data, enabling fast and intuitive insights without the complexity of traditional data management platforms.
+**0dev** is a platform that offers a flexible environment for working with data, enabling fast, intuitive insights without the complexity often associated with traditional data management. Today, accessing data typically requires extensive developer involvement, and deriving insights often demands data scientists’ expertise. While 0dev isn’t designed to replace these roles, it seeks to make data more accessible to everyone, reducing dependency on specialized skills.
+
+With 0dev, you can answer questions like:
+
+- How many users signed up last week?
+- What is the average revenue per user?
+
+Results from these queries can also be visualized as tables and charts in a report which can be saved and easily shared with your team.
+
+The platform is built with extensibility in mind, allowing users to add new data sources, query engines, AI models, and more. Our vision for 0dev is to expand its capabilities both horizontally and vertically: horizontally, by adding more and more AI-driven functionality, and vertically, by enhancing existing features for even greater depth and utility.
 
 [![YouTube Video](https://img.shields.io/badge/Watch%20on-YouTube-red?style=for-the-badge&logo=youtube)](https://www.youtube.com/embed/K9B3AWI8uIE)
 [![Join us on Discord](https://img.shields.io/badge/Join%20our-Discord-blue?style=for-the-badge&logo=discord)](https://discord.gg/GNSCWZm6kT)

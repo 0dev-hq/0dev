@@ -40,7 +40,6 @@ export const MySQLSchemaAnalyzer: SchemaAnalyzer = {
 
       return schema;
     } catch (error: any) {
-      throw new Error(`Failed to fetch MySQL schema: ${error.message}`);
     } finally {
       await connection.end();
     }

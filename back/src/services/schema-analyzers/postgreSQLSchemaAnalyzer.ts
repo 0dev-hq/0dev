@@ -39,7 +39,6 @@ export const PostgreSQLSchemaAnalyzer: SchemaAnalyzer = {
 
       return schema;
     } catch (error: any) {
-      throw new Error(`Failed to fetch PostgreSQL schema: ${error.message}`);
     } finally {
       await pgClient.end();
     }
