@@ -11,11 +11,13 @@ export interface DataSource {
   apiKey?: string;
   googleSheetId?: string;
   createdBy?: string;
-  analysisInfo?: {
-    schema?: any;
-    semanticLayer?: SemanticLayer;
-    dynamicInfo?: { [key: string]: any };
-  };
+  analysisInfo?: AnalysisInfo;
+}
+
+export interface AnalysisInfo {
+  schema?: any;
+  semanticLayer?: SemanticLayer;
+  dynamicInfo?: { [key: string]: any };
 }
 
 export type Entity = {

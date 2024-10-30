@@ -1,70 +1,103 @@
-// const SemanticLayerEntities: React.FC =
-import React from "react";
-import { useState } from "react";
-
-import { ScrollArea } from "@/components/ui/scroll-area";
+import React, { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit2, Check, X } from "lucide-react";
+import { Edit2, Check, X, Trash2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Entity } from "@/models/DataSource";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 type SemanticLayerEntitiesProps = {
   entities?: Entity[];
+  onEntityUpdate: (updatedEntities: Entity[]) => void;
 };
 
-const SemanticLayerEntities: React.FC<SemanticLayerEntitiesProps> = ({ entities = [] }) => {
-  const [editingEntityId, setEditingEntityId] = useState<string | null>(null);
+const SemanticLayerEntities: React.FC<SemanticLayerEntitiesProps> = ({
+  entities = [],
+  onEntityUpdate,
+}) => {
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [isAddingEntity, setIsAddingEntity] = useState(false);
+  const [newEntity, setNewEntity] = useState<Partial<Entity>>({});
+  const { control, handleSubmit, reset } = useForm<Entity>({
+    defaultValues: entities[editingIndex || 0],
+  });
 
-
-  const handleEditEntity = (id: string) => {
-    setEditingEntityId(id);
+  const handleEditEntity = (index: number) => {
+    setEditingIndex(index);
+    reset(entities[index]); // Reset form values to the selected entity's data
   };
 
-  const handleSaveEntity = (id: string, updatedEntity: Partial<Entity>) => {
-    
-    setEditingEntityId(null);
+  const handleDeleteEntity = (index: number) => {
+    const updatedEntities = entities.filter((_, idx) => idx !== index);
+    onEntityUpdate(updatedEntities);
+  };
+
+  const handleSaveEntity = (data: Entity) => {
+    if (editingIndex !== null) {
+      const updatedEntities = entities.map((entity, idx) =>
+        idx === editingIndex ? { ...entity, ...data } : entity
+      );
+      onEntityUpdate(updatedEntities);
+      setEditingIndex(null);
+    }
   };
 
   const handleCancelEdit = () => {
-    setEditingEntityId(null);
+    setEditingIndex(null);
+    reset(); // Clear form values
+  };
+
+  const handleAddEntity = () => {
+    if (newEntity.name && newEntity.table) {
+      const updatedEntities = [...entities, newEntity as Entity];
+      onEntityUpdate(updatedEntities);
+      setNewEntity({});
+      setIsAddingEntity(false);
+    }
   };
 
   return (
     <>
-      {entities.map((entity) => (
-        <div key={entity.id} className="p-4 border rounded-lg">
-          {editingEntityId === entity.id ? (
-            <div className="space-y-2">
-              <Input
-                value={entity.name}
-                onChange={(e) =>
-                  handleSaveEntity(entity.id, { name: e.target.value })
-                }
-                placeholder="Entity name"
-                className="font-semibold"
+      {entities.map((entity, index) => (
+        <div key={index} className="p-4 border rounded-lg">
+          {editingIndex === index ? (
+            <form
+              onSubmit={handleSubmit(handleSaveEntity)}
+              className="space-y-2"
+            >
+              <Controller
+                name="name"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    placeholder="Entity name"
+                    className="font-semibold"
+                  />
+                )}
               />
-              <Textarea
-                value={entity.description}
-                onChange={(e) =>
-                  handleSaveEntity(entity.id, { description: e.target.value })
-                }
-                placeholder="Entity description"
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => (
+                  <Textarea {...field} placeholder="Entity description" />
+                )}
               />
-              <Input
-                value={entity.synonyms?.join(", ")}
-                onChange={(e) =>
-                  handleSaveEntity(entity.id, {
-                    synonyms: e.target.value.split(", "),
-                  })
-                }
-                placeholder="Synonyms (comma-separated)"
+              <Controller
+                name="synonyms"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    placeholder="Synonyms (comma-separated)"
+                    onChange={(e) => field.onChange(e.target.value.split(", "))}
+                  />
+                )}
               />
               <div className="flex space-x-2">
-                <Button
-                  size="sm"
-                  onClick={() => handleSaveEntity(entity.id, {})}
-                >
+                <Button size="sm" type="submit">
                   <Check className="h-4 w-4 mr-2" />
                   Save
                 </Button>
@@ -73,21 +106,19 @@ const SemanticLayerEntities: React.FC<SemanticLayerEntitiesProps> = ({ entities 
                   Cancel
                 </Button>
               </div>
-            </div>
+            </form>
           ) : (
             <div>
               <p>
                 <span className="font-semibold">{entity.name}</span> is a
-                business entity that represents{" "}
-                {entity.description.toLowerCase()}. It is mapped to the{" "}
+                business entity that represents {entity.description.toLowerCase()}. It is mapped to the
                 <span className="font-mono text-sm bg-muted px-1 rounded">
                   {entity.table}
-                </span>{" "}
+                </span>
                 table in the database
                 {entity.synonyms && entity.synonyms.length > 0 && (
                   <span>
-                    {" "}
-                    and can also be referred to as {entity.synonyms.join(", ")}.
+                    {" "}and can also be referred to as {entity.synonyms.join(", ")}.
                   </span>
                 )}
                 .
@@ -95,16 +126,89 @@ const SemanticLayerEntities: React.FC<SemanticLayerEntitiesProps> = ({ entities 
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => handleEditEntity(entity.id)}
+                onClick={() => handleEditEntity(index)}
                 className="mt-2"
               >
                 <Edit2 className="h-4 w-4 mr-2" />
                 Edit
               </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => handleDeleteEntity(index)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
             </div>
           )}
         </div>
       ))}
+
+      <Dialog open={isAddingEntity} onOpenChange={setIsAddingEntity}>
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Entity
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Entity</DialogTitle>
+            <DialogDescription>
+              Enter the details for the new entity.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="entityName">Entity Name</Label>
+              <Input
+                id="entityName"
+                value={newEntity.name || ""}
+                onChange={(e) =>
+                  setNewEntity({ ...newEntity, name: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="entityTable">Table Name</Label>
+              <Input
+                id="entityTable"
+                value={newEntity.table || ""}
+                onChange={(e) =>
+                  setNewEntity({ ...newEntity, table: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="entityDescription">Description</Label>
+              <Textarea
+                id="entityDescription"
+                value={newEntity.description || ""}
+                onChange={(e) =>
+                  setNewEntity({ ...newEntity, description: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="entitySynonyms">Synonyms (comma-separated)</Label>
+              <Input
+                id="entitySynonyms"
+                value={newEntity.synonyms?.join(", ") || ""}
+                onChange={(e) =>
+                  setNewEntity({
+                    ...newEntity,
+                    synonyms: e.target.value.split(", "),
+                  })
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleAddEntity}>Add Entity</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

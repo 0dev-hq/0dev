@@ -1,5 +1,4 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,14 +9,17 @@ import SemanticLayerMeasurements from "./SemanticLayerMeasurements";
 import SemanticLayerDefinitions from "./SemanticLayerDefinitions";
 import SemanticLayerSynonyms from "./SemanticLayerSynonyms";
 import SwitchCase from "@/components/ui/SwitchCase";
-import { DataSource } from "@/models/DataSource";
+import { DataSource, Entity, SemanticLayer as SL } from "@/models/DataSource";
 
 interface SemanticLayerProps {
   dataSource: DataSource;
+  onSemanticLayerUpdate: (semanticLayer: SL) => void;
 }
 
-
-const SemanticLayer: React.FC<SemanticLayerProps> = ({ dataSource }) => {
+const SemanticLayer: React.FC<SemanticLayerProps> = ({
+  dataSource,
+  onSemanticLayerUpdate,
+}) => {
   const semanticLayerSections = [
     "Entities",
     "Attributes",
@@ -30,7 +32,19 @@ const SemanticLayer: React.FC<SemanticLayerProps> = ({ dataSource }) => {
   const [activeSidebarItem, setActiveSidebarItem] = useState(
     semanticLayerSections[0]
   );
-  
+
+  const handleSemanticLayerChange = <K extends keyof SL>(
+    propertyKey: K,
+    updatedValue: SL[K]
+  ) => {
+    if (dataSource.analysisInfo?.semanticLayer) {
+      const updatedSemanticLayer = {
+        ...dataSource.analysisInfo.semanticLayer,
+        [propertyKey]: updatedValue,
+      };
+      onSemanticLayerUpdate(updatedSemanticLayer);
+    }
+  };
 
   return (
     <div className="grid grid-cols-4 gap-4">
@@ -70,12 +84,66 @@ const SemanticLayer: React.FC<SemanticLayerProps> = ({ dataSource }) => {
               <SwitchCase
                 value={activeSidebarItem}
                 cases={{
-                  Entities: <SemanticLayerEntities entities={dataSource.analysisInfo?.semanticLayer?.entities} />,
-                  Attributes: <SemanticLayerAttributes entityAttributes={dataSource.analysisInfo?.semanticLayer?.entityAttributes} />,
-                  Relationships: <SemanticLayerRelationships entities={dataSource.analysisInfo?.semanticLayer?.entities} relationships={dataSource.analysisInfo?.semanticLayer?.relationships} />,
-                  Measurements: <SemanticLayerMeasurements measurements={dataSource.analysisInfo?.semanticLayer?.measurements} />,
-                  Definitions: <SemanticLayerDefinitions definitions={dataSource.analysisInfo?.semanticLayer?.definitions} />,
-                  Synonyms: <SemanticLayerSynonyms synonyms={dataSource.analysisInfo?.semanticLayer?.synonyms} />,
+                  Entities: (
+                    <SemanticLayerEntities
+                      entities={
+                        dataSource.analysisInfo?.semanticLayer?.entities
+                      }
+                      onEntityUpdate={(updatedEntities: Entity[]) =>
+                        handleSemanticLayerChange("entities", updatedEntities)
+                      }
+                    />
+                  ),
+                  Attributes: (
+                    <SemanticLayerAttributes
+                      entityAttributes={
+                        dataSource.analysisInfo?.semanticLayer?.entityAttributes
+                      }
+                    />
+                  ),
+                  Relationships: (
+                    <SemanticLayerRelationships
+                      entities={
+                        dataSource.analysisInfo?.semanticLayer?.entities
+                      }
+                      relationships={
+                        dataSource.analysisInfo?.semanticLayer?.relationships
+                      }
+                      onRelationshipsUpdate={(updatedRelationships) =>
+                        handlePropertyChange("relationships", updatedRelationships)
+                      }
+                    />
+                  ),
+                  Measurements: (
+                    <SemanticLayerMeasurements
+                      measurements={
+                        dataSource.analysisInfo?.semanticLayer?.measurements
+                      }
+                      onMeasurementsUpdate={(updatedMeasurements) =>
+                        handlePropertyChange("measurements", updatedMeasurements)
+                      }
+                    />
+                  ),
+                  Definitions: (
+                    <SemanticLayerDefinitions
+                      definitions={
+                        dataSource.analysisInfo?.semanticLayer?.definitions
+                      }
+                      onDefinitionsUpdate={(updatedDefinitions) =>
+                        handlePropertyChange("definitions", updatedDefinitions)
+                      }
+                    />
+                  ),
+                  Synonyms: (
+                    <SemanticLayerSynonyms
+                      synonyms={
+                        dataSource.analysisInfo?.semanticLayer?.synonyms
+                      }
+                      onSynonymsUpdate={(updatedSynonyms) =>
+                        handlePropertyChange("synonyms", updatedSynonyms)
+                      }
+                    />
+                  ),
                 }}
               />
             </div>

@@ -9,6 +9,7 @@ import {
   testDataSourceConnection,
   captureSchema,
   getDataSourceAnalysis,
+  updateDataSourceAnalysis,
 } from "../controllers/dataSourceController";
 
 const router = express.Router();
@@ -41,7 +42,16 @@ router.post(
 // Capture schema for the specified data source
 router.post("/analyze/:id", isAuthenticated(["editor"]), captureSchema);
 
+// Update the analysis of the specified data source
+router.put(
+  "/:id/analysis",
+  isAuthenticated(["editor"]),
+  updateDataSourceAnalysis
+);
+
 export default {
   path: "/api/data-source",
   router,
 };
+
+//

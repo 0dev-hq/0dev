@@ -12,9 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SemanticLayer from "./SemanticLayer";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useParams } from "react-router-dom";
-import { analyze, getDataSourceAnalysis } from "@/services/dataSourceService";
-import { DataSource } from "@/models/DataSource";
-
+import { analyze, getDataSourceAnalysis, updateDataSourceAnalysis } from "@/services/dataSourceService";
+import { AnalysisInfo, DataSource, SemanticLayer as SL } from "@/models/DataSource";
 export default function DataSourceAnalysisPage() {
   const [activeTab, setActiveTab] = useState("semanticLayer");
   const { id } = useParams();
@@ -39,6 +38,26 @@ export default function DataSourceAnalysisPage() {
     }
   );
 
+  const { mutate: reviseAnalysis, isLoading: isUpdating } = useMutation(
+    (analysisInfo: AnalysisInfo) => updateDataSourceAnalysis(id!, analysisInfo),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries("dataSourceAnalysis"); // Refetch data sources after capturing schema
+      },
+      onError: (error) => {
+        console.error("Error capturing schema:", error);
+      },
+    }
+  );
+
+  const handleReviseAnalysis = (semanticLayer: SL) => {
+    const updatedAnalysisInfo = {
+      ...dataSource!.analysisInfo,
+      semanticLayer,
+    };
+    reviseAnalysis(updatedAnalysisInfo);
+  }
+
 
   if (isLoading) {
     return <p>Loading...</p>;
@@ -54,6 +73,11 @@ export default function DataSourceAnalysisPage() {
 
   if (isAnalyzing) {
     return <p>Analyzing the data source...</p>;
+  }
+
+  // todo: this is too intrusive, we should have a better way to handle this
+  if (isUpdating) {
+    return <p>Updating the data source...</p>;
   }
   
 
@@ -119,7 +143,7 @@ export default function DataSourceAnalysisPage() {
           </TabsContent>
 
           <TabsContent value="semanticLayer" className="space-y-4">
-            <SemanticLayer dataSource={dataSource} />
+            <SemanticLayer dataSource={dataSource} onSemanticLayerUpdate={handleReviseAnalysis} />
           </TabsContent>
 
           <TabsContent value="erd" className="space-y-4">
