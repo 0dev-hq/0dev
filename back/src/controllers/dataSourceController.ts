@@ -206,3 +206,69 @@ export const captureSchema = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Failed to capture schema", error });
   }
 };
+
+// Get the schema for a data source
+export const getDataSourceAnalysis = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const dataSource = await DataSource.findOne({
+      _id: id,
+      createdBy: req.user!.id,
+    }).select("name type lastTimeAnalyzed analysisInfo");
+
+    if (!dataSource) {
+      return res.status(404).json({ message: "Data source not found" });
+    }
+
+    return res.status(200).json(dataSource);
+  } catch (error) {
+    logger.error("Failed to fetch data source schema:", error);
+    return res
+      .status(500)
+      .json({ message: "Failed to fetch data source schema", error });
+  }
+};
+
+// Update the analysis info for a data source with user revisions. This is a manual revision process.
+export const updateDataSourceAnalysis = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { analysisInfo } = req.body;
+
+  try {
+    const dataSource = await DataSource.findOne({
+      _id: id,
+      createdBy: req.user!.id,
+    });
+
+    if (!dataSource) {
+      return res.status(404).json({ message: "Data source not found" });
+    }
+
+    if (!dataSource.analysisInfo) {
+      return res
+        .status(400)
+        .json({ message: "Data source has not been analyzed yet" });
+    }
+
+    // Update analysis info fields with user-provided revisions
+    dataSource.analysisInfo = analysisInfo;
+
+    dataSource.lastTimeAnalyzed = new Date(); // Set to current UTC time
+    await dataSource.save();
+
+    return res.status(200).json({
+      message: "Data source analysis updated successfully with user revisions",
+      analysisInfo: dataSource.analysisInfo,
+      lastTimeAnalyzed: dataSource.lastTimeAnalyzed,
+    });
+  } catch (error) {
+    logger.error(
+      "Failed to update data source analysis with user revisions:",
+      error
+    );
+    return res
+      .status(500)
+      .json({ message: "Failed to update data source analysis", error });
+  }
+};

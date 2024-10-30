@@ -8,6 +8,7 @@ import {
   deleteDataSource,
   testDataSourceConnection,
   captureSchema,
+  getDataSourceAnalysis,
 } from "../controllers/dataSourceController";
 
 const router = express.Router();
@@ -17,6 +18,9 @@ router.post("/", isAuthenticated(["editor"]), createDataSource);
 
 // Get all data sources for the authenticated user
 router.get("/", isAuthenticated(), getDataSources);
+
+// Get the analysis of the specified data source
+router.get("/:id/analysis", isAuthenticated(), getDataSourceAnalysis);
 
 // Get a single data source by ID
 router.get("/:id", isAuthenticated(), getDataSourceById);

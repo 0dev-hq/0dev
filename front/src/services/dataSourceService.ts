@@ -42,3 +42,11 @@ export const analyze = async (id: string) => {
   const response = await apiClient.post(`/data-source/analyze/${id}`);
   return response.data;
 };
+
+// Function to fetch schema analysis
+export const getDataSourceAnalysis = async (id: string) => {
+  const response = await apiClient.get<DataSource>(
+    `/data-source/${id}/analysis`
+  );
+  return response.data;
+};
