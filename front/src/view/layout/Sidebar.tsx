@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import Logo from "../../assets/0dev-logo.png";
-import { FaDatabase, FaFileAlt, FaChartBar, FaUser, FaSignOutAlt, FaChevronDown, FaChevronRight, FaProjectDiagram } from "react-icons/fa";
+import { FaDatabase, FaFileAlt, FaChartBar, FaUser, FaSignOutAlt } from "react-icons/fa";
 import { FaDiscord } from "react-icons/fa";
 
 const Sidebar: React.FC = () => {

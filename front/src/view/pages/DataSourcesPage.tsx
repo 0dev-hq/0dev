@@ -5,7 +5,6 @@ import DataSourceBlock from "../components/DataSourceBlock";
 import {
   getDataSources,
   deleteDataSource,
-  analyze,
 } from "../../services/dataSourceService"; // Import services
 import { DataSource } from "../../models/DataSource";
 
@@ -40,25 +39,8 @@ const DataSourcesPage: React.FC = () => {
     deleteMutation.mutate(id);
   };
 
-  const { mutate: captureSchema, isLoading: isAnalyzing } = useMutation(
-    (id: string) => analyze(id),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries("dataSources"); // Refetch data sources after capturing schema
-      },
-      onError: (error) => {
-        console.error("Error capturing schema:", error);
-      },
-    }
-  );
-
   if (isLoading) {
     return <p>Loading data sources...</p>;
-  }
-  
-  
-  if (isAnalyzing) {
-    return <p>Analyzing the data source...</p>;
   }
 
 
