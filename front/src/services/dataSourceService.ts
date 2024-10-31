@@ -1,5 +1,5 @@
 import { apiClient } from "./apiClient";
-import { DataSource } from "../models/DataSource";
+import { AnalysisInfo, DataSource } from "../models/DataSource";
 
 // Add a new data source
 export const addDataSource = async (data: DataSource) => {
@@ -40,5 +40,24 @@ export const testDataSourceConnection = async (data: DataSource) => {
 // Function to trigger schema capture
 export const analyze = async (id: string) => {
   const response = await apiClient.post(`/data-source/analyze/${id}`);
+  return response.data;
+};
+
+// Function to fetch schema analysis
+export const getDataSourceAnalysis = async (id: string) => {
+  const response = await apiClient.get<DataSource>(
+    `/data-source/${id}/analysis`
+  );
+  return response.data;
+};
+
+// Function to update schema analysis
+export const updateDataSourceAnalysis = async (
+  id: string,
+  analysisInfo: AnalysisInfo
+) => {
+  const response = await apiClient.put(`/data-source/${id}/analysis`, {
+    analysisInfo,
+  });
   return response.data;
 };

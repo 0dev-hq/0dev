@@ -4,8 +4,6 @@ import { SchemaAnalyzer } from "./schemaAnalyzer";
 
 export const MongoDBSchemaAnalyzer: SchemaAnalyzer = {
   fetchSchema: async (dataSource: IDataSource) => {
-    console.log("Fetching MongoDB schema...");
-    console.log(`Data source: ${JSON.stringify(dataSource)}`);
     const client = new MongoClient(dataSource.connectionString!);
 
     try {
@@ -20,13 +18,16 @@ export const MongoDBSchemaAnalyzer: SchemaAnalyzer = {
           .find({})
           .limit(1)
           .toArray();
-        schema[collection.name] = sampleDocs.length
-          ? Object.keys(sampleDocs[0])
-          : [];
+        schema[collection.name] = [];
+        for (const key in sampleDocs[0]) {
+          schema[collection.name].push({
+            column: key,
+            type: typeof sampleDocs[0][key],
+          });
+        }
       }
       return schema;
     } catch (error: any) {
-      throw new Error(`Failed to fetch MongoDB schema: ${error.message}`);
     } finally {
       await client.close();
     }

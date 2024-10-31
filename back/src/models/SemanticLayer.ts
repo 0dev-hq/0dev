@@ -1,27 +1,4 @@
-export interface DataSource {
-  _id?: string;
-  id?: string;
-  dataHub?: string;
-  name: string;
-  type: string;
-  lastTimeAnalyzed?: string;
-  connectionString?: string;
-  username?: string;
-  password?: string;
-  apiKey?: string;
-  googleSheetId?: string;
-  createdBy?: string;
-  analysisInfo?: AnalysisInfo;
-}
-
-export interface AnalysisInfo {
-  schema?: any;
-  semanticLayer?: SemanticLayer;
-  dynamicInfo?: { [key: string]: any };
-}
-
 export type Entity = {
-  _id?: string;
   name: string;
   table: string; // Mapping to schema table/collection
   description: string; // Business-oriented description of the collection
@@ -29,7 +6,6 @@ export type Entity = {
 };
 
 export type Relationship = {
-  _id?: string;
   fromEntity: string;
   toEntity: string;
   type: "one-to-one" | "one-to-many" | "many-to-many";
@@ -55,7 +31,6 @@ export type SynonymMapping = {
 };
 
 export type Attribute = {
-  _id?: string;
   name: string;
   type: "identifier" | "number" | "currency" | "date" | "string" | "boolean";
   aliases?: string[];

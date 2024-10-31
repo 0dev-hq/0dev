@@ -8,6 +8,8 @@ import {
   deleteDataSource,
   testDataSourceConnection,
   captureSchema,
+  getDataSourceAnalysis,
+  updateDataSourceAnalysis,
 } from "../controllers/dataSourceController";
 
 const router = express.Router();
@@ -17,6 +19,9 @@ router.post("/", isAuthenticated(["editor"]), createDataSource);
 
 // Get all data sources for the authenticated user
 router.get("/", isAuthenticated(), getDataSources);
+
+// Get the analysis of the specified data source
+router.get("/:id/analysis", isAuthenticated(), getDataSourceAnalysis);
 
 // Get a single data source by ID
 router.get("/:id", isAuthenticated(), getDataSourceById);
@@ -37,7 +42,16 @@ router.post(
 // Capture schema for the specified data source
 router.post("/analyze/:id", isAuthenticated(["editor"]), captureSchema);
 
+// Update the analysis of the specified data source
+router.put(
+  "/:id/analysis",
+  isAuthenticated(["editor"]),
+  updateDataSourceAnalysis
+);
+
 export default {
   path: "/api/data-source",
   router,
 };
+
+//

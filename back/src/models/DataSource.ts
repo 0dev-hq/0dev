@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 import encrypt from "mongoose-encryption";
+import { SemanticLayer } from "./SemanticLayer";
 
 // dataSourceType enum
 export enum DataSourceType {
@@ -26,13 +27,7 @@ export interface IDataSource extends Document {
   fileName?: string;
   analysisInfo?: {
     schema?: any;
-    semanticModel?: {
-      json: any; // The semantic model as a JSON structure
-      plainText: {
-        language: SemanticModelLanguage;
-        text: string; // Human-readable text in the specified language
-      };
-    };
+    semanticLayer?: SemanticLayer;
     dynamicInfo?: { [key: string]: any }; // Flexible field for dynamically adding analysis information
   };
   lastTimeAnalyzed?: Date;
@@ -50,13 +45,7 @@ const DataSourceSchema: Schema = new Schema({
   fileName: { type: String },
   analysisInfo: {
     schema: { type: Schema.Types.Mixed },
-    semanticModel: {
-      json: { type: Schema.Types.Mixed },
-      plainText: {
-        language: { type: String, enum: Object.values(SemanticModelLanguage) },
-        text: { type: String },
-      },
-    },
+    semanticLayer: { type: Schema.Types.Mixed },
     dynamicInfo: { type: Schema.Types.Mixed },
   },
   lastTimeAnalyzed: { type: Date },

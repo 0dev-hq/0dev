@@ -52,11 +52,6 @@ const DataSourcesPage: React.FC = () => {
     }
   );
 
-  // Handler for schema capture
-  const handleCaptureSchema = (id: string) => {
-    captureSchema(id);
-  };
-
   if (isLoading) {
     return <p>Loading data sources...</p>;
   }
@@ -73,28 +68,24 @@ const DataSourcesPage: React.FC = () => {
 
   return (
     <div className="flex flex-col space-y-6">
-      {/* Button to connect a new data source */}
       <div>
         <button className="bg-black text-white px-4 py-2 rounded hover:bg-opacity-90">
           <Link to="/data-source/new">Connect New Data Source</Link>
         </button>
       </div>
-
-      {/* Existing Data Sources List */}
       <div>
         <h2 className="text-2xl font-bold mb-4">Existing Data Sources</h2>
         {dataSources?.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-2 gap-4 px-auto">
             {dataSources.map((dataSource: DataSource) => (
               <DataSourceBlock
                 key={dataSource._id}
                 id={dataSource._id!}
                 name={dataSource.name}
                 type={dataSource.type}
-                lastTimeAnalyzed={dataSource.lastTimeAnalyzed} // Pass lastTimeAnalyzed field
+                lastTimeAnalyzed={dataSource.lastTimeAnalyzed}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
-                onCaptureSchema={handleCaptureSchema} // Add capture schema handler
               />
             ))}
           </div>
