@@ -43,7 +43,7 @@ interface DataSourceBlockProps {
   onDelete: (id: string) => void;
 }
 
-const formatDate = (date: string) => {
+const formatDate = (date?: string) => {
   if (!date) {
     return "Not analyzed";
   }
