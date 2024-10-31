@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 import encrypt from "mongoose-encryption";
-import { SemanticLayer } from "../services/semantic-layer-generator/semanticLayer";
+import { SemanticLayer } from "./SemanticLayer";
 
 // dataSourceType enum
 export enum DataSourceType {

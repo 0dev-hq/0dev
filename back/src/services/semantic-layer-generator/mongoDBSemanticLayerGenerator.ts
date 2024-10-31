@@ -3,7 +3,7 @@ import {
   Entity,
   EntityAttribute,
   Relationship,
-} from "./semanticLayer";
+} from "../../models/SemanticLayer";
 import {
   SemanticLayerGenerator,
   DataSourceSchema,

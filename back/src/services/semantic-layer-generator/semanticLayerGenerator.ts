@@ -1,5 +1,5 @@
 import { GenerativeAIProvider } from "../generative-ai-providers/generativeAIProvider";
-import { SemanticLayer } from "./semanticLayer";
+import { SemanticLayer } from "../../models/SemanticLayer";
 
 export type DataSourceSchema = Record<
   string,

@@ -12,15 +12,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SemanticLayer from "./SemanticLayer";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useParams } from "react-router-dom";
-import { analyze, getDataSourceAnalysis, updateDataSourceAnalysis } from "@/services/dataSourceService";
-import { AnalysisInfo, DataSource, SemanticLayer as SL } from "@/models/DataSource";
+import {
+  analyze,
+  getDataSourceAnalysis,
+  updateDataSourceAnalysis,
+} from "@/services/dataSourceService";
+import {
+  AnalysisInfo,
+  DataSource,
+  SemanticLayer as SL,
+} from "@/models/DataSource";
 export default function DataSourceAnalysisPage() {
   const [activeTab, setActiveTab] = useState("semanticLayer");
   const { id } = useParams();
 
-
   // Fetch data source analysis info
-  const { data: dataSource, isLoading, isError} = useQuery<DataSource>("dataSourceAnalysis", () =>
+  const {
+    data: dataSource,
+    isLoading,
+    isError,
+  } = useQuery<DataSource>("dataSourceAnalysis", () =>
     getDataSourceAnalysis(id!)
   );
 
@@ -56,8 +67,7 @@ export default function DataSourceAnalysisPage() {
       semanticLayer,
     };
     reviseAnalysis(updatedAnalysisInfo);
-  }
-
+  };
 
   if (isLoading) {
     return <p>Loading...</p>;
@@ -79,7 +89,6 @@ export default function DataSourceAnalysisPage() {
   if (isUpdating) {
     return <p>Updating the data source...</p>;
   }
-  
 
   return (
     <div className="container mx-auto p-4 space-y-4">
@@ -91,16 +100,22 @@ export default function DataSourceAnalysisPage() {
           </Button>
           <h1 className="text-2xl font-bold">{dataSource.name}</h1>
         </div>
-        {dataSource.lastTimeAnalyzed ? (
-          <p className="text-sm text-muted-foreground">
-            Last analyzed: {new Date(dataSource.lastTimeAnalyzed).toLocaleString()}
-          </p>
-        ) : (
-          <div className="flex items-center text-yellow-600">
-            <AlertCircle className="h-4 w-4 mr-2" />
-            <p className="text-sm">Not yet analyzed</p>
-          </div>
-        )}
+        <div className="flex items-center space-x-4">
+          {dataSource.lastTimeAnalyzed ? (
+            <p className="text-sm text-muted-foreground">
+              Last analyzed:{" "}
+              {new Date(dataSource.lastTimeAnalyzed).toLocaleString()}
+            </p>
+          ) : (
+            <div className="flex items-center text-yellow-600">
+              <AlertCircle className="h-4 w-4 mr-2" />
+              <p className="text-sm">Not yet analyzed</p>
+            </div>
+          )}
+          <Button onClick={() => captureSchema()} disabled={isAnalyzing}>
+            {isAnalyzing ? "Analyzing..." : "Analyze"}
+          </Button>
+        </div>
       </div>
 
       {/* Main Content */}
@@ -114,9 +129,7 @@ export default function DataSourceAnalysisPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={
-              () => captureSchema()
-            }>Run Analysis</Button>
+            <Button onClick={() => captureSchema()}>Run Analysis</Button>
           </CardContent>
         </Card>
       ) : (
@@ -143,7 +156,10 @@ export default function DataSourceAnalysisPage() {
           </TabsContent>
 
           <TabsContent value="semanticLayer" className="space-y-4">
-            <SemanticLayer dataSource={dataSource} onSemanticLayerUpdate={handleReviseAnalysis} />
+            <SemanticLayer
+              dataSource={dataSource}
+              onSemanticLayerUpdate={handleReviseAnalysis}
+            />
           </TabsContent>
 
           <TabsContent value="erd" className="space-y-4">

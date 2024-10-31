@@ -1,7 +1,11 @@
 
 # 0DEV 🚀
 
-**0dev** is a platform that offers a flexible environment for working with data, enabling fast, intuitive insights without the complexity often associated with traditional data management. Today, accessing data typically requires extensive developer involvement, and deriving insights often demands data scientists’ expertise. While 0dev isn’t designed to replace these roles, it seeks to make data more accessible to everyone, reducing dependency on specialized skills.
+**0dev** is an NL-first* platform that offers a flexible environment for working with data, enabling fast, intuitive methods to access, analyze, and visualize data **<u>with significantly less complexity</u>**.
+
+Today, accessing data typically requires extensive developer involvement, and deriving insights often demands data scientists’ expertise. While 0dev isn’t designed to replace these roles, it seeks to make data more accessible to everyone, reducing dependency on specialized skills.
+
+ NL-first: 0dev is designed to be natural language first, meaning users can interact with the platform using natural language queries. Initially, we provide the functionalities through a combination of (classic?) UI and NL, but as we develop the platform further, we aim to enable more and more functionalities through NL.
 
 With 0dev, you can answer questions like:
 
@@ -10,7 +14,7 @@ With 0dev, you can answer questions like:
 
 Results from these queries can also be visualized as tables and charts in a report which can be saved and easily shared with your team.
 
-The platform is built with extensibility in mind, allowing users to add new data sources, query engines, AI models, and more. Our vision for 0dev is to expand its capabilities both horizontally and vertically: horizontally, by adding more and more AI-driven functionality, and vertically, by enhancing existing features for even greater depth and utility.
+The platform is built with extensibility in mind, allowing users to add new data sources, query engines, AI models, and more. The vision for 0dev is to expand its capabilities both horizontally and vertically: horizontally, by adding more and more AI-driven functionality, and vertically, by enhancing existing features for even greater depth and utility.
 
 [![YouTube Video](https://img.shields.io/badge/Watch%20on-YouTube-red?style=for-the-badge&logo=youtube)](https://www.youtube.com/embed/K9B3AWI8uIE)
 [![Join us on Discord](https://img.shields.io/badge/Join%20our-Discord-blue?style=for-the-badge&logo=discord)](https://discord.gg/GNSCWZm6kT)
@@ -41,8 +45,6 @@ The platform is built with extensibility in mind, allowing users to add new data
 - **Report Generation**: Generate and visualize reports from your query results.
 - **User-friendly Interface**: Modern and clean UI for streamlined data operations.
 - **Open-Source**: 0dev is free and customizable to suit your data management needs.
-
-> Note: The **Data Hub** functionality is not available in the open-source version.
 
 ---
 
@@ -93,11 +95,6 @@ The backend of 0dev is built using **Node.js** and **Express**, handling API cal
 - **Report Generation**:
   - Supports generating structured reports in various formats (tables, charts, etc.).
   
-- **API Endpoints**:
-  - `POST /api/data-source`: Connects a new data source.
-  - `POST /api/query`: Executes a query on a specified data source.
-  - `GET /api/report`: Retrieves all available reports.
-
 ### Backend Tech Stack:
 - **Node.js** (JavaScript runtime)
 - **Express** (Web framework)
@@ -133,8 +130,6 @@ We welcome contributions! Here’s how you can get involved:
 3. **Commit your changes** (`git commit -m 'Add new feature'`).
 4. **Push to the branch** (`git push origin feature/your-feature`).
 5. Open a **Pull Request**!
-
-For detailed guidelines, refer to our [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 

@@ -99,6 +99,12 @@ const SemanticLayer: React.FC<SemanticLayerProps> = ({
                       entityAttributes={
                         dataSource.analysisInfo?.semanticLayer?.entityAttributes
                       }
+                      onAttributesUpdate={(updatedEntityAttributes) =>
+                        handleSemanticLayerChange(
+                          "entityAttributes",
+                          updatedEntityAttributes
+                        )
+                      }
                     />
                   ),
                   Relationships: (
@@ -110,7 +116,10 @@ const SemanticLayer: React.FC<SemanticLayerProps> = ({
                         dataSource.analysisInfo?.semanticLayer?.relationships
                       }
                       onRelationshipsUpdate={(updatedRelationships) =>
-                        handlePropertyChange("relationships", updatedRelationships)
+                        handleSemanticLayerChange(
+                          "relationships",
+                          updatedRelationships
+                        )
                       }
                     />
                   ),
@@ -120,7 +129,10 @@ const SemanticLayer: React.FC<SemanticLayerProps> = ({
                         dataSource.analysisInfo?.semanticLayer?.measurements
                       }
                       onMeasurementsUpdate={(updatedMeasurements) =>
-                        handlePropertyChange("measurements", updatedMeasurements)
+                        handleSemanticLayerChange(
+                          "measurements",
+                          updatedMeasurements
+                        )
                       }
                     />
                   ),
@@ -130,7 +142,10 @@ const SemanticLayer: React.FC<SemanticLayerProps> = ({
                         dataSource.analysisInfo?.semanticLayer?.definitions
                       }
                       onDefinitionsUpdate={(updatedDefinitions) =>
-                        handlePropertyChange("definitions", updatedDefinitions)
+                        handleSemanticLayerChange(
+                          "definitions",
+                          updatedDefinitions
+                        )
                       }
                     />
                   ),
@@ -140,7 +155,7 @@ const SemanticLayer: React.FC<SemanticLayerProps> = ({
                         dataSource.analysisInfo?.semanticLayer?.synonyms
                       }
                       onSynonymsUpdate={(updatedSynonyms) =>
-                        handlePropertyChange("synonyms", updatedSynonyms)
+                        handleSemanticLayerChange("synonyms", updatedSynonyms)
                       }
                     />
                   ),
