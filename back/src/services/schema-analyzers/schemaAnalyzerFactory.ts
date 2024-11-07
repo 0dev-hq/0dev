@@ -1,4 +1,5 @@
 import { DataSourceType } from "../../models/DataSource";
+import { GoogleSheetSchemaAnalyzer } from "./googleSheetSchemaAnalyzer";
 import { MongoDBSchemaAnalyzer } from "./mongoDBSchemaAnalyzer";
 import { MySQLSchemaAnalyzer } from "./mySQLSchemaAnalyzer";
 import { PostgreSQLSchemaAnalyzer } from "./postgreSQLSchemaAnalyzer";
@@ -14,6 +15,8 @@ export class SchemaAnalyzerFactory {
         return PostgreSQLSchemaAnalyzer;
       case DataSourceType.MYSQL:
         return MySQLSchemaAnalyzer;
+      case DataSourceType.GOOGLE_SHEET:
+        return GoogleSheetSchemaAnalyzer;
       default:
         throw new Error("Unsupported data source type");
     }

@@ -55,7 +55,7 @@ export const createDataSource = async (req: Request, res: Response) => {
       password,
       apiKey,
       googleSheetId,
-      createdBy: req.user!.id, // Add authenticated user
+      createdBy: req.user!.id,
     });
 
     await newDataSource.save();

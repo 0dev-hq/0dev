@@ -1,17 +1,39 @@
 import { Request, Response } from "express";
 import Query from "../models/Query";
-import {
-  executeMongoDBQuery,
-  executeMySQLQuery,
-  executePostgresQuery,
-  generateSQLQuery,
-} from "./queryUtil";
-import DataSource from "../models/DataSource";
+import DataSource, { DataSourceType } from "../models/DataSource";
 import logger from "../utils/logger";
+import { GenerativeAIProviderFactory } from "../services/generative-ai-providers/generativeAIProviderFactory";
+import { QueryBuilderFactory } from "../services/query-builder/query-builder-factory";
+import { QueryExecutorFactory } from "../services/query-executor/queryExecutorFactory";
+
+const generateQueryUtil = async (
+  description: string,
+  analysisInfo: any,
+  dataSourceType: DataSourceType
+) => {
+  const generativeAIProvider =
+    GenerativeAIProviderFactory.getGenerativeAIProvider({
+      provider: "openai",
+      modelName: "gpt-4o-mini",
+    });
+
+  const queryBuilder = QueryBuilderFactory.getQueryBuilder(
+    dataSourceType,
+    generativeAIProvider
+  );
+  const rawQuery = await queryBuilder.generateQuery(description, analysisInfo);
+  console.log(`analysisInfo: ${JSON.stringify(analysisInfo, null, 2)}`);
+  console.log(`rawQuery: ${rawQuery}`);
+  return rawQuery;
+};
 
 // Create a new query
 export const createQuery = async (req: Request, res: Response) => {
-  const { name, description, dataSource } = req.body;
+  const {
+    name,
+    description,
+    dataSource,
+  }: { name: string; description: string; dataSource: string } = req.body;
 
   try {
     // Fetch the data source and its schema
@@ -28,19 +50,21 @@ export const createQuery = async (req: Request, res: Response) => {
       operation: "read", // Hardcoded to 'read' for now
     });
 
-    if (dataSource.analysisInfo) {
+    if (dataSourceDoc.analysisInfo) {
       // Generate the new raw query based on the updated description and schema
-      const rawQuery = await generateSQLQuery(
+      const rawQuery = await generateQueryUtil(
         description,
-        dataSource.analysisInfo,
-        dataSource.type
+        dataSourceDoc.analysisInfo,
+        dataSourceDoc.type
       );
+
       newQuery.raw = rawQuery;
     }
 
     await newQuery.save();
     return res.sendStatus(200);
   } catch (error) {
+    logger.error("Failed to create query:", error);
     return res.status(500).json({ message: "Failed to create query", error });
   }
 };
@@ -62,8 +86,7 @@ export const buildQuery = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Data source not found" });
     }
 
-    // Generate the raw query based on the description and schema
-    const rawQuery = await generateSQLQuery(
+    const rawQuery = await generateQueryUtil(
       query.description,
       dataSource.analysisInfo,
       dataSource.type
@@ -162,7 +185,8 @@ export const updateQuery = async (req: Request, res: Response) => {
 
       if (dataSource.analysisInfo) {
         // Generate the new raw query based on the updated description and schema
-        const rawQuery = await generateSQLQuery(
+
+        const rawQuery = await generateQueryUtil(
           description,
           dataSource.analysisInfo,
           dataSource.type
@@ -222,34 +246,15 @@ export const executeQuery = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Data source not found" });
     }
 
-    let result;
-    switch (dataSource.type) {
-      case "mongodb":
-        result = await executeMongoDBQuery(
-          query.raw,
-          dataSource,
-          page,
-          pageSize
-        );
-        break;
-      case "postgresql":
-      case "supabase":
-        result = await executePostgresQuery(
-          query.raw,
-          dataSource,
-          page,
-          pageSize
-        );
-        break;
-      case "mysql":
-        result = await executeMySQLQuery(query.raw, dataSource, page, pageSize);
-        break;
-      default:
-        return res
-          .status(400)
-          .json({ message: "Unsupported data source type" });
-    }
-
+    const queryExecutor = QueryExecutorFactory.getQueryExecutor(
+      dataSource.type
+    );
+    const result = await queryExecutor.executeQuery(
+      query.raw,
+      dataSource,
+      page,
+      pageSize
+    );
     return res.status(200).json({ data: result });
   } catch (error) {
     logger.error("Failed to execute query:", error);

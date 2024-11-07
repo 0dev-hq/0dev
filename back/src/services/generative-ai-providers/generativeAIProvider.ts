@@ -7,7 +7,11 @@ export type AIModel =
   | { provider: "openai"; modelName: "gpt-4o-mini" | "gpt-4o" }
   | { provider: "anthropic"; modelName: "claude-1" | "claude-2" }; // Not implemented yet
 
-export type GenerativeAIOutputFormat = "javascript" | "json" | "file";
+export type GenerativeAIOutputFormat =
+  | "string"
+  | "javascript"
+  | "json"
+  | "file";
 
 export type GenerativeAIResponse<T> = T extends "javascript"
   ? string
@@ -15,6 +19,8 @@ export type GenerativeAIResponse<T> = T extends "javascript"
   ? object
   : T extends "file"
   ? File
+  : T extends "string"
+  ? string
   : never;
 
 export abstract class GenerativeAIProvider {

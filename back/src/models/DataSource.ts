@@ -8,6 +8,7 @@ export enum DataSourceType {
   MONGODB = "mongodb",
   MYSQL = "mysql",
   SUPABASE = "supabase",
+  GOOGLE_SHEET = "googlesheet",
 }
 
 export enum SemanticModelLanguage {
