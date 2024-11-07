@@ -70,11 +70,11 @@ app.get("/health", (_req: Request, res: Response) => {
   res.status(200).send("OK");
 });
 
-importAndRegisterRoutes(app);
-
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+importAndRegisterRoutes(app).then(() => {
+  // Start the server
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
 });
 
 // TODO: Check if we have to keep it or let it crash (ideally in a dockerized environment with proper health check)

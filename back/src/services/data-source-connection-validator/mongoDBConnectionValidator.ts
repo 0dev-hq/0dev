@@ -1,5 +1,4 @@
 import { MongoClient } from "mongodb";
-import { IDataSource } from "../../models/DataSource";
 import {
   ConnectionConfig,
   DataSourceConnectionValidator,

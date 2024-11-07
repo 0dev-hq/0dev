@@ -32,7 +32,7 @@ const dataSourceIcons: { [key: string]: JSX.Element } = {
   postgresql: <SiPostgresql />,
   mysql: <SiMysql />,
   supabase: <SiSupabase />,
-  googleSheet: <FaGoogle />,
+  googlesheet: <FaGoogle />,
   wordpress: <FaWordpress />,
   default: <FaServer />,
   shopify: <FaShopify />,
@@ -50,7 +50,7 @@ const dataSourceCategories: { [key: string]: string[] } = {
     "postgresql",
     "mysql",
     "supabase",
-    "googleSheet",
+    "googlesheet",
     "wordpress",
   ],
   ecommerce: ["shopify", "woocommerce", "magento"],
@@ -78,6 +78,7 @@ const NewDataSourcePage = () => {
     handleSubmit,
     watch,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<DataSource>();
 
@@ -130,7 +131,22 @@ const NewDataSourcePage = () => {
     }
   );
 
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const fileContent = await file.text();
+      try {
+        const jsonContent = JSON.parse(fileContent);
+        setValue("connectionString", JSON.stringify(jsonContent)); // Set connectionString directly
+      } catch (error) {
+        console.error("Invalid JSON format in the file");
+      }
+    }
+  };
+
   const onSubmit = (data: DataSource) => {
+
+
     const newDataSource: DataSource = {
       ...(id ? {} : { dataHub }), // Update should not change the data hub
       name: data.name,
@@ -420,7 +436,7 @@ const NewDataSourcePage = () => {
                   </div>
                 </>
               )}
-              {selectedType === "googleSheet" && (
+              {selectedType === "googlesheet" && (
                 <>
                   <div>
                     <label className="text-lg font-medium">
@@ -439,16 +455,15 @@ const NewDataSourcePage = () => {
                     )}
                   </div>
                   <div>
-                    <label className="text-lg font-medium">API Key</label>
+                    <label className="text-lg font-medium">
+                      Upload Google Sheet JSON
+                    </label>
                     <input
-                      type="text"
-                      {...register("apiKey", { required: true })}
+                      type="file"
+                      accept=".json"
+                      onChange={handleFileChange}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter API Key"
                     />
-                    {errors.apiKey && (
-                      <span className="text-red-500">API Key is required</span>
-                    )}
                   </div>
                 </>
               )}

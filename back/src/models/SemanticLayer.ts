@@ -8,7 +8,7 @@ export type Entity = {
 export type Relationship = {
   fromEntity: string;
   toEntity: string;
-  type: "one-to-one" | "one-to-many" | "many-to-many";
+  type: "one-to-one" | "one-to-many" | "many-to-one" | "many-to-many";
   name: string; // Name of the relationship, e.g., "places" or "contains"
   attributes?: string[]; // Any attributes specific to the relationship, e.g., "Order Date"
 };
