@@ -1,6 +1,6 @@
 import { QueryExecutionResult, QueryExecutor } from "./query-executor";
 import logger from "../../utils/logger";
-import { CodeExecutor } from "../code-executor/codeExecutor";
+import { CodeExecutor } from "../code-executor/code-executor";
 import { google } from "googleapis";
 
 export class GoogleSheetQueryExecutor implements QueryExecutor {

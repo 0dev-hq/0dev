@@ -1,9 +1,9 @@
-import { DataSourceType } from "../../models/DataSource";
-import { GenerativeAIProvider } from "../generative-ai-providers/generativeAIProvider";
+import { DataSourceType } from "../../models/data-source";
+import { GenerativeAIProvider } from "../generative-ai-providers/generative-ai-provider";
 import GoogleSheetQueryBuilder from "./google-sheet-query-builder";
-import MongoDBQueryBuilder from "./mongoDBQueryBuilder";
+import MongoDBQueryBuilder from "./mongodb-query-builder";
 import { QueryBuilder } from "./query-builder";
-import SQLQueryBuilder from "./sqlQueryBuilder";
+import SQLQueryBuilder from "./sql-query-builder";
 
 export class QueryBuilderFactory {
   static getQueryBuilder(

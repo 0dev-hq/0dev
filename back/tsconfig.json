@@ -9,16 +9,16 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "typeRoots": ["./src/@types", "./node_modules/@types"],
-    "types": ["node", "express", "express-session", "custom"]
+    "types": ["node", "express", "express-session"]
   },
   "include": [
     "src/**/*",
-    "src/**/*.d.ts"  // Make sure this is included
+    "src/**/*.d.ts" 
   ],
   "exclude": [
     "node_modules",
     "dist",
-    "**/*.test.ts",    // Exclude test files from being built
-    "**/__tests__/**"  // Exclude test directories if you have them
+    "**/*.test.ts",  
+    "**/__tests__/**"
   ]
 }

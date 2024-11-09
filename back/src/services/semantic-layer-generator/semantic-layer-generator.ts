@@ -1,15 +1,18 @@
 import { GenerativeAIProvider } from "../generative-ai-providers/generative-ai-provider";
+import { SemanticLayer } from "../../models/semantic-layer";
 
 export type DataSourceSchema = Record<
   string,
   { column: string; type: string }[]
 >;
 
-export abstract class QueryBuilder {
+export abstract class SemanticLayerGenerator {
   protected aiProvider: GenerativeAIProvider;
 
   constructor(aiProvider: GenerativeAIProvider) {
     this.aiProvider = aiProvider;
   }
-  abstract generateQuery(description: string, analysisInfo: any): Promise<any>;
+  abstract generateSemanticLayer(
+    schema: DataSourceSchema
+  ): Promise<SemanticLayer>;
 }
