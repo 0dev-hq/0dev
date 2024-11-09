@@ -9,7 +9,7 @@ import {
 } from "passport-github2";
 import { VerifyCallback } from "passport-oauth2";
 import { Strategy as LocalStrategy } from "passport-local";
-import User, { IUser } from "../models/User";
+import User, { IUser } from "../models/user";
 import bcrypt from "bcryptjs";
 
 // Google OAuth strategy

@@ -1,6 +1,5 @@
-import { DataSourceType } from "../../models/DataSource";
 import logger from "../../utils/logger";
-import { Prompt } from "../generative-ai-providers/generativeAIProvider";
+import { Prompt } from "../generative-ai-providers/generative-ai-provider";
 import { QueryBuilder } from "./query-builder";
 
 class GoogleSheetQueryBuilder extends QueryBuilder {

@@ -1,5 +1,5 @@
 import { Schema, model, Document, Types } from "mongoose";
-import { IUser } from "./User";
+import { IUser } from "./user";
 
 interface IAccount extends Document {
   name: string;

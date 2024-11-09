@@ -11,8 +11,8 @@ import cors from "cors";
 
 import "./config/passport"; // Initialize passport strategies
 
-import { sessionMiddleware } from "./middlewares/sessionMiddleware";
-import { importAndRegisterRoutes } from "./routes/util/routeUtil";
+import { sessionMiddleware } from "./middlewares/session-middleware";
+import { importAndRegisterRoutes } from "./routes/util/route-util";
 
 // Initialize Express app
 const app: express.Application = express();
