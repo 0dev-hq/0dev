@@ -4,6 +4,7 @@ export enum StorageProviderType {
 }
 
 export interface StorageFile {
+  type: string;
   url: string;
   size: number;
   createdAt: Date;

@@ -29,8 +29,10 @@ export default class LocalStorageProvider implements StorageProvider {
         files.map(async (file) => {
           const filePath = path.join(this.directory, subPath, file);
           const stats = await fs.promises.stat(filePath);
+          const fileExtension = path.extname(file);
 
           return {
+            type: fileExtension,
             url: file,
             size: stats.size,
             createdAt: stats.birthtime,

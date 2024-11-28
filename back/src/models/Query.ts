@@ -7,6 +7,7 @@ export interface IQuery extends Document {
   description: string;
   raw: string;
   operation: "create" | "read" | "update" | "delete";
+  owner?: mongoose.Types.ObjectId;
 }
 
 const QuerySchema: Schema = new Schema({
@@ -27,6 +28,10 @@ const QuerySchema: Schema = new Schema({
     type: String,
     enum: ["create", "read", "update", "delete"],
     required: true,
+  },
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Account",
   },
 });
 

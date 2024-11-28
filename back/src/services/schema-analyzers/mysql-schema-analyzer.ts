@@ -13,7 +13,6 @@ export const MySQLSchemaAnalyzer: SchemaAnalyzer = {
       throw new Error("Invalid MySQL connection string format");
     }
 
-    // MySQL connection
     const connection = await mysql.createConnection({
       host: match[1],
       port: parseInt(match[2]),

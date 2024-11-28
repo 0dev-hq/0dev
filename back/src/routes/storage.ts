@@ -25,6 +25,12 @@ router.get(
   storageController.downloadFile
 );
 
+router.post(
+  "/ingest/:file",
+  isAuthenticated(["editor"]),
+  storageController.ingest
+);
+
 export default {
   path: "/api/file",
   router,

@@ -1,3 +1,4 @@
+import { IDataSource } from "../../models/data-source";
 import logger from "../../utils/logger";
 import { QueryExecutionResult, QueryExecutor } from "./query-executor";
 import { MongoClient } from "mongodb";
@@ -5,11 +6,11 @@ import { MongoClient } from "mongodb";
 class MongoDBQueryExecutor implements QueryExecutor {
   async executeQuery(
     rawQuery: string,
-    dataSource: any,
+    dataSource: IDataSource,
     page: number,
     pageSize: number
   ): Promise<QueryExecutionResult> {
-    const client = new MongoClient(dataSource.connectionString);
+    const client = new MongoClient(dataSource.connectionString!);
     try {
       await client.connect();
       const db = client.db(); // Use the default database
@@ -19,10 +20,10 @@ class MongoDBQueryExecutor implements QueryExecutor {
       const { collection, query, projection } = JSON.parse(rawQuery);
 
       // Log collection, query, projection, and rawQuery
-      logger.verbose(`Collection:  ${JSON.stringify(collection)}`);
-      logger.verbose(`Query:: , ${JSON.stringify(query)}`);
-      logger.verbose(`Projection:: , ${JSON.stringify(projection)}`);
-      logger.verbose(`Raw Query:: , ${JSON.stringify(rawQuery)}`);
+      logger.debug(`Collection:  ${JSON.stringify(collection)}`);
+      logger.debug(`Query:: , ${JSON.stringify(query)}`);
+      logger.debug(`Projection:: , ${JSON.stringify(projection)}`);
+      logger.debug(`Raw Query:: , ${JSON.stringify(rawQuery)}`);
 
       // Get the collection based on the name in the query
       const col = db.collection(collection);

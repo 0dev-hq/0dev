@@ -10,7 +10,6 @@ export const PostgreSQLSchemaAnalyzer: SchemaAnalyzer = {
       return false;
     }
 
-    // PostgreSQL connection
     const pgClient = new PGClient({
       user: dataSource.username,
       password: dataSource.password,

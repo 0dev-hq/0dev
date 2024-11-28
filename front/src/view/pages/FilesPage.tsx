@@ -1,10 +1,13 @@
 import { useForm } from "react-hook-form";
 import { useQuery, useMutation, useQueryClient } from "react-query";
 import {
+  Calendar,
+  CloudUpload,
   Download,
   File,
   FileSpreadsheet,
   FileText,
+  Import,
   MoreVertical,
   Plus,
   Trash,
@@ -41,17 +44,28 @@ import { Label } from "@/components/ui/label";
 
 import { fileService, StorageFile } from "@/services/fileService";
 import { useState } from "react";
+import { dataPipelineService } from "@/services/dataPipelineService";
 
 function getFileIcon(type: string) {
   switch (type.toLowerCase()) {
     case "csv":
-    case "excel":
+    case "xlsx":
       return <FileSpreadsheet className="h-5 w-5" />;
     case "json":
       return <FileText className="h-5 w-5" />;
     default:
       return <File className="h-5 w-5" />;
   }
+}
+
+function beautifySize(size: number) {
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let unitIndex = 0;
+  while (size > 1024 && unitIndex < units.length) {
+    size /= 1024;
+    unitIndex++;
+  }
+  return `${size.toFixed(2)} ${units[unitIndex]}`;
 }
 
 export default function FilesPage() {
@@ -65,7 +79,9 @@ export default function FilesPage() {
     onError: () => toast.error("Failed to fetch files."),
   });
 
-  const { register, handleSubmit, reset, formState } = useForm<{ file: FileList }>();
+  const { register, handleSubmit, reset, formState } = useForm<{
+    file: FileList;
+  }>();
 
   const uploadMutation = useMutation(fileService.uploadFile, {
     onSuccess: () => {
@@ -79,7 +95,6 @@ export default function FilesPage() {
     },
   });
 
-  // React Query: Delete file
   const deleteMutation = useMutation(fileService.deleteFile, {
     onSuccess: () => {
       toast.success("File deleted successfully.");
@@ -90,14 +105,22 @@ export default function FilesPage() {
     },
   });
 
-  // React Query: Download file
+  const ingestMutation = useMutation(dataPipelineService.ingest, {
+    onSuccess: () => {
+      toast.success("File ingested successfully.");
+      queryClient.invalidateQueries(["files"]);
+    },
+    onError: () => {
+      toast.error("Failed to ingest the file.");
+    },
+  });
+
   const handleDownload = async (fileUrl: string) => {
     try {
       const blob = await fileService.downloadFile(fileUrl);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = fileUrl; // Use file name or identifier
       link.click();
       window.URL.revokeObjectURL(url);
     } catch {
@@ -143,6 +166,7 @@ export default function FilesPage() {
                   {...register("file")}
                   required
                   disabled={uploadMutation.isLoading}
+                  accept=".csv,.xlsx,.pdf"
                 />
               </div>
               <DialogFooter>
@@ -171,18 +195,24 @@ export default function FilesPage() {
             <Card key={file.url}>
               <CardHeader className="flex flex-row items-center gap-4 space-y-0">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg border bg-muted">
-                  {getFileIcon(file.url.split(".").pop() || "")}
+                  {getFileIcon(file.type)}
                 </div>
                 <div className="flex-1">
                   <CardTitle className="text-base">{file.url}</CardTitle>
                   <CardDescription>
-                    {file.size} bytes •{" "}
-                    {formatDistanceToNow(new Date(file.createdAt), {
-                      addSuffix: true,
-                    })}
+                    {file.type?.toLocaleUpperCase()} • {beautifySize(file.size)}
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
+                  <time
+                    dateTime={new Date(file.createdAt).toISOString()}
+                    className="text-sm text-muted-foreground whitespace-nowrap"
+                  >
+                    <Calendar className="inline-block w-4 h-4 mr-1" />
+                    {formatDistanceToNow(new Date(file.createdAt), {
+                      addSuffix: true,
+                    })}
+                  </time>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -198,6 +228,13 @@ export default function FilesPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => ingestMutation.mutate(file.url)}
+                        disabled={ingestMutation.isLoading}
+                      >
+                        <CloudUpload className="mr-2 h-4 w-4" />
+                        {ingestMutation.isLoading ? "Ingesting..." : "Ingest"}
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleDownload(file.url)}
                       >

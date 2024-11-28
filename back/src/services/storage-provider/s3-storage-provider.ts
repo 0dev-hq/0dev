@@ -21,6 +21,7 @@ export default class S3StorageProvider implements StorageProvider {
       }
 
       const storageFiles: StorageFile[] = result.Contents.map((obj) => ({
+        type: obj.Key ? obj.Key.split(".").pop() || "" : "",
         url: obj.Key ? obj.Key.replace(`${subPath}/`, "") : "",
         size: obj.Size || 0,
         createdAt: obj.LastModified || new Date(),
