@@ -11,6 +11,7 @@ import {
   getDataSourceAnalysis,
   updateDataSourceAnalysis,
 } from "../controllers/data-source-controller";
+import { contextMiddleware } from "../middlewares/context-middleware";
 
 const router = express.Router();
 
@@ -48,6 +49,8 @@ router.put(
   isAuthenticated(["editor"]),
   updateDataSourceAnalysis
 );
+
+router.use(contextMiddleware);
 
 export default {
   path: "/api/data-source",

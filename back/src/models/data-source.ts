@@ -9,6 +9,10 @@ export enum DataSourceType {
   MYSQL = "mysql",
   SUPABASE = "supabase",
   GOOGLE_SHEET = "googlesheet",
+  IMPORTED_CSV = "imported-csv",
+  IMPORTED_EXCEL = "imported-excel",
+  IMPORTED_PDF = "imported-pdf",
+  IMPORTED_WORD = "imported-word",
 }
 
 export enum SemanticModelLanguage {
@@ -26,6 +30,11 @@ export interface IDataSource extends Document {
   apiKey?: string;
   googleSheetId?: string;
   fileName?: string;
+  ingestionInfo?: {
+    fileName: string;
+    tableNames: string[];
+    ingestionTime: Date;
+  };
   analysisInfo?: {
     schema?: any;
     semanticLayer?: SemanticLayer;
@@ -33,6 +42,7 @@ export interface IDataSource extends Document {
   };
   lastTimeAnalyzed?: Date;
   createdBy: mongoose.Types.ObjectId;
+  owner?: mongoose.Types.ObjectId;
 }
 
 const DataSourceSchema: Schema = new Schema({
@@ -44,6 +54,11 @@ const DataSourceSchema: Schema = new Schema({
   apiKey: { type: String },
   googleSheetId: { type: String },
   fileName: { type: String },
+  ingestionInfo: {
+    fileName: { type: String },
+    tableNames: { type: [String] },
+    ingestionTime: { type: Date },
+  },
   analysisInfo: {
     schema: { type: Schema.Types.Mixed },
     semanticLayer: { type: Schema.Types.Mixed },
@@ -54,6 +69,10 @@ const DataSourceSchema: Schema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
+  },
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Account",
   },
 });
 

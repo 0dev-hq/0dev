@@ -1,3 +1,5 @@
+import { IDataSource } from "../../models/data-source";
+
 export type QueryExecutionResult = {
   data: any[];
   total: number;
@@ -6,7 +8,7 @@ export type QueryExecutionResult = {
 export interface QueryExecutor {
   executeQuery(
     rawQuery: string,
-    dataSource: any,
+    dataSource: IDataSource,
     page: number,
     pageSize: number
   ): Promise<QueryExecutionResult>;

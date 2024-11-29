@@ -1,3 +1,4 @@
+import { IDataSource } from "../../models/data-source";
 import logger from "../../utils/logger";
 import { QueryExecutionResult, QueryExecutor } from "./query-executor";
 import { Client as PGClient } from "pg";
@@ -5,7 +6,7 @@ import { Client as PGClient } from "pg";
 class PostgreSQLQueryExecutor implements QueryExecutor {
   async executeQuery(
     rawQuery: string,
-    dataSource: any,
+    dataSource: IDataSource,
     page: number,
     pageSize: number
   ): Promise<QueryExecutionResult> {

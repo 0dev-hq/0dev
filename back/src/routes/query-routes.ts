@@ -10,6 +10,7 @@ import {
   executeQuery,
   buildQuery,
 } from "../controllers/query-controller";
+import { contextMiddleware } from "../middlewares/context-middleware";
 
 const router = express.Router();
 
@@ -40,6 +41,8 @@ router.put("/:id", isAuthenticated(["editor"]), updateQuery);
 
 // Delete a query
 router.delete("/:id", isAuthenticated(["editor"]), deleteQuery);
+
+router.use(contextMiddleware);
 
 export default {
   path: "/api/query",

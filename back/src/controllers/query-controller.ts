@@ -1,22 +1,23 @@
 import { Request, Response } from "express";
 import Query from "../models/query";
-import DataSource, { DataSourceType } from "../models/data-source";
+import DataSource, { DataSourceType, IDataSource } from "../models/data-source";
 import logger from "../utils/logger";
 import { GenerativeAIProviderFactory } from "../services/generative-ai-providers/generative-ai-provider-factory";
 import { QueryBuilderFactory } from "../services/query-builder/query-builder-factory";
 import { QueryExecutorFactory } from "../services/query-executor/query-executor-factory";
+import { AIModel } from "../services/generative-ai-providers/generative-ai-provider";
+
+const generativeAIProvider =
+  GenerativeAIProviderFactory.getGenerativeAIProvider({
+    provider: process.env.GENERATIVE_AI_PROVIDER! as AIModel["provider"],
+    modelName: process.env.GENERATIVE_AI_MODEL_NAME! as AIModel["modelName"],
+  } as AIModel);
 
 const generateQueryUtil = async (
   description: string,
   analysisInfo: any,
   dataSourceType: DataSourceType
 ) => {
-  const generativeAIProvider =
-    GenerativeAIProviderFactory.getGenerativeAIProvider({
-      provider: "openai",
-      modelName: "gpt-4o-mini",
-    });
-
   const queryBuilder = QueryBuilderFactory.getQueryBuilder(
     dataSourceType,
     generativeAIProvider
@@ -39,7 +40,7 @@ export const createQuery = async (req: Request, res: Response) => {
     // Fetch the data source and its schema
     const dataSourceDoc = await DataSource.findById(dataSource);
     if (!dataSourceDoc) {
-      return res.status(404).json({ message: "Data source not found" });
+      return res.status(400);
     }
 
     let newQuery = new Query({
@@ -48,10 +49,16 @@ export const createQuery = async (req: Request, res: Response) => {
       dataSource,
       createdBy: req.user!.id,
       operation: "read", // Hardcoded to 'read' for now
+      owner: req.user!.account,
     });
 
-    if (dataSourceDoc.analysisInfo) {
-      // Generate the new raw query based on the updated description and schema
+    if (
+      [DataSourceType.IMPORTED_PDF, DataSourceType.IMPORTED_WORD].includes(
+        dataSourceDoc.type
+      )
+    ) {
+      newQuery.raw = description;
+    } else if (dataSourceDoc.analysisInfo) {
       const rawQuery = await generateQueryUtil(
         description,
         dataSourceDoc.analysisInfo,
@@ -74,16 +81,19 @@ export const buildQuery = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    // Fetch the query by ID and ensure it was created by the authenticated user
-    const query = await Query.findOne({ _id: id, createdBy: req.user!.id });
+    const query = await Query.findOne({
+      _id: id,
+      ...req.context?.filters,
+    }).populate<{ dataSource: IDataSource }>("dataSource", "analysisInfo type");
     if (!query) {
       return res.status(404).json({ message: "Query not found" });
     }
 
-    // Fetch the associated data source
-    const dataSource = await DataSource.findById(query.dataSource);
+    const dataSource = query.dataSource;
     if (!dataSource || !dataSource.analysisInfo) {
-      return res.status(404).json({ message: "Data source not found" });
+      return res
+        .status(400)
+        .json({ message: "Invalid data source or missing analysis info" });
     }
 
     const rawQuery = await generateQueryUtil(
@@ -107,7 +117,10 @@ export const buildQuery = async (req: Request, res: Response) => {
 // Get all queries for the authenticated user
 export const getQueries = async (req: Request, res: Response) => {
   try {
-    const queries = await Query.find({ createdBy: req.user!.id })
+    // TODO: Add pagination
+    const queries = await Query.find({
+      ...req.context?.filters,
+    })
       .populate("dataSource", "name")
       .select("-raw");
     return res.status(200).json(queries);
@@ -124,7 +137,7 @@ export const getQueryById = async (req: Request, res: Response) => {
   try {
     const query = await Query.findOne({
       _id: id,
-      createdBy: req.user!.id,
+      ...req.context?.filters,
     }).select("-raw");
 
     if (!query) {
@@ -143,10 +156,9 @@ export const getQueriesByDataSource = async (req: Request, res: Response) => {
   const { dataSourceId } = req.params;
 
   try {
-    // Find queries where the data source matches the provided id and the user is authenticated
     const queries = await Query.find({
       dataSource: dataSourceId,
-      createdBy: req.user!.id, // Only fetch queries created by the authenticated user
+      ...req.context?.filters,
     });
 
     if (!queries || queries.length === 0) {
@@ -168,7 +180,7 @@ export const updateQuery = async (req: Request, res: Response) => {
   const { name, description, dataSource } = req.body;
 
   try {
-    let query = await Query.findOne({ _id: id, createdBy: req.user!.id });
+    let query = await Query.findOne({ _id: id, ...req.context?.filters });
     if (!query) {
       return res.status(404).json({ message: "Query not found" });
     }
@@ -177,15 +189,18 @@ export const updateQuery = async (req: Request, res: Response) => {
     if (description !== query.description || dataSource !== query.dataSource) {
       query.description = description;
 
-      // Fetch the associated data source
       const dataSource = await DataSource.findById(query.dataSource);
       if (!dataSource) {
         return res.status(404).json({ message: "Data source not found" });
       }
 
-      if (dataSource.analysisInfo) {
-        // Generate the new raw query based on the updated description and schema
-
+      if (
+        [DataSourceType.IMPORTED_PDF, DataSourceType.IMPORTED_WORD].includes(
+          dataSource.type
+        )
+      ) {
+        query.raw = description;
+      } else if (dataSource.analysisInfo) {
         const rawQuery = await generateQueryUtil(
           description,
           dataSource.analysisInfo,
@@ -206,14 +221,13 @@ export const updateQuery = async (req: Request, res: Response) => {
   }
 };
 
-// Delete a query
 export const deleteQuery = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
     const deletedQuery = await Query.findOneAndDelete({
       _id: id,
-      createdBy: req.user!.id,
+      ...req.context?.filters,
     });
 
     if (!deletedQuery) {
@@ -227,28 +241,29 @@ export const deleteQuery = async (req: Request, res: Response) => {
   }
 };
 
-// Controller to execute a query based on the query ID
 export const executeQuery = async (req: Request, res: Response) => {
   const { id } = req.params;
   const page = Number(req.query.page) || 1; // Default to page 1 if not provided
   const pageSize = Number(req.query.pageSize) || 10; // Default to 10 items per page
 
   try {
-    // Fetch the saved query
-    const query = await Query.findById(id);
+    const query = await Query.findOne({
+      _id: id,
+      ...req.context?.filters,
+    }).populate<{ dataSource: IDataSource }>("dataSource");
     if (!query) {
       return res.status(404).json({ message: "Query not found" });
     }
 
-    // Fetch the associated data source
-    const dataSource = await DataSource.findById(query.dataSource);
+    const dataSource = query.dataSource;
     if (!dataSource) {
-      return res.status(404).json({ message: "Data source not found" });
+      return res.status(400);
     }
 
     const queryExecutor = QueryExecutorFactory.getQueryExecutor(
       dataSource.type
     );
+
     const result = await queryExecutor.executeQuery(
       query.raw,
       dataSource,

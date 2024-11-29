@@ -44,7 +44,11 @@ export const executeQuery = async (
   pageSize: number = 50
 ) => {
   const response = await apiClient.post(
-    `query/execute/${queryId}?page=${page}&pageSize=${pageSize}`
+    `query/execute/${queryId}?page=${page}&pageSize=${pageSize}`,
+    {},
+    {
+      timeout: 180000,
+    }
   );
   return response.data?.data;
 };

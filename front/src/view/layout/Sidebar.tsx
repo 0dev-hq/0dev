@@ -47,6 +47,12 @@ const Sidebar: React.FC = () => {
           >
             <FaChartBar className="mr-2" /> Reports
           </Link>
+          <Link
+            to="/file"
+            className="flex items-center text-cream opacity-75 hover:opacity-100"
+          >
+            <FaFileAlt className="mr-2" /> Files
+          </Link>
         </nav>
       </div>
 

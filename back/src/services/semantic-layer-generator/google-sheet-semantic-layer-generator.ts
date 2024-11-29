@@ -44,7 +44,7 @@ export class GoogleSheetSemanticLayerGenerator extends SemanticLayerGenerator {
     const prompt: Prompt = [
       {
         role: "system",
-        content: `You are an AI that generates business-oriented names and descriptions for multiple sheets in a Google Spreadsheet.
+        content: `You are a business analyst that generates business-oriented names and descriptions for multiple sheets in a Google Spreadsheet.
         
         Notes about semanticName:
         - Names should be business-oriented but can stay similar to the sheet names if they are already meaningful.

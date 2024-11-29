@@ -1,9 +1,5 @@
 import React, { useState } from "react";
-import {
-  FiEdit,
-  FiTrash2,
-  FiFileText,
-} from "react-icons/fi";
+import { FiEdit, FiTrash2, FiFileText } from "react-icons/fi";
 import { FaDatabase } from "react-icons/fa";
 import { SiMongodb, SiMysql, SiPostgresql, SiSupabase } from "react-icons/si";
 import { useNavigate } from "react-router-dom";
@@ -48,12 +44,12 @@ const formatDate = (date?: string) => {
     return "Not analyzed";
   }
   return new Date(date).toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
   });
 };
 
@@ -85,6 +81,11 @@ const DataSourceBlock: React.FC<DataSourceBlockProps> = ({
 
   const goToDataSourceAnalysis = (id: string) => {
     navigate(`/data-source/${id}/analysis`);
+  };
+
+  // You can't analyze imported PDF data sources
+  const isAnalyzable = (type: string) => {
+    return ["imported-pdf"].indexOf(type.toLocaleLowerCase()) === -1;
   };
 
   return (
@@ -147,15 +148,20 @@ const DataSourceBlock: React.FC<DataSourceBlockProps> = ({
               <AlertDialogHeader>
                 <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to delete {name}? This action cannot be undone.
+                  Are you sure you want to delete {name}? This action cannot be
+                  undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setIsDialogOpen(false)}>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => {
-                  onDelete(id);
-                  setIsDialogOpen(false);
-                }}>
+                <AlertDialogCancel onClick={() => setIsDialogOpen(false)}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    onDelete(id);
+                    setIsDialogOpen(false);
+                  }}
+                >
                   Confirm
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -163,30 +169,32 @@ const DataSourceBlock: React.FC<DataSourceBlockProps> = ({
           </AlertDialog>
         </div>
 
-        <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="text-xs text-muted-foreground">
-                  <Clock className="h-3 w-3 inline mr-1" />
-                  <span className="sr-only">Last analyzed:</span>
-                  <span>{formatDate(lastTimeAnalyzed)}</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Last analyzed: {formatDate(lastTimeAnalyzed)}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <Button
-            onClick={() => goToDataSourceAnalysis(id)}
-            variant="default"
-            size="sm"
-            className="flex items-center gap-1"
-          >
-            Analyze
-          </Button>
-        </div>
+        {isAnalyzable(type) && (
+          <div className="flex items-center gap-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3 inline mr-1" />
+                    <span className="sr-only">Last analyzed:</span>
+                    <span>{formatDate(lastTimeAnalyzed)}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Last analyzed: {formatDate(lastTimeAnalyzed)}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <Button
+              onClick={() => goToDataSourceAnalysis(id)}
+              variant="default"
+              size="sm"
+              className="flex items-center gap-1"
+            >
+              Analyze
+            </Button>
+          </div>
+        )}
       </CardFooter>
     </Card>
   );

@@ -24,6 +24,10 @@ const reportSchema = new Schema({
   },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Account",
+  },
 });
 
 export interface IReport extends Document {
@@ -32,6 +36,7 @@ export interface IReport extends Document {
   createdBy: mongoose.Types.ObjectId;
   createdAt?: Date;
   updatedAt?: Date;
+  owner?: mongoose.Types.ObjectId;
 }
 
 export default mongoose.model<IReport>("Report", reportSchema);

@@ -5,6 +5,14 @@ import { SchemaAnalyzerFactory } from "../services/schema-analyzers/schema-analy
 import { DataSourceConnectionValidatorFactory } from "../services/data-source-connection-validator/data-source-connection-validator-factory";
 import { GenerativeAIProviderFactory } from "../services/generative-ai-providers/generative-ai-provider-factory";
 import { SemanticLayerGeneratorFactory } from "../services/semantic-layer-generator/semantic-layer-generator-factory";
+import { Client } from "pg";
+import { AIModel } from "../services/generative-ai-providers/generative-ai-provider";
+
+const generativeAIProvider =
+  GenerativeAIProviderFactory.getGenerativeAIProvider({
+    provider: process.env.GENERATIVE_AI_PROVIDER! as AIModel["provider"],
+    modelName: process.env.GENERATIVE_AI_MODEL_NAME! as AIModel["modelName"],
+  } as AIModel);
 
 // Test connection to the data source
 export const testDataSourceConnection = async (req: Request, res: Response) => {
@@ -56,6 +64,7 @@ export const createDataSource = async (req: Request, res: Response) => {
       apiKey,
       googleSheetId,
       createdBy: req.user!.id,
+      owner: req.user!.account,
     });
 
     await newDataSource.save();
@@ -72,7 +81,7 @@ export const createDataSource = async (req: Request, res: Response) => {
 export const getDataSources = async (req: Request, res: Response) => {
   try {
     const dataSources = await DataSource.find({
-      createdBy: req.user!.id,
+      ...req.context?.filters,
     }).select("-analysisInfo");
 
     return res.status(200).json(dataSources);
@@ -92,7 +101,7 @@ export const getDataSourceById = async (req: Request, res: Response) => {
     // Exclude the analysisInfo field by using projection
     const dataSource = await DataSource.findOne({
       _id: id,
-      createdBy: req.user!.id,
+      ...req.context?.filters,
     }).select("-analysisInfo");
 
     if (!dataSource) {
@@ -114,7 +123,7 @@ export const updateDataSource = async (req: Request, res: Response) => {
 
   try {
     const updatedDataSource = await DataSource.findOneAndUpdate(
-      { _id: id, createdBy: req.user!.id },
+      { _id: id, ...req.context?.filters },
       { ...req.body },
       { new: true }
     );
@@ -132,27 +141,122 @@ export const updateDataSource = async (req: Request, res: Response) => {
   }
 };
 
-// Delete a data source
 export const deleteDataSource = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
+    const dataSource = await DataSource.findOne({
+      _id: id,
+      ...req.context?.filters,
+    });
+
+    if (!dataSource) {
+      return res.status(404).json({ message: "Data source not found" });
+    }
+
+    // If it's an imported data source, delete associated tables or records
+    if (
+      dataSource.type === DataSourceType.IMPORTED_CSV ||
+      dataSource.type === DataSourceType.IMPORTED_EXCEL
+    ) {
+      const tableNames = dataSource.ingestionInfo?.tableNames || [];
+      if (tableNames.length > 0) {
+        const client = new Client({
+          user: process.env.INTERNAL_DB_USER,
+          password: process.env.INTERNAL_DB_PASS,
+          host: process.env.INTERNAL_DB_HOST,
+          port: Number(process.env.INTERNAL_DB_PORT),
+          database: process.env.INTERNAL_DB_NAME,
+        });
+
+        try {
+          await client.connect();
+          for (const tableName of tableNames) {
+            try {
+              await client.query(
+                `DROP TABLE IF EXISTS "${tableName}" CASCADE;`
+              );
+              console.log(`Dropped table: ${tableName}`);
+            } catch (error) {
+              console.error(`Failed to drop table: ${tableName}`, error);
+              return res.status(500).json({
+                message: `Failed to delete associated table: ${tableName}`,
+                error,
+              });
+            }
+          }
+        } catch (dbError) {
+          console.error("Failed to connect to the database", dbError);
+          return res.status(500).json({
+            message: "Failed to connect to the internal database",
+            error: dbError,
+          });
+        } finally {
+          await client.end();
+        }
+      }
+    } else if (
+      dataSource.type === DataSourceType.IMPORTED_PDF ||
+      dataSource.type === DataSourceType.IMPORTED_WORD
+    ) {
+      const client = new Client({
+        user: process.env.INTERNAL_DB_USER,
+        password: process.env.INTERNAL_DB_PASS,
+        host: process.env.INTERNAL_DB_HOST,
+        port: Number(process.env.INTERNAL_DB_PORT),
+        database: process.env.INTERNAL_DB_NAME,
+      });
+
+      try {
+        await client.connect();
+        const fileName = dataSource.ingestionInfo?.fileName;
+
+        if (fileName) {
+          const deleteChunksQuery = `
+            DELETE FROM document_chunks
+            WHERE document_id IN (
+              SELECT id FROM imported_documents
+              WHERE file_name = $1
+            );
+          `;
+
+          const deleteDocumentsQuery = `
+            DELETE FROM imported_documents
+            WHERE file_name = $1;
+          `;
+
+          await client.query(deleteChunksQuery, [fileName]);
+          await client.query(deleteDocumentsQuery, [fileName]);
+        }
+      } catch (dbError) {
+        return res.status(500).json({
+          message: "Failed to clean up document records",
+          error: dbError,
+        });
+      } finally {
+        await client.end();
+      }
+    }
+
+    // Delete the data source document
     const deletedDataSource = await DataSource.findOneAndDelete({
       _id: id,
-      createdBy: req.user!.id,
+      ...req.context?.filters,
     });
 
     if (!deletedDataSource) {
       return res.status(404).json({ message: "Data source not found" });
     }
 
-    return res
-      .status(200)
-      .json({ message: "Data source deleted successfully" });
+    return res.status(200).json({
+      message: "Data source and associated data deleted successfully",
+    });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Failed to delete data source", error });
+    console.error("Error deleting data source:", error);
+    return res.status(500).json({
+      message: "Failed to delete data source",
+      error,
+    });
   }
 };
 
@@ -163,7 +267,7 @@ export const captureSchema = async (req: Request, res: Response) => {
   try {
     const dataSource = await DataSource.findOne({
       _id: id,
-      createdBy: req.user!.id,
+      ...req.context?.filters,
     });
 
     if (!dataSource) {
@@ -177,12 +281,6 @@ export const captureSchema = async (req: Request, res: Response) => {
     const schema = await schemaAnalyzer.fetchSchema(dataSource);
 
     console.log(`Schema: ${JSON.stringify(schema, null, 2)}`);
-
-    const generativeAIProvider =
-      GenerativeAIProviderFactory.getGenerativeAIProvider({
-        provider: "openai",
-        modelName: "gpt-4o-mini",
-      });
 
     // 2. Generate the Semantic Layer
     const semanticLayerGenerator =
@@ -214,7 +312,7 @@ export const getDataSourceAnalysis = async (req: Request, res: Response) => {
   try {
     const dataSource = await DataSource.findOne({
       _id: id,
-      createdBy: req.user!.id,
+      ...req.context?.filters,
     }).select("name type lastTimeAnalyzed analysisInfo");
 
     if (!dataSource) {
@@ -238,7 +336,7 @@ export const updateDataSourceAnalysis = async (req: Request, res: Response) => {
   try {
     const dataSource = await DataSource.findOne({
       _id: id,
-      createdBy: req.user!.id,
+      ...req.context?.filters,
     });
 
     if (!dataSource) {

@@ -2,6 +2,7 @@ import { QueryExecutionResult, QueryExecutor } from "./query-executor";
 import logger from "../../utils/logger";
 import { CodeExecutor } from "../code-executor/code-executor";
 import { google } from "googleapis";
+import { IDataSource } from "../../models/data-source";
 
 export class GoogleSheetQueryExecutor implements QueryExecutor {
   private codeExecutor: CodeExecutor;
@@ -12,16 +13,16 @@ export class GoogleSheetQueryExecutor implements QueryExecutor {
 
   async executeQuery(
     rawQuery: string,
-    dataSource: any,
+    dataSource: IDataSource,
     page: number,
     pageSize: number
   ): Promise<QueryExecutionResult> {
     const accessor = new GoogleSheetDataAccessor(
-      dataSource.connectionString,
-      dataSource.googleSheetId
+      dataSource.connectionString!,
+      dataSource.googleSheetId!
     );
 
-    console.log("Executing Google Sheets query:", rawQuery);
+    logger.debug("Executing Google Sheets query:", rawQuery);
 
     try {
       // Execute the JavaScript code using the injected code executor
