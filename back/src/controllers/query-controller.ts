@@ -53,9 +53,12 @@ export const createQuery = async (req: Request, res: Response) => {
     });
 
     if (
-      dataSourceDoc.analysisInfo &&
-      dataSourceDoc.type !== DataSourceType.IMPORTED_PDF
+      [DataSourceType.IMPORTED_PDF, DataSourceType.IMPORTED_WORD].includes(
+        dataSourceDoc.type
+      )
     ) {
+      newQuery.raw = description;
+    } else if (dataSourceDoc.analysisInfo) {
       const rawQuery = await generateQueryUtil(
         description,
         dataSourceDoc.analysisInfo,
@@ -63,8 +66,6 @@ export const createQuery = async (req: Request, res: Response) => {
       );
 
       newQuery.raw = rawQuery;
-    } else if ([DataSourceType.IMPORTED_PDF].includes(dataSourceDoc.type)) {
-      newQuery.raw = description;
     }
 
     await newQuery.save();
@@ -194,17 +195,18 @@ export const updateQuery = async (req: Request, res: Response) => {
       }
 
       if (
-        dataSource.analysisInfo &&
-        dataSource.type !== DataSourceType.IMPORTED_PDF
+        [DataSourceType.IMPORTED_PDF, DataSourceType.IMPORTED_WORD].includes(
+          dataSource.type
+        )
       ) {
+        query.raw = description;
+      } else if (dataSource.analysisInfo) {
         const rawQuery = await generateQueryUtil(
           description,
           dataSource.analysisInfo,
           dataSource.type
         );
         query.raw = rawQuery;
-      } else if ([DataSourceType.IMPORTED_PDF].includes(dataSource.type)) {
-        query.raw = description;
       }
     } else {
       query.name = name;
@@ -258,12 +260,9 @@ export const executeQuery = async (req: Request, res: Response) => {
       return res.status(400);
     }
 
-    console.log("here11");
-
     const queryExecutor = QueryExecutorFactory.getQueryExecutor(
       dataSource.type
     );
-    console.log(`executing query: ${query.raw}`);
 
     const result = await queryExecutor.executeQuery(
       query.raw,

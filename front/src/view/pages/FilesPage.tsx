@@ -166,7 +166,7 @@ export default function FilesPage() {
                   {...register("file")}
                   required
                   disabled={uploadMutation.isLoading}
-                  accept=".csv,.xlsx,.pdf"
+                  accept=".csv,.xlsx,.pdf,.docx"
                 />
               </div>
               <DialogFooter>

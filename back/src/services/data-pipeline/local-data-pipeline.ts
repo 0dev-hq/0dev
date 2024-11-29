@@ -45,6 +45,10 @@ export class LocalDataPipeline implements DataPipeline {
           script = "local-ingest-pdf.py";
           args.push(`--openai_api_key=${process.env.OPENAI_API_KEY}`);
           break;
+        case "docx":
+          script = "local-ingest-word.py";
+          args.push(`--openai_api_key=${process.env.OPENAI_API_KEY}`);
+          break;
         default:
           reject(new Error("Unsupported file type"));
           return;
@@ -61,7 +65,7 @@ export class LocalDataPipeline implements DataPipeline {
           } else {
             logger.info(`Output: ${stdout}`);
 
-            if (fileType === "pdf") {
+            if (["pdf", "docx"].includes(fileType)) {
               return resolve([]);
             }
             // Get the results from the result file and clean up

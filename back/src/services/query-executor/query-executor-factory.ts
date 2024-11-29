@@ -8,6 +8,7 @@ import MySQLQueryExecutor from "./mysql-query-executor";
 import { PDFQueryExecutor } from "./pdf-query-executor";
 import PostgreSQLQueryExecutor from "./postgresql-query-executor";
 import { QueryExecutor } from "./query-executor";
+import { WordQueryExecutor } from "./word-query-executor";
 
 const generativeAIProvider =
   GenerativeAIProviderFactory.getGenerativeAIProvider({
@@ -29,6 +30,8 @@ export class QueryExecutorFactory {
         return new GoogleSheetQueryExecutor(new JSVM2Executor());
       case DataSourceType.IMPORTED_PDF:
         return new PDFQueryExecutor(generativeAIProvider);
+      case DataSourceType.IMPORTED_WORD:
+        return new WordQueryExecutor(generativeAIProvider);
       default:
         throw new Error("Unsupported data source type");
     }

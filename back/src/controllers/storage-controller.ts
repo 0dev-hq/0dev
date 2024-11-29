@@ -102,15 +102,19 @@ export const storageController = {
         `${req.user!.account}/${fileUrl}`
       );
 
+      console.log("ingestResult", ingestResult);
+
       if (ingestResult) {
         const fileExtension = fileUrl.split(".").pop();
+        const dataSourceType = {
+          csv: DataSourceType.IMPORTED_CSV,
+          xlsx: DataSourceType.IMPORTED_EXCEL,
+          pdf: DataSourceType.IMPORTED_PDF,
+          docx: DataSourceType.IMPORTED_WORD,
+        }[fileExtension!];
+        console.log("dataSourceType", dataSourceType);
         const newDataSource = new DataSource({
-          type:
-            fileExtension === "csv"
-              ? DataSourceType.IMPORTED_CSV
-              : fileExtension === "xlsx"
-              ? DataSourceType.IMPORTED_EXCEL
-              : DataSourceType.IMPORTED_PDF,
+          type: dataSourceType,
           name: fileUrl.replace(".", "-"),
           ingestionInfo: {
             fileName: fileUrl,

@@ -8,7 +8,7 @@ import { IDataSource } from "../../models/data-source";
 import OpenAI from "openai";
 import logger from "../../utils/logger";
 
-export class PDFQueryExecutor implements QueryExecutor {
+export class WordQueryExecutor implements QueryExecutor {
   private aiProvider: GenerativeAIProvider;
 
   constructor(aiProvider: GenerativeAIProvider) {
@@ -25,7 +25,7 @@ export class PDFQueryExecutor implements QueryExecutor {
     const accountId = owner!.toString();
     const fileName = ingestionInfo!.fileName;
 
-    console.log("Executing PDF query:", rawQuery);
+    console.log("Executing Word document query:", rawQuery);
 
     if (!accountId || !fileName) {
       throw new Error("Missing required accountId or fileName in dataSource.");
@@ -87,7 +87,7 @@ export class PDFQueryExecutor implements QueryExecutor {
 
     const response = await client.embeddings.create({
       input: query,
-      model: "text-embedding-ada-002", // Updated to the latest model
+      model: "text-embedding-ada-002", // Updated to current model
     });
     return response.data[0].embedding;
   }
@@ -115,7 +115,7 @@ export class PDFQueryExecutor implements QueryExecutor {
       JOIN imported_documents ON document_chunks.document_id = imported_documents.id
       WHERE imported_documents.owner = $1
       AND imported_documents.file_name = $2
-      AND imported_documents.document_type = 'pdf'
+      AND imported_documents.document_type = 'word'
       ORDER BY document_chunks.embedding <-> $3::vector
       LIMIT 5;
       `;

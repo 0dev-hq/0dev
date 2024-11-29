@@ -12,6 +12,7 @@ export enum DataSourceType {
   IMPORTED_CSV = "imported-csv",
   IMPORTED_EXCEL = "imported-excel",
   IMPORTED_PDF = "imported-pdf",
+  IMPORTED_WORD = "imported-word",
 }
 
 export enum SemanticModelLanguage {

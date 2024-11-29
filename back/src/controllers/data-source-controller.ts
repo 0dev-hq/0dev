@@ -141,12 +141,10 @@ export const updateDataSource = async (req: Request, res: Response) => {
   }
 };
 
-// Delete a data source
 export const deleteDataSource = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    // Find the data source to be deleted
     const dataSource = await DataSource.findOne({
       _id: id,
       ...req.context?.filters,
@@ -156,12 +154,11 @@ export const deleteDataSource = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Data source not found" });
     }
 
-    // If it's an imported data source, delete associated tables
+    // If it's an imported data source, delete associated tables or records
     if (
       dataSource.type === DataSourceType.IMPORTED_CSV ||
       dataSource.type === DataSourceType.IMPORTED_EXCEL
     ) {
-      logger.info(`dataSource: ${JSON.stringify(dataSource, null, 2)}`);
       const tableNames = dataSource.ingestionInfo?.tableNames || [];
       if (tableNames.length > 0) {
         const client = new Client({
@@ -198,6 +195,47 @@ export const deleteDataSource = async (req: Request, res: Response) => {
           await client.end();
         }
       }
+    } else if (
+      dataSource.type === DataSourceType.IMPORTED_PDF ||
+      dataSource.type === DataSourceType.IMPORTED_WORD
+    ) {
+      const client = new Client({
+        user: process.env.INTERNAL_DB_USER,
+        password: process.env.INTERNAL_DB_PASS,
+        host: process.env.INTERNAL_DB_HOST,
+        port: Number(process.env.INTERNAL_DB_PORT),
+        database: process.env.INTERNAL_DB_NAME,
+      });
+
+      try {
+        await client.connect();
+        const fileName = dataSource.ingestionInfo?.fileName;
+
+        if (fileName) {
+          const deleteChunksQuery = `
+            DELETE FROM document_chunks
+            WHERE document_id IN (
+              SELECT id FROM imported_documents
+              WHERE file_name = $1
+            );
+          `;
+
+          const deleteDocumentsQuery = `
+            DELETE FROM imported_documents
+            WHERE file_name = $1;
+          `;
+
+          await client.query(deleteChunksQuery, [fileName]);
+          await client.query(deleteDocumentsQuery, [fileName]);
+        }
+      } catch (dbError) {
+        return res.status(500).json({
+          message: "Failed to clean up document records",
+          error: dbError,
+        });
+      } finally {
+        await client.end();
+      }
     }
 
     // Delete the data source document
@@ -211,7 +249,7 @@ export const deleteDataSource = async (req: Request, res: Response) => {
     }
 
     return res.status(200).json({
-      message: "Data source and associated tables deleted successfully",
+      message: "Data source and associated data deleted successfully",
     });
   } catch (error) {
     console.error("Error deleting data source:", error);
