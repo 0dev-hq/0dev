@@ -1,0 +1,29 @@
+- name: send_email
+  description: Send an email to a recipient.
+  tags: ["communication"]
+  inputs: ["recipient", "subject", "body"]
+  outputs: ["status"]
+
+- name: query_database
+  description: Query a database for records.
+  tags: ["data", "query"]
+  inputs: ["query_string"]
+  outputs: ["result_set"]
+
+- name: generate_report
+  description: Generate a PDF report.
+  tags: ["report", "pdf"]
+  inputs: ["data_source"]
+  outputs: ["report_file"]
+
+- name: create_user
+  description: Create a new user in the system.
+  tags: ["user", "management"]
+  inputs: ["username", "email"]
+  outputs: ["user_id"]
+
+- name: delete_file
+  description: Delete a file from the system.
+  tags: ["file", "delete"]
+  inputs: ["file_path"]
+  outputs: ["status"]

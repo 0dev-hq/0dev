@@ -1,0 +1,29 @@
+- name: file_sensor
+  description: Monitor a directory for file changes.
+  tags: ["monitoring", "filesystem"]
+  inputs: ["directory_path"]
+  outputs: ["event"]
+
+- name: api_sensor
+  description: Monitor an API for changes in response.
+  tags: ["monitoring", "api"]
+  inputs: ["api_endpoint"]
+  outputs: ["event"]
+
+- name: email_sensor
+  description: Monitor an inbox for new emails.
+  tags: ["monitoring", "email"]
+  inputs: ["inbox"]
+  outputs: ["email_event"]
+
+- name: temperature_sensor
+  description: Monitor temperature changes in a specified environment.
+  tags: ["monitoring", "environment"]
+  inputs: ["sensor_id"]
+  outputs: ["temperature_reading"]
+
+- name: database_sensor
+  description: Monitor a database for changes.
+  tags: ["monitoring", "database"]
+  inputs: ["connection_string"]
+  outputs: ["event"]
