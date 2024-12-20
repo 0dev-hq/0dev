@@ -5,7 +5,7 @@ exclude =
     notebooks
 # Recommend matching the black line length (default 88),
 # rather than using the flake8 default of 79:
-max-line-length = 88
+max-line-length = 150
 extend-ignore =
     # See https://github.com/PyCQA/pycodestyle/issues/373
     E203,

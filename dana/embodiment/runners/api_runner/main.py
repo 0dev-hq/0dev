@@ -1,42 +1,78 @@
+import os
+import json
+from core.answer_handler import AnswerHandler
 from core.interactive_agent import InteractiveAgent
+from core.internal_code_generator import InternalCodeGenerator
+from core.local_code_executor import LocalCodeExecutor
 from core.navigator import Navigator
-from core.planner import Planner
-from core.action_sensor_registry import ActionSensorRegistry
+from core.perception_handler import PerceptionHandler
 from core.postgres_history_manager import PostgresHistoryManager
+from core.step_handler import StepHandler
 from embodiment.runners.api_runner.api_runner import APIRunner
 from core.llms.openai import OpenAIClient
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
+# Load environment variables
+
+
+def load_agent_config(config_path: str) -> dict:
+    """
+    Load the agent configuration from a given JSON file path.
+    :param config_path: Path to the agent configuration file.
+    :return: Dictionary containing the agent configuration.
+    """
+
+    for key, value in os.environ.items():
+        print(f"main.py -> {key}: {value}")
+
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Configuration file not found at: {config_path}")
+
+    with open(config_path, "r") as config_file:
+        return json.load(config_file)
+
 
 if __name__ == "__main__":
+    # Load configuration path from environment variable
+    print("Loading agent configuration...")
+    config_path = os.getenv("AGENT_CONFIG_PATH")
+    if not config_path:
+        raise EnvironmentError("AGENT_CONFIG_PATH environment variable is not set.")
+
+    # Load agent configuration
+    agent_config = load_agent_config(config_path)
+
     # Initialize dependencies
     llm_client = OpenAIClient(api_key=os.getenv("OPENAI_API_KEY"))
-    registry = ActionSensorRegistry()
-    registry.load("actions.yaml", "sensors.yaml")
-    planner = Planner(llm_client, registry)
-    navigator = Navigator(llm_client, registry)
-    history_manager = PostgresHistoryManager(llm_client)
 
-    # Initialize the runner with the agent
-    runner = APIRunner(
-        agent_class=InteractiveAgent, 
-        agent_config={
-            "id": "1",
-            "account_id": "123",
-            "name": "MyInteractiveAgent",
-            "intent_set":["support_ticket", "send_email", "query_data"],
-            "action_set":["send_email", "generate_report"],
-            "sensor_set":["s3_file_sensor", "email_sensor"],
-            "policy_set":[
-                "Don't generate a report without confirmation from the user.",
-                "Send an email with the report as an attachment.",
-                "Notify the user if the report generation fails.",
-            ],
+    navigator = Navigator(llm_client)
+    history_manager = PostgresHistoryManager(llm_client)
+    code_generator = InternalCodeGenerator(llm_client)
+    code_executor = LocalCodeExecutor()
+    perception_handler = PerceptionHandler(llm_client)
+    answer_handler = AnswerHandler(llm_client)
+    step_handler = StepHandler(
+        code_generator=code_generator,
+        history_manager=history_manager,
+        perception_handler=perception_handler,
+        code_executor=code_executor,
+        answer_handler=answer_handler,
+    )
+
+    # Inject dependencies into the agent configuration
+    agent_config.update(
+        {
             "navigator": navigator,
-            "planner": planner,
+            "step_handler": step_handler,
             "history_manager": history_manager,
         }
     )
-    runner.run()
+
+    # Initialize the runner with the InteractiveAgent and dynamic config
+    runner = APIRunner(
+        agent_class=InteractiveAgent,
+        agent_config=agent_config,
+    )
+
+    # Run the API server
+    port = int(os.getenv("FLASK_RUN_PORT", 5001))
+    runner.run(port=port)

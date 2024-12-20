@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, Plus, Info, CheckCircle, AlertCircle } from 'lucide-react'
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, X, Plus, Info, CheckCircle, AlertCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
   CardContent,
@@ -15,100 +15,72 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
+import { AgentRegistryAction, agentRegistryService } from "@/services/agentRegistryService";
+import { useQuery } from "react-query";
 
-// Mock data for actions
-const allActions = [
-  { 
-    id: 1, 
-    name: 'Send message', 
-    service: 'Slack', 
-    tags: ['communication'],
-    description: 'Send a message to a Slack channel or user.',
-    inputs: ['channel', 'message'],
-    outputs: ['messageId', 'timestamp'],
-    creator: 'Official'
-  },
-  { 
-    id: 2, 
-    name: 'Create ticket', 
-    service: 'Zendesk', 
-    tags: ['support'],
-    description: 'Create a new support ticket in Zendesk.',
-    inputs: ['subject', 'description', 'priority'],
-    outputs: ['ticketId', 'ticketUrl'],
-    creator: 'Official'
-  },
-  { 
-    id: 3, 
-    name: 'Assign issue', 
-    service: 'Jira', 
-    tags: ['project management'],
-    description: 'Assign a Jira issue to a team member.',
-    inputs: ['issueId', 'assigneeId'],
-    outputs: ['success', 'assignedTo'],
-    creator: 'Official'
-  },
-  { 
-    id: 4, 
-    name: 'Post update', 
-    service: 'Slack', 
-    tags: ['communication'],
-    description: 'Post an update to a Slack channel.',
-    inputs: ['channel', 'message'],
-    outputs: ['messageId', 'timestamp'],
-    creator: 'Official'
-  },
-  { 
-    id: 5, 
-    name: 'Close ticket', 
-    service: 'Zendesk', 
-    tags: ['support'],
-    description: 'Close an existing support ticket in Zendesk.',
-    inputs: ['ticketId', 'resolution'],
-    outputs: ['success', 'closedAt'],
-    creator: 'Official'
-  },
-  { 
-    id: 6, 
-    name: 'Create sprint', 
-    service: 'Jira', 
-    tags: ['project management'],
-    description: 'Create a new sprint in a Jira project.',
-    inputs: ['projectId', 'sprintName', 'startDate', 'endDate'],
-    outputs: ['sprintId', 'sprintUrl'],
-    creator: 'Official'
-  },
-]
 
-const allTags = [...new Set(allActions.flatMap(action => action.tags))]
-const allServices = [...new Set(allActions.map(action => action.service))]
 
 export default function AllowedActions({ config, updateConfig }) {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedTag, setSelectedTag] = useState('all')
-  const [selectedService, setSelectedService] = useState('all')
-  const [filteredActions, setFilteredActions] = useState(allActions)
-  const [selectedAction, setSelectedAction] = useState(null)
+  const {
+    data: actions = [],
+    isLoading: actionsLoading,
+    error: actionsError,
+  } = useQuery({
+    queryKey: ["actions"],
+    queryFn: agentRegistryService.listActions,
+  });
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedTag, setSelectedTag] = useState("all");
+  const [selectedService, setSelectedService] = useState("all");
+  const [filteredActions, setFilteredActions] = useState<AgentRegistryAction[]>([]);
+  const [selectedAction, setSelectedAction] = useState(null);
+
+  const allTags = [...new Set(actions.flatMap(action => action.tags))];
+  const allServices = [...new Set(actions.map(action => action.service))];
 
   useEffect(() => {
-    const filtered = allActions.filter(action => 
-      action.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (selectedTag === 'all' || action.tags.includes(selectedTag)) &&
-      (selectedService === 'all' || action.service === selectedService)
-    )
-    setFilteredActions(filtered)
-  }, [searchTerm, selectedTag, selectedService])
+    if (!actionsLoading && !actionsError) {
+      const filtered = actions.filter(
+        (action) =>
+          action.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+          (selectedTag === "all" || action.tags.includes(selectedTag)) &&
+          (selectedService === "all" || action.service === selectedService)
+      );
+      setFilteredActions(filtered);
+    }
+  }, [searchTerm, selectedTag, selectedService, actions, actionsLoading, actionsError]);
 
   const addAction = (action) => {
-    if (!config.selectedActions.find(a => a.id === action.id)) {
-      updateConfig({ selectedActions: [...config.selectedActions, action] })
+    if (!config.selectedActions.find((a) => a.id === action.id)) {
+      updateConfig({ selectedActions: [...config.selectedActions, action] });
     }
-  }
+  };
 
   const removeAction = (actionId) => {
-    updateConfig({ selectedActions: config.selectedActions.filter(a => a.id !== actionId) })
+    updateConfig({
+      selectedActions: config.selectedActions.filter((a) => a.id !== actionId),
+    });
+  };
+
+  if (actionsLoading) {
+    return (
+      <div className="flex items-center justify-center h-[600px]">
+        <AlertCircle className="h-8 w-8 text-gray-500 animate-spin" />
+      </div>
+    );
   }
+  
+  if (actionsError) {
+    return (
+      <div className="flex items-center justify-center h-[600px]">
+        <p className="text-red-500">Error loading actions. Please try again later.</p>
+      </div>
+    );
+  }
+
+
 
   return (
     <div className="space-y-6">
@@ -135,8 +107,10 @@ export default function AllowedActions({ config, updateConfig }) {
               className="block w-48 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             >
               <option value="all">All tags</option>
-              {allTags.map(tag => (
-                <option key={tag} value={tag}>{tag}</option>
+              {allTags.map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag}
+                </option>
               ))}
             </select>
             <select
@@ -145,14 +119,16 @@ export default function AllowedActions({ config, updateConfig }) {
               className="block w-48 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             >
               <option value="all">All services</option>
-              {allServices.map(service => (
-                <option key={service} value={service}>{service}</option>
+              {allServices.map((service) => (
+                <option key={service} value={service}>
+                  {service}
+                </option>
               ))}
             </select>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <AnimatePresence>
-              {filteredActions.map(action => (
+              {filteredActions.map((action) => (
                 <motion.div
                   key={action.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -164,17 +140,23 @@ export default function AllowedActions({ config, updateConfig }) {
                     <CardHeader>
                       <CardTitle className="flex items-center justify-between">
                         <span>{action.name}</span>
-                        {config.selectedActions.find(a => a.id === action.id) ? (
+                        {config.selectedActions.find(
+                          (a) => a.id === action.id
+                        ) ? (
                           <CheckCircle className="h-5 w-5 text-green-500" />
                         ) : null}
                       </CardTitle>
                       <CardDescription>{action.service}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-gray-500 mb-2">{action.description}</p>
+                      <p className="text-sm text-gray-500 mb-2">
+                        {action.description}
+                      </p>
                       <div className="flex flex-wrap gap-2">
-                        {action.tags.map(tag => (
-                          <Badge key={tag} variant="secondary">{tag}</Badge>
+                        {action.tags.map((tag) => (
+                          <Badge key={tag} variant="secondary">
+                            {tag}
+                          </Badge>
                         ))}
                       </div>
                     </CardContent>
@@ -188,7 +170,9 @@ export default function AllowedActions({ config, updateConfig }) {
                           <Info className="h-4 w-4 mr-2" />
                           Details
                         </Button>
-                        {config.selectedActions.find(a => a.id === action.id) ? (
+                        {config.selectedActions.find(
+                          (a) => a.id === action.id
+                        ) ? (
                           <Button
                             variant="destructive"
                             size="sm"
@@ -217,17 +201,21 @@ export default function AllowedActions({ config, updateConfig }) {
         </TabsContent>
         <TabsContent value="selected" className="mt-6">
           <ScrollArea className="h-[600px] rounded-md border p-4">
-            {config.selectedActions.map(action => (
+            {config.selectedActions.map((action) => (
               <Card key={action.id} className="mb-4">
                 <CardHeader>
                   <CardTitle>{action.name}</CardTitle>
                   <CardDescription>{action.service}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-500 mb-2">{action.description}</p>
+                  <p className="text-sm text-gray-500 mb-2">
+                    {action.description}
+                  </p>
                   <div className="flex flex-wrap gap-2">
-                    {action.tags.map(tag => (
-                      <Badge key={tag} variant="secondary">{tag}</Badge>
+                    {action.tags.map((tag) => (
+                      <Badge key={tag} variant="secondary">
+                        {tag}
+                      </Badge>
                     ))}
                   </div>
                 </CardContent>
@@ -262,7 +250,7 @@ export default function AllowedActions({ config, updateConfig }) {
                 <div>
                   <h4 className="font-semibold mb-2">Inputs:</h4>
                   <ul className="list-disc list-inside">
-                    {selectedAction.inputs.map(input => (
+                    {selectedAction.inputs.map((input) => (
                       <li key={input}>{input}</li>
                     ))}
                   </ul>
@@ -270,7 +258,7 @@ export default function AllowedActions({ config, updateConfig }) {
                 <div>
                   <h4 className="font-semibold mb-2">Outputs:</h4>
                   <ul className="list-disc list-inside">
-                    {selectedAction.outputs.map(output => (
+                    {selectedAction.outputs.map((output) => (
                       <li key={output}>{output}</li>
                     ))}
                   </ul>
@@ -278,18 +266,17 @@ export default function AllowedActions({ config, updateConfig }) {
               </div>
             </CardContent>
             <CardFooter className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => setSelectedAction(null)}
-              >
+              <Button variant="outline" onClick={() => setSelectedAction(null)}>
                 Close
               </Button>
-              {config.selectedActions.find(a => a.id === selectedAction.id) ? (
+              {config.selectedActions.find(
+                (a) => a.id === selectedAction.id
+              ) ? (
                 <Button
                   variant="destructive"
                   onClick={() => {
-                    removeAction(selectedAction.id)
-                    setSelectedAction(null)
+                    removeAction(selectedAction.id);
+                    setSelectedAction(null);
                   }}
                 >
                   <X className="h-4 w-4 mr-2" />
@@ -299,8 +286,8 @@ export default function AllowedActions({ config, updateConfig }) {
                 <Button
                   variant="default"
                   onClick={() => {
-                    addAction(selectedAction)
-                    setSelectedAction(null)
+                    addAction(selectedAction);
+                    setSelectedAction(null);
                   }}
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -312,6 +299,5 @@ export default function AllowedActions({ config, updateConfig }) {
         </div>
       )}
     </div>
-  )
+  );
 }
-

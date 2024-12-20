@@ -56,5 +56,3 @@ export default {
   path: "/api/data-source",
   router,
 };
-
-//
