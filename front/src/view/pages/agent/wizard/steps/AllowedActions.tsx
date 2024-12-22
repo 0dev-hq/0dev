@@ -19,7 +19,7 @@ import {
 import { AgentRegistryAction, agentRegistryService } from "@/services/agentRegistryService";
 import { useQuery } from "react-query";
 
-
+// todo: use this for the agent with fixed actions/tools
 
 export default function AllowedActions({ config, updateConfig }) {
   const {

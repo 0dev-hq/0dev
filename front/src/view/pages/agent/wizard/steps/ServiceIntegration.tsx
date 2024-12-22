@@ -9,6 +9,8 @@ import { CheckCircle2, AlertCircle } from 'lucide-react'
 
 const services = ['Slack', 'Zendesk', 'Jira']
 
+// todo: use this for the agent with fixed actions/tools
+
 export default function ServiceIntegration({ config, updateConfig }) {
   const [integrationStatus, setIntegrationStatus] = useState({})
 
