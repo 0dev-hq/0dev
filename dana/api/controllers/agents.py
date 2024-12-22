@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, g, jsonify, request
 from api.services.agent_service import AgentService
 
 agents_bp = Blueprint("agents", __name__)
@@ -39,17 +39,18 @@ def interact_agent(agent_id):
     """
     user_input = request.json.get("input")
     session_id = request.json.get("session_id")
-    account_id = request.json.get(
-        "account_id"
-    )  # todo: get this from the authentication token
+    account_id = g.get("account_id")
 
-    if not user_input or not account_id:
-        return jsonify({"error": "Input and account_id are required."}), 400
+    if not user_input:
+        return jsonify({"error": "Input is required."}), 400
 
-    if not session_id:
-        session_id = agent_service.create_session(agent_id, account_id)
-
-    response = agent_service.save_interaction(
-        session_id, user_input, {"message": "response placeholder"}
-    )
-    return jsonify({"session_id": session_id, "response": response})
+    try:
+        response = agent_service.interact(
+            account_id=account_id,
+            agent_id=agent_id,
+            user_input=user_input,
+            session_id=session_id,
+        )
+        return jsonify(response), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to interact with agent: {str(e)}"}), 500

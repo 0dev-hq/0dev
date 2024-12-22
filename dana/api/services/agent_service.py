@@ -1,9 +1,15 @@
+from api.models.agent import Agent
 from api.models.session import AgentSession
 from api.db import db
+from embodiment.interactors.interactor_factory import InteractorFactory
 
 
 class AgentService:
-    def create_session(self, agent_id: str, account_id: str) -> str:
+
+    def __init__(self):
+        self.interactor = InteractorFactory.create()
+
+    def _create_session(self, agent_id: str, account_id: str) -> str:
         """
         Create a new session and return the session ID.
         """
@@ -30,9 +36,38 @@ class AgentService:
         # Placeholder logic - replace with DB fetch
         return [{"user_input": "example input", "response": "example response"}]
 
-    def get_generated_codes(self, agent_id: str) -> list:
+    def get_generated_codes(self, agent_id: str) -> dict:
         """
         Retrieve all generated codes for an agent.
         """
         # Placeholder logic - replace with DB fetch
         return [{"name": "example_code", "version": 1, "description": "Test code"}]
+
+    def interact(
+        self, account_id: str, agent_id: str, user_input: str, session_id: str = None
+    ):
+        """
+        Engage with the agent to process input and determine actions or perceptions.
+        :param account_id: Account ID associated with the agent.
+        :param agent_id: Agent ID to interact with.
+        :param user_input: Input string from the user.
+        :param session_id: The session ID for this interaction.
+        :return: A dictionary representing the agent's response.
+        """
+
+        # 1. Find the agent's url if it exists. If not, raise an error.
+
+        print(f"filtering by agent_id: {agent_id}, account_id: {account_id}")
+
+        agent = Agent.query.filter_by(agent_id=agent_id, account_id=account_id).first()
+        if not agent:
+            raise ValueError("Agent not found.")
+
+        # 2. Check if a session ID is provided, otherwise create a new session
+        if not session_id:
+            session_id = self._create_session(agent_id, account_id)
+
+        # 3. Interact with the agent
+        print(f"agent url: {agent.deployment_url}")
+        response = self.interactor.interact(user_input, session_id, agent.deployment_url)
+        return response

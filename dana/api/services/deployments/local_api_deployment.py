@@ -1,6 +1,5 @@
 import os
 import sys
-import uuid
 import json
 import subprocess
 import socket
@@ -71,11 +70,12 @@ class LocalAPIDeployment(BaseDeployment):
         env["VIRTUAL_ENV"] = venv_path
 
         # Step 3: Run the agent in a subprocess
+        agent_id = os.path.basename(package_path)
         try:
             process = subprocess.Popen(
                 [sys.executable, "-m", "embodiment.runners.api_runner.main"],
                 env=env,
-                stdout=open(f"./logs/agent_{port}.log", "w"),
+                stdout=open(f"./logs/agent_{agent_id}.log", "w"),
                 stderr=subprocess.STDOUT,
             )
 

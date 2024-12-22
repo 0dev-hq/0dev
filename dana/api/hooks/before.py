@@ -11,8 +11,6 @@ def authenticate():
     Middleware to validate JWT from the Authorization header.
     Attaches `account_id` to the `g` object for global use.
     """
-    print("Authenticating...")
-    print("request.headers: ", request.headers)
     token = request.headers.get("Authorization")
     if not token:
         return jsonify({"error": "Authorization token is missing"}), 401
@@ -20,13 +18,10 @@ def authenticate():
     try:
         if token.startswith("Bearer "):
             token = token.split(" ")[1]
-        
-        print("token: ", token)
-        print(f"secret key:{SECRET_KEY}")
+
         decoded = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        print("decoded: ", decoded)
-        g.account_id = decoded.get("account_id")
-        g.user_id = decoded.get("user_id")
+        g.account_id = decoded.get("account")
+        g.user_id = decoded.get("user")
 
     except ExpiredSignatureError:
         print("Token has expired")

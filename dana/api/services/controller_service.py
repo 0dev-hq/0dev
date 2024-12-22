@@ -14,7 +14,7 @@ class ControllerService:
     """
 
     def __init__(self):
-        self.deployment_strategy = DeploymentFactory.get_strategy()
+        self.deployment_strategy = DeploymentFactory.create()
         self.registry = AgentRegistry()
 
     def list_agents(self):
@@ -78,10 +78,7 @@ class ControllerService:
                 status=AgentStatus.RUNNING,
             )
             db.session.add(new_agent)
-            # debug the db connection details
-            print(f"DB connection details: {db.engine.url}")
-
-            # db.session.commit()
+            db.session.commit()
 
             return {
                 "agent_id": agent_id,

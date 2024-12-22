@@ -1,19 +1,22 @@
+from .base_interactor import BaseInteractor
+from .api_interactor import APIInteractor
 import os
-from api.services.deployments.local_api_deployment import LocalAPIDeployment
-from api.services.deployments.base_deployment import BaseDeployment
 
 
-class DeploymentFactory:
+class InteractorFactory:
     """
-    Factory for creating deployment strategy instances.
+    Factory for creating interactor strategy instances.
     Determines the strategy dynamically based on the environment variable AGENT_DEPLOYMENT_TYPE.
     """
 
     @staticmethod
-    def create() -> BaseDeployment:
+    def create() -> BaseInteractor:
+        """
+        Return an instance of the specified strategy.
+        """
         deployment_type = os.getenv("AGENT_DEPLOYMENT_TYPE", "local_api")
 
         if deployment_type == "local_api":
-            return LocalAPIDeployment()
+            return APIInteractor()
         else:
             raise ValueError(f"Unsupported deployment type: {deployment_type}")
