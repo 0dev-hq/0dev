@@ -7,15 +7,17 @@ class BaseAgent(ABC):
     Provides foundational attributes and enforces implementation of key methods.
     """
 
-    def __init__(self, id: str, name: str, agent_type: str):
+    def __init__(self, id: str, name: str, description: str, agent_type: str):
         """
         Initialize the agent with basic attributes.
         :param id: Unique ID of the agent.
         :param name: Unique name of the agent.
+        :param description: Description of the agent.
         :param agent_type: Type of the agent (e.g., Reactive, Interactive).
         """
         self.id = id
         self.name = name
+        self.description = description
         self.agent_type = agent_type
         self.action_history = []
 

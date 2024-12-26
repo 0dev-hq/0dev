@@ -31,9 +31,6 @@ class LocalAPIDeployment(BaseDeployment):
         agent_path = f"./agents/{agent_id}"
         os.makedirs(agent_path, exist_ok=True)
 
-        # set the agent ID
-        agent_details["id"] = agent_id
-
         config_file = os.path.join(agent_path, "config.json")
         with open(config_file, "w") as f:
             json.dump(agent_details, f, indent=4)

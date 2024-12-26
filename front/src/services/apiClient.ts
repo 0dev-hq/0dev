@@ -3,14 +3,21 @@ import { toast } from "react-toastify";
 
 // API client for general API routes (e.g., /api)
 const apiClient = axios.create({
-  baseURL: `${import.meta.env.VITE_API_BASE_URL}/api`, // Assuming general API routes under /api
+  baseURL: `${import.meta.env.VITE_API_BASE_URL}/api`,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// if the response of any requests via apiClient is 403 show a notification with toastify
+const agentApiClient = axios.create({
+  baseURL: `${import.meta.env.VITE_AGENT_API_BASE_URL}`,
+  timeout: 10000,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -44,8 +51,12 @@ apiClient.interceptors.request.use(configAxios, (error) =>
   Promise.reject(error)
 );
 
+agentApiClient.interceptors.request.use(configAxios, (error) =>
+  Promise.reject(error)
+);
+
 authClient.interceptors.request.use(configAxios, (error) =>
   Promise.reject(error)
 );
 
-export { apiClient, authClient };
+export { apiClient, authClient, agentApiClient };

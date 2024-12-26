@@ -6,7 +6,7 @@ controller_bp = Blueprint("controller", __name__)
 controller_service = ControllerService()
 
 
-@controller_bp.route("/agents", methods=["POST"])
+@controller_bp.route("/agent", methods=["POST"])
 def create_agent():
     """
     Create a new agent.
@@ -14,15 +14,13 @@ def create_agent():
     """
     try:
         data = request.json
-        if not data or "name" not in data:
-            return jsonify({"error": "Agent name and details are required."}), 400
+        # todo: validate input
 
         deployment_info = controller_service.create_agent(data)
         return (
             jsonify(
                 {
-                    "message": f"Agent '{deployment_info['agent_id']}' created successfully.",
-                    "deployment": deployment_info["deployment"],
+                    "agent_id": deployment_info["agent_id"],
                 }
             ),
             201,
@@ -32,7 +30,7 @@ def create_agent():
         return jsonify({"error": f"Failed to create agent: {str(e)}"}), 500
 
 
-@controller_bp.route("/agents/<agent_id>", methods=["PUT"])
+@controller_bp.route("/agent/<agent_id>", methods=["PUT"])
 def update_agent(agent_id):
     """
     Update an agent's configuration.
@@ -45,7 +43,7 @@ def update_agent(agent_id):
     return jsonify({"error": f"Agent '{agent_id}' not found."}), 404
 
 
-@controller_bp.route("/agents", methods=["GET"])
+@controller_bp.route("/agent", methods=["GET"])
 def list_agents():
     """
     List all agents.
@@ -54,7 +52,7 @@ def list_agents():
     return jsonify(agents), 200
 
 
-@controller_bp.route("/agents/<agent_id>", methods=["GET"])
+@controller_bp.route("/agent/<agent_id>", methods=["GET"])
 def get_agent_details(agent_id):
     """
     Get details of a specific agent.
@@ -65,7 +63,7 @@ def get_agent_details(agent_id):
     return jsonify({"error": f"Agent '{agent_id}' not found."}), 404
 
 
-@controller_bp.route("/agents/<agent_id>", methods=["DELETE"])
+@controller_bp.route("/agent/<agent_id>", methods=["DELETE"])
 def delete_agent(agent_id):
     """
     Delete an existing agent.
@@ -76,7 +74,7 @@ def delete_agent(agent_id):
     return jsonify({"error": f"Agent '{agent_id}' not found."}), 404
 
 
-@controller_bp.route("/agents/<agent_id>/pause", methods=["POST"])
+@controller_bp.route("/agent/<agent_id>/pause", methods=["POST"])
 def pause_agent(agent_id):
     """
     Pause an agent if supported.
@@ -87,7 +85,7 @@ def pause_agent(agent_id):
     return jsonify({"error": f"Failed to pause agent '{agent_id}'."}), 400
 
 
-@controller_bp.route("/agents/<agent_id>/scale", methods=["POST"])
+@controller_bp.route("/agent/<agent_id>/scale", methods=["POST"])
 def scale_agent(agent_id):
     """
     Scale an agent.

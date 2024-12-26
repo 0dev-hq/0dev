@@ -1,4 +1,5 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 from flask_migrate import Migrate
 from api.config import Config
 from api.db import db
@@ -18,12 +19,19 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
+    # Enable CORS for the front-end URL
+    frontend_url = os.getenv("FRONTEND_URL", "*")
+    CORS(app, resources={r"/*": {"origins": frontend_url}})
+
     # Initialize database and migration
     db.init_app(app)
     Migrate(app, db, directory="api/migrations")
 
     @app.before_request
     def require_authentication():
+        if request.method == "OPTIONS":
+            return jsonify({"message": "CORS preflight check"}), 200
+
         if request.endpoint not in ["health"]:
             return authenticate()
 

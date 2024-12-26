@@ -5,16 +5,18 @@ agents_bp = Blueprint("agents", __name__)
 agent_service = AgentService()
 
 
-@agents_bp.route("/<agent_id>/sessions", methods=["GET"])
+@agents_bp.route("/<agent_id>/session", methods=["GET"])
 def list_sessions(agent_id):
     """
     List all sessions for a specific agent.
     """
-    sessions = agent_service.get_sessions(agent_id)
+
+    account_id = g.get("account_id")
+    sessions = agent_service.get_sessions(agent_id=agent_id, account_id=account_id)
     return jsonify(sessions), 200
 
 
-@agents_bp.route("/<agent_id>/sessions/<session_id>/history", methods=["GET"])
+@agents_bp.route("/<agent_id>/session/<session_id>/history", methods=["GET"])
 def list_history(agent_id, session_id):
     """
     List the interaction history for a specific session.
@@ -23,7 +25,7 @@ def list_history(agent_id, session_id):
     return jsonify(history), 200
 
 
-@agents_bp.route("/<agent_id>/generated-codes", methods=["GET"])
+@agents_bp.route("/<agent_id>/generated-code", methods=["GET"])
 def list_generated_codes(agent_id):
     """
     List all generated codes for a specific agent.

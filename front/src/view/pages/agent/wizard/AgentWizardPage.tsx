@@ -19,22 +19,33 @@ import DeployAgent from "./steps/DeployAgent";
 
 const steps = [
   "Basic Information",
-  "Integrations",
+  // "Integrations",
   "Intents",
   "Facts",
   "Policy and Permissions",
   "Deploy",
 ];
 
+export type AgentConfig = {
+  name: string;
+  description: string;
+  selectedIntegrations: string[];
+  intents: string[];
+  facts: string[];
+  policies: string[];
+  categories: string[];
+};
+
 export default function AgentWizard() {
   const [currentStep, setCurrentStep] = useState(0);
-  const [agentConfig, setAgentConfig] = useState({
+  const [agentConfig, setAgentConfig] = useState<AgentConfig>({
     name: "",
     description: "",
     selectedIntegrations: [],
     intents: [],
     facts: [],
     policies: [],
+    categories: [],
   });
 
   const handleNext = () => {
@@ -54,35 +65,35 @@ export default function AgentWizard() {
   };
 
   const renderStep = () => {
-    switch (currentStep) {
-      case 0:
+    switch (steps[currentStep]) {
+      case "Basic Information":
         return (
           <AgentInitialization
             config={agentConfig}
             updateConfig={updateConfig}
           />
         );
-      case 1:
+      case "Integrations":
         return (
           <IntegrationSelection
             config={agentConfig}
             updateConfig={updateConfig}
           />
         );
-      case 2:
+      case "Intents":
         return (
           <DefineIntents config={agentConfig} updateConfig={updateConfig} />
         );
-      case 3:
+      case "Facts":
         return <DefineFacts config={agentConfig} updateConfig={updateConfig} />;
-      case 4:
+      case "Policy and Permissions":
         return (
           <PolicyAndPermissions
             config={agentConfig}
             updateConfig={updateConfig}
           />
         );
-      case 5:
+      case "Deploy":
         return <DeployAgent config={agentConfig} />;
       default:
         return null;

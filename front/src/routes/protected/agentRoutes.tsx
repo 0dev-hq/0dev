@@ -1,6 +1,6 @@
 import AgentMarketplacePage from "@/view/pages/agent/AgentMarketPlacePage";
-import AgentPage from "@/view/pages/agent/AgentPage";
-import AgentDashboardPage from "@/view/pages/agent/AgentsDashboardPage";
+import AgentPage from "@/view/pages/agent/single/AgentPage";
+import AgentDashboardPage from "@/view/pages/agent/dashboard/AgentsDashboardPage";
 import MarketplaceAgentDetailsPage from "@/view/pages/agent/MarketplaceAgentDetailsPage";
 import NewAgentPage from "@/view/pages/agent/NewAgentPage";
 

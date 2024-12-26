@@ -10,17 +10,43 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CheckCircle, AlertCircle } from "lucide-react";
+import { CheckCircle } from "lucide-react";
+import { AgentConfig } from "../AgentWizardPage";
+import { useMutation } from "react-query";
+import { agentControllerService } from "@/services/agentControllerService";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
-export default function DeployAgent({ config }) {
+type DeployAgentProps = {
+  config: AgentConfig;
+};
+
+export default function DeployAgent({ config }: DeployAgentProps) {
   const [deploymentStatus, setDeploymentStatus] = useState("idle");
+
+  const navigate = useNavigate();
+
+  const deployMutation = useMutation(agentControllerService.createAgent, {
+    onSuccess: () => {
+      toast.success("Agent create and deployed successfully!");
+      setDeploymentStatus("success");
+      setTimeout(() => {
+        navigate("/agent");
+      }, 2000);
+    },
+  });
 
   const handleDeploy = () => {
     setDeploymentStatus("deploying");
-    // Simulating deployment process
-    setTimeout(() => {
-      setDeploymentStatus("success");
-    }, 3000);
+    const agentConfig = {
+      name: config.name,
+      description: config.description,
+      categories: config.categories,
+      intents: config.intents,
+      facts: config.facts,
+      policies: config.policies,
+    };
+    deployMutation.mutate(agentConfig);
   };
 
   return (
@@ -59,7 +85,7 @@ export default function DeployAgent({ config }) {
                 <h3 className="font-semibold">Defined Intents:</h3>
                 <ul className="list-disc list-inside">
                   {config.intents.map((intent, index) => (
-                    <li key={index}>{intent.name}</li>
+                    <li key={index}>{intent}</li>
                   ))}
                 </ul>
               </div>
@@ -67,12 +93,7 @@ export default function DeployAgent({ config }) {
                 <h3 className="font-semibold">Policies:</h3>
                 <ul className="list-disc list-inside">
                   {config.policies.map((policy, index) => (
-                    <li key={index}>
-                      {policy.intent}:{" "}
-                      {policy.askConfirmation
-                        ? "Ask for confirmation"
-                        : "Autonomous"}
-                    </li>
+                    <li key={index}>{policy}</li>
                   ))}
                 </ul>
               </div>

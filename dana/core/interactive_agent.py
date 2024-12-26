@@ -17,6 +17,7 @@ class InteractiveAgent(BaseAgent):
         self,
         id: str,
         name: str,
+        description: str,
         navigator: Navigator,
         step_handler: StepHandler,
         history_manager: BaseHistoryManager,
@@ -30,6 +31,7 @@ class InteractiveAgent(BaseAgent):
 
         :param id: Unique ID of the agent.
         :param name: Unique name of the agent.
+        :param description: Description of the agent.
         :param navigator: Instance of Navigator for deciding the next step.
         :param step_handler: Instance of StepHandler for handling the next step.
         :param history_manager: Instance of HistoryManager for managing interaction history.
@@ -40,7 +42,7 @@ class InteractiveAgent(BaseAgent):
         :param policies: Set of policies defining agent behavior.
         :param account_id: Account ID associated with the agent.
         """
-        super().__init__(id, name, agent_type="Interactive")
+        super().__init__(id, name, description, agent_type="Interactive")
         self.policies = policies
         self.facts = facts
         self.intents = intents

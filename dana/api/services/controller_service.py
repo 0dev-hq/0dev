@@ -1,7 +1,9 @@
 import traceback
 
 from flask import g
+from sqlalchemy import func
 from api.models.agent import Agent, AgentStatus
+from api.models.session import AgentSession
 from api.db import db
 import uuid
 from api.services.deployments.deployment_factory import DeploymentFactory
@@ -21,14 +23,26 @@ class ControllerService:
         """
         List all agents.
         """
-        agents = Agent.query.all()
+        agents = (
+            db.session.query(
+                Agent.agent_id,
+                Agent.name,
+                Agent.description,
+                Agent.categories,
+                func.count(AgentSession.session_id).label("total_sessions"),
+            )
+            .outerjoin(AgentSession, Agent.agent_id == AgentSession.agent_id)
+            .filter(Agent.account_id == g.get("account_id"))
+            .group_by(Agent.agent_id, Agent.name, Agent.description, Agent.categories)
+            .all()
+        )
         return [
             {
-                "agent_id": agent.agent_id,
+                "id": agent.agent_id,
                 "name": agent.name,
-                "status": agent.status.value,
-                "deployment_url": agent.deployment_url,
-                "created_at": agent.created_at.isoformat(),
+                "description": agent.description,
+                "categories": agent.categories.split(",") if agent.categories else [],
+                "totalSessions": agent.total_sessions,
             }
             for agent in agents
         ]
@@ -61,7 +75,17 @@ class ControllerService:
             agent_id = str(uuid.uuid4())
 
             # Step 1: Package the agent
-            package_path = self.deployment_strategy.package(agent_id, agent_details)
+            # only the required fields are passed to the deployment strategy. Passing unsupported fields BREAKS the agent
+            agent_config = {
+                "id": agent_id,
+                "account_id": g.get("account_id"),
+                "name": agent_details["name"],
+                "description": agent_details.get("description", ""),
+                "intents": agent_details.get("intents", []),
+                "policies": agent_details.get("policies", []),
+                "facts": agent_details.get("facts", []),
+            }
+            package_path = self.deployment_strategy.package(agent_id, agent_config)
 
             # Step 2: Deploy the agent
             deployment_metadata = self.deployment_strategy.deploy(package_path)
@@ -71,11 +95,13 @@ class ControllerService:
                 agent_id=agent_id,
                 account_id=g.get("account_id"),
                 name=agent_details["name"],
+                description=agent_details.get("description", ""),
                 intents=",".join(agent_details.get("intents", [])),
                 policies=",".join(agent_details.get("policies", [])),
                 facts=",".join(agent_details.get("facts", [])),
                 deployment_url=deployment_metadata["url"],
                 status=AgentStatus.RUNNING,
+                categories=",".join(agent_details.get("categories", [])),
             )
             db.session.add(new_agent)
             db.session.commit()

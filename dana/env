@@ -1,0 +1,13 @@
+OPENAI_API_KEY=your-value
+JWT_SECRET=your-value
+FRONTEND_URL=http://localhost:5173
+INTERNAL_DB_USER=your-value
+INTERNAL_DB_PASS=your-value
+INTERNAL_DB_HOST=your-value
+INTERNAL_DB_PORT=your-value
+INTERNAL_DB_NAME=your-value
+AGENT_INTERNAL_DB_USER=your-value
+AGENT_INTERNAL_DB_PASS=your-value
+AGENT_INTERNAL_DB_HOST=your-value
+AGENT_INTERNAL_DB_PORT=your-value
+AGENT_INTERNAL_DB_NAME=your-value

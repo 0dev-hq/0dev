@@ -1,13 +1,13 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 
 interface AgentHeaderProps {
   agent: {
-    name: string
-    type: string
-    status: string
-    avatar: string
-  }
+    name: string;
+    type: string;
+    status: string;
+    avatar: string;
+  };
 }
 
 export function AgentHeader({ agent }: AgentHeaderProps) {
@@ -20,11 +20,14 @@ export function AgentHeader({ agent }: AgentHeaderProps) {
       <div>
         <h1 className="text-2xl font-bold">{agent.name}</h1>
         <p className="text-muted-foreground">{agent.type}</p>
-        <Badge variant={agent.status.toLowerCase() === 'online' ? 'default' : 'secondary'}>
+        <Badge
+          variant={
+            agent.status.toLowerCase() === "online" ? "default" : "secondary"
+          }
+        >
           {agent.status}
         </Badge>
       </div>
     </div>
-  )
+  );
 }
-
