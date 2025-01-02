@@ -25,8 +25,7 @@ class AnswerHandler:
         prompt = self._build_prompt(user_input, context)
         print(f"Generated Answer Prompt: {prompt}")
 
-        # Call the LLM to generate the response
-        llm_response = self.llm_client.answer(prompt=prompt, format="text")
+        llm_response = self.llm_client.answer(prompt=prompt)
         return llm_response.strip()
 
     def _build_prompt(self, user_input: str, context: AgentContext) -> list:
@@ -47,7 +46,9 @@ class AnswerHandler:
         - Policies: {context.get('policies', [])}
         - Interaction History: {context.get('history', [])} if context.get('history') else 'No previous history available.'
         """
-        user_content = f"User's latest input: {user_input}\nProvide a relevant and concise answer."
+        user_content = (
+            f"User's latest input: {user_input}\nProvide a relevant and concise answer."
+        )
 
         return [
             {"role": "system", "content": system_content},

@@ -48,7 +48,7 @@ export function SessionsList({ onSelectSession, agentId }: SessionsListProps) {
         {sessions?.map((session) => (
           <TableRow key={session.sessionId}>
             <TableCell>{session.sessionId}</TableCell>
-            <TableCell>{format(session.createdAt, "PPpp")}</TableCell>
+            <TableCell>{format(session.createAt, "PPpp")}</TableCell>
             <TableCell>
               <Button onClick={() => onSelectSession(session.sessionId)}>
                 Continue

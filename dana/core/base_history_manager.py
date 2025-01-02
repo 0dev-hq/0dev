@@ -20,12 +20,13 @@ class BaseHistoryManager(ABC):
         pass
 
     @abstractmethod
-    def get_history(self, account_id: str, agent_id: str, n: int = 10) -> list:
+    def get_history(self, account_id: str, agent_id: str, session_id: str, n: int = 10) -> list:
         """
-        Retrieve the last 'n' interactions for a given account and agent.
+        Retrieve the last 'n' interactions for a given session.
 
         :param account_id: The ID of the account to filter by.
         :param agent_id: The id of the agent to filter by.
+        :param session_id: The session ID to filter by.
         :param n: The number of recent interactions to return.
         :return: A list of interactions sorted by timestamp in descending order.
         """

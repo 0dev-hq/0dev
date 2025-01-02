@@ -1,7 +1,9 @@
-import json
+import logging
 import traceback
 from core.agent_context import AgentContext
-from core.base_code_generator import BaseCodeGenerator, GeneratedCode
+from core.base_code_generator import BaseCodeGenerator, GeneratedCodeFormat
+
+logger = logging.getLogger(__name__)
 
 
 class InternalCodeGenerator(BaseCodeGenerator):
@@ -9,6 +11,13 @@ class InternalCodeGenerator(BaseCodeGenerator):
     A concrete implementation of BaseCodeGenerator to generate code
     that runs inside the agent.
     """
+
+    def __init__(self, llm_client):
+        """
+        Initialize the InternalCodeGenerator with the LLM client.
+        :param llm_client: The LLM client to generate code.
+        """
+        super().__init__(llm_client)
 
     def _create_prompt(self, user_input, context: AgentContext):
         """
@@ -42,30 +51,23 @@ class InternalCodeGenerator(BaseCodeGenerator):
             },
         ]
 
-    def generate(self, user_input: str, context: AgentContext) -> GeneratedCode:
+    def generate(self, user_input: str, context: AgentContext) -> GeneratedCodeFormat:
         try:
             # Call LLM client to generate code and requirements
+
             response = self.llm_client.answer(
                 prompt=self._create_prompt(user_input, context=context),
-                format="json",
+                formatter=GeneratedCodeFormat,
             )
-            print(f"Generated response: {response}")
-
-            parsed = json.loads(response)
-
-            # Validate the response structure
-            if "code" not in parsed or "requirements" not in parsed:
-                raise ValueError(
-                    "The LLM response is missing 'code' or 'requirements' fields."
-                )
+            logger.info(f"Generated response: {response}")
 
             return {
-                "code": parsed["code"],
-                "requirements": parsed["requirements"],
-                "name": parsed["name"],
-                "description": parsed["description"],
+                "code": response.code,
+                "requirements": response.requirements,
+                "name": response.name,
+                "description": response.description,
             }
         except Exception as e:
-            print(f"Error generating code: {e}")
-            print(f"Error details: {traceback.format_exc()}")
+            logger.error(f"Error generating code: {e}")
+            logger.error(f"Error details: {traceback.format_exc()}")
             return {"code": "", "requirements": [], "name": "", "description": ""}

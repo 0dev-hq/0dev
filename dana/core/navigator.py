@@ -1,10 +1,14 @@
+import logging
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 
 class NextStep(Enum):
     PLAN = "plan"  # Generate a task plan or custom code
     ANSWER = "answer"  # Generate an answer to a question
-    PERCEPTION = "perception"  # Ask for more information or provide options
+    Question = "question"  # Ask for more information
+    Option = "option"  # Provide options to choose from
     CONFIRM_EXECUTION = "confirm_execution"  # Require user confirmation for execution
     EXECUTE = "execute"  # Execute a confirmed plan
     NONE = "none"  # Deny the request
@@ -35,8 +39,7 @@ class Navigator:
         """
 
         next_step = self.llm_client.answer(
-            prompt=self._create_prompt(user_input, context),
-            format="text",
+            prompt=self._create_prompt(user_input, context)
         )
 
         return NextStep(next_step)
@@ -58,14 +61,19 @@ class Navigator:
                 the agent should ask the user for confirmation before executing the plan.
                 Your role is to decide the agent's next step based on user input, history, and the current context.
                 Help the agent move towards the goal of fulfilling the user's request efficiently and effectively.
+                If you're focusing on executing a code (aka plan) according to the user's input and the history of interactions,
+                while you haven't got all the necessary information to pass to the executor,
+                you should generate a question and try to get as much information as possible with a single question.
+                If you can provide options to choose from, you should do so to help the user make a decision.
                 Note that agent is constrained by its intents, policies, and available actions.
                 Your response should be one of the following options without any explanation, punctuation, or additional information or formatting:
-                1. {NextStep.PLAN.value}: Plan to perform an action. This step involves generating a custom code to achieve the user's request.
-                2. {NextStep.PERCEPTION.value}: Ask the user for more information or provide options to choose from when additional details are needed.
-                3. {NextStep.CONFIRM_EXECUTION.value}: Prepare for executing a plan but require explicit confirmation from the user. Show the generated code, dependencies, and gathered inputs for review.
-                4. {NextStep.EXECUTE.value}: Execute a confirmed plan or action. This step can only occur if the user has explicitly approved the plan.
-                5. {NextStep.NONE.value}: Deny the request. This applies if the request is outside the agent's scope, violates policies, or cannot be fulfilled.
-                6. {NextStep.ANSWER.value}: Generate an answer to a question based on the user input and context.
+                1. {NextStep.PLAN.value}: If the agent needs to generate a plan or custom code to fulfill the user's request.
+                2. {NextStep.Question.value}: If the agent needs to ask the user for more information to proceed with the request.
+                3. {NextStep.Option.value}: If the agent needs to provide options to choose from.
+                4. {NextStep.CONFIRM_EXECUTION.value}: If the agent is ready to execute a plan and has already gathered all the necessary information. Confirmation is required before executing the plan.
+                5. {NextStep.EXECUTE.value}: If the agent has received confirmation and is ready to execute the plan. This step can only occur if the user has explicitly approved the plan.
+                6. {NextStep.NONE.value}: If the request is outside the agent's scope, violates policies, or cannot be fulfilled.
+                7. {NextStep.ANSWER.value}: If the agent needs to generate an answer to a question based on the user's input and the context.
                 """,
             },
             {
@@ -95,6 +103,6 @@ class Navigator:
             },
         ]
 
-        print(f"Prompt: {prompt}")
+        logger.info(f"Generated prompt: {prompt}")
 
         return prompt

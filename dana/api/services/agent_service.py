@@ -32,9 +32,20 @@ class AgentService:
     def get_history(self, agent_id: str, session_id: str) -> list:
         """
         Retrieve interaction history for a session.
+
+        :param agent_id: Agent ID to filter by.
+        :param session_id: Session ID to filter by.
         """
-        # Placeholder logic - replace with DB fetch
-        return [{"user_input": "example input", "response": "example response"}]
+
+        # 1. Find the agent's url if it exists. If not, raise an error.
+        agent = Agent.query.filter_by(agent_id=agent_id).first()
+        if not agent:
+            raise ValueError("Agent not found.")
+
+        # 2. Get the history
+        history = self.interactor.get_history(session_id, agent.deployment_url)
+
+        return history
 
     def get_generated_codes(self, agent_id: str) -> dict:
         """
@@ -69,5 +80,7 @@ class AgentService:
 
         # 3. Interact with the agent
         print(f"agent url: {agent.deployment_url}")
-        response = self.interactor.interact(user_input, session_id, agent.deployment_url)
+        response = self.interactor.interact(
+            user_input, session_id, agent.deployment_url
+        )
         return response

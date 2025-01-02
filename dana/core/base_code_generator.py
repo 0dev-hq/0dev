@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 import uuid
-from typing import Any
+from pydantic import BaseModel
 from sqlalchemy import (
     create_engine,
     text,
@@ -18,17 +17,15 @@ from core.agent_context import AgentContext
 import os
 
 
-@dataclass
-class GeneratedCode:
+class GeneratedCodeFormat(BaseModel):
     name: str
     description: str
     code: str
     requirements: str
 
 
-@dataclass
-class GeneratedCodeWithInput:
-    generated_code: GeneratedCode
+class GeneratedCodeWithInput(BaseModel):
+    generated_code: GeneratedCodeFormat
     inputs: dict
     reference_id: str
 
@@ -50,10 +47,12 @@ class BaseCodeGenerator(ABC):
         db_host = os.getenv("INTERNAL_DB_HOST")
         db_port = os.getenv("INTERNAL_DB_PORT")
         db_name = os.getenv("INTERNAL_DB_NAME")
-        return create_engine(f"postgresql+psycopg2://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}")
+        return create_engine(
+            f"postgresql+psycopg2://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}"
+        )
 
     @abstractmethod
-    def generate(self, user_input: str, context: AgentContext) -> GeneratedCode:
+    def generate(self, user_input: str, context: AgentContext) -> GeneratedCodeFormat:
         """
         Generate code based on the given task and context.
         :param user_input: The user's latest input.
@@ -67,7 +66,7 @@ class BaseCodeGenerator(ABC):
         account_id: str,
         agent_id: str,
         session_id: str,
-        generated_code: GeneratedCode,
+        generated_code: GeneratedCodeFormat,
     ) -> str:
         """
         Save the generated code into the database.
@@ -100,10 +99,10 @@ class BaseCodeGenerator(ABC):
                         "account_id": account_id,
                         "agent_id": agent_id,
                         "session_id": session_id,
-                        "name": generated_code["name"],
-                        "description": generated_code["description"],
-                        "code": generated_code["code"],
-                        "requirements": generated_code["requirements"],
+                        "name": generated_code.name,
+                        "description": generated_code.description,
+                        "code": generated_code.code,
+                        "requirements": generated_code.requirements,
                     },
                 )
                 session.commit()
@@ -129,15 +128,21 @@ class BaseCodeGenerator(ABC):
         :return: Generated code with inputs and reference_id if found, None otherwise.
         """
         try:
+
+            class AgentGeneratedCodeFormat(BaseModel):
+                reference_id: str
+                version: str
+                inputs: dict
+
             # Use LLM client to infer reference_id and version
             response = self.llm_client.answer(
-                prompt=self._build_inference_prompt(context), format="json"
+                prompt=self._build_inference_prompt(context),
+                formatter=AgentGeneratedCodeFormat,
             )
 
-            reference_id = response.get("reference_id")
-            version = response.get(
-                "version", "latest"
-            )  # Default to 'latest' if version not specified
+            reference_id = response.reference_id
+            # default to 'latest' if not specified
+            version = response.version or "latest"
 
             # Validate reference_id
             if not reference_id:
@@ -165,8 +170,11 @@ class BaseCodeGenerator(ABC):
             if result:
                 name, description, code, requirements = result
                 return GeneratedCodeWithInput(
-                    generated_code=GeneratedCode(name, description, code, requirements),
-                    inputs=response.get("inputs", {}),
+                    generated_code=GeneratedCodeFormat(
+                        name, description, code, requirements
+                    ),
+                    # default to empty dict if no inputs provided
+                    inputs=response.inputs or {},
                     reference_id=reference_id,
                 )
 
@@ -211,7 +219,7 @@ class BaseCodeGenerator(ABC):
         agent_id: str,
         session_id: str,
         reference_id: str,
-        generated_code: GeneratedCode,
+        generated_code: GeneratedCodeFormat,
     ) -> bool:
         """
         Add a new version of the generated code to the database.

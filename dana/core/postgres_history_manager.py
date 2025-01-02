@@ -99,12 +99,13 @@ class PostgresHistoryManager(BaseHistoryManager):
             )
             session.commit()
 
-    def get_history(self, account_id: str, agent_id: str, n: int = 10) -> list:
+    def get_history(self, account_id: str, agent_id: str, session_id: str, n: int = 10) -> list:
         """
-        Retrieve the last 'n' interactions for a given account and agent.
+        Retrieve the last 'n' interactions for a given session.
         
         :param account_id: The ID of the account to filter by.
         :param agent_id: The id of the agent to filter by.
+        :param session_id: The session ID to filter by.
         :param n: The number of recent interactions to return.
         :return: A list of interactions sorted by timestamp in descending order.
         """
@@ -113,11 +114,11 @@ class PostgresHistoryManager(BaseHistoryManager):
                 text("""
                     SELECT timestamp, interaction
                     FROM interaction_history
-                    WHERE account_id = :account_id AND agent_id = :agent_id
+                    WHERE account_id = :account_id AND agent_id = :agent_id AND session_id = :session_id
                     ORDER BY timestamp DESC
                     LIMIT :n
                 """),
-                {"account_id": account_id, "agent_id": agent_id, "n": n}
+                {"account_id": account_id, "agent_id": agent_id, "session_id": session_id, "n": n}
             ).fetchall()
             return [{"timestamp": row[0], "interaction": row[1]} for row in result]
 
@@ -156,7 +157,7 @@ class PostgresHistoryManager(BaseHistoryManager):
                 {"role": "system", "content": "You are a summarizer that creates very concise summaries of an agent's interactions."},
                 {"role": "user", "content": f"Current Summary: {current_summary}\nNew Interaction: {new_interaction}\nUpdate the summary to include the new interaction."}
             ]
-            response = self.llm_client.answer(prompt=prompt, format="text")
+            response = self.llm_client.answer(prompt=prompt)
             return response.strip()
         except Exception as e:
             print(f"Error generating updated summary: {e}")

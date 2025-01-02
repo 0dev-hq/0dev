@@ -6,16 +6,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { agentService } from "@/services/agentService";
+import { agentService, InteractionResponse } from "@/services/agentService";
 import { useMutation } from "react-query";
 import { TypingIndicator } from "./TypingIndicator";
-
-interface Message {
-  id: number;
-  sender: "user" | "agent";
-  content: string;
-  timestamp: string;
-}
+import { InteractionMessage } from "./chatbox-messages/messageTypes";
+import { MessageFactory } from "./chatbox-messages/MessageBubbleFactory";
 
 interface ChatBoxProps {
   agentId: string;
@@ -24,7 +19,7 @@ interface ChatBoxProps {
 }
 
 export function ChatBox({ agentId, agentName, sessionId }: ChatBoxProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<InteractionMessage[]>([]);
   const [input, setInput] = useState("");
   const [isAgentTyping, setIsAgentTyping] = useState(false);
 
@@ -39,119 +34,75 @@ export function ChatBox({ agentId, agentName, sessionId }: ChatBoxProps) {
       input: string;
     }) => agentService.interact(agentId, sessionId, input),
     {
-      onSuccess: () => {
-        const newAgentMessage: Message = {
-          id: messages.length + 1,
-          sender: "agent",
-          content: "response",
-          timestamp: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        };
-
-        setMessages((prevMessages) => [...prevMessages, newAgentMessage]);
+      onSuccess: (response: InteractionResponse) => {
+        setMessages((prevMessages) => [...prevMessages, response]);
         setIsAgentTyping(false);
       },
       onError: () => {
         setIsAgentTyping(false);
-      }
+      },
+    }
+  );
+
+  const { mutate: loadInteractionHistory, isLoading } = useMutation(
+    () => agentService.loadChatHistory(agentId, sessionId),
+    {
+      onSuccess: (history: InteractionMessage[]) => {
+        console.log(JSON.stringify(history, null, 2));
+        setMessages(history);
+      },
+      onError: () => {
+        setMessages([]);
+      },
+      onSettled: () => {
+      },
     }
   );
 
   useEffect(() => {
     if (sessionId) {
-      // Fetch messages for the selected session
-      // This is a mock implementation. Replace with actual API call.
-      const mockMessages: Message[] = [
-        {
-          id: 1,
-          sender: "agent",
-          content: `Continuing session ${sessionId}. How can I assist you further?`,
-          timestamp: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        },
-        {
-          id: 2,
-          sender: "agent",
-          content: `Hello 2! I'm ${agentName}. How can I assist you today?`,
-          timestamp: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        },
-      ];
-      setMessages(mockMessages);
+      loadInteractionHistory();
     } else {
-      setMessages([
-        {
-          id: 1,
-          sender: "agent",
-          content: `Hello! I'm ${agentName}. How can I assist you today?`,
-          timestamp: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        },
-      ]);
+      setMessages([]);
     }
-  }, [sessionId, agentName]);
+  }, [sessionId, loadInteractionHistory]);
 
-  const handleSendMessage = () => {
-    if (input.trim() === "") return;
-
-    setIsAgentTyping(true);
-
-    const newUserMessage: Message = {
-      id: messages.length + 1,
-      sender: "user",
-      content: input,
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+  const handleSendMessage = (content: string) => {
+    const newUserMessage: InteractionMessage = {
+      type: "user_input",
+      content,
     };
 
     setMessages((prevMessages) => [...prevMessages, newUserMessage]);
     setInput("");
+    setIsAgentTyping(true);
 
     interactMutation.mutate({
       agentId,
       sessionId,
       input,
     });
-
-    // // Simulate agent response
-    // setTimeout(() => {
-    //   const newAgentMessage: Message = {
-    //     id: messages.length + 2,
-    //     sender: "agent",
-    //     content: `This is a response from ${agentName}${
-    //       sessionId ? ` in session ${sessionId}` : ""
-    //     }.`,
-    //     timestamp: new Date().toLocaleTimeString([], {
-    //       hour: "2-digit",
-    //       minute: "2-digit",
-    //     }),
-    //   };
-
-    //   setMessages((prevMessages) => [...prevMessages, newAgentMessage]);
-    // }, 1000);
   };
+
+  const handleStructuredResponse = (response: string) => {
+    handleSendMessage(response);
+  };
+
+  if (isLoading) {
+    return <div>Loading chat history...</div>;
+  }
 
   return (
     <div className="flex flex-col h-[600px]">
       <ScrollArea className="flex-grow pr-4">
-        {messages.map((message) => (
+        {messages.map((message, index) => (
           <div
-            key={message.id}
+            key={index}
             className={`flex items-start mb-4 ${
-              message.sender === "user" ? "justify-end" : "justify-start"
+              message.type === "user_input" ? "justify-end" : "justify-start"
             }`}
           >
-            {message.sender === "agent" && (
+            {message.type !== "user_input" && (
               <Avatar className="h-8 w-8 mr-2">
                 <AvatarImage
                   src="/placeholder.svg?height=32&width=32"
@@ -160,18 +111,10 @@ export function ChatBox({ agentId, agentName, sessionId }: ChatBoxProps) {
                 <AvatarFallback>{agentName[0]}</AvatarFallback>
               </Avatar>
             )}
-            <div
-              className={`rounded-lg p-3 max-w-[70%] ${
-                message.sender === "user"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted"
-              }`}
-            >
-              <p>{message.content}</p>
-              <span className="text-xs opacity-50 mt-1 block">
-                {message.timestamp}
-              </span>
-            </div>
+            <MessageFactory
+              message={message}
+              onResponse={handleStructuredResponse}
+            />
           </div>
         ))}
         {isAgentTyping && (
@@ -191,7 +134,7 @@ export function ChatBox({ agentId, agentName, sessionId }: ChatBoxProps) {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            handleSendMessage();
+            handleSendMessage(input);
           }}
           className="flex items-center space-x-2"
         >

@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 from core.answer_handler import AnswerHandler
 from core.interactive_agent import InteractiveAgent
 from core.internal_code_generator import InternalCodeGenerator
@@ -31,8 +32,15 @@ def load_agent_config(config_path: str) -> dict:
         return json.load(config_file)
 
 
+def configure_logger(agent_id: str) -> object:
+    """
+    Configure the logger for the agent.
+    """
+    logging.basicConfig(format=f"{agent_id}- %(asctime)s ::: %(message)s", level=logging.INFO)
+
+
 if __name__ == "__main__":
-    # Load configuration path from environment variable
+
     print("Loading agent configuration...")
     config_path = os.getenv("AGENT_CONFIG_PATH")
     if not config_path:
@@ -40,6 +48,8 @@ if __name__ == "__main__":
 
     # Load agent configuration
     agent_config = load_agent_config(config_path)
+
+    configure_logger(agent_id=agent_config["id"])
 
     # Initialize dependencies
     llm_client = OpenAIClient(api_key=os.getenv("OPENAI_API_KEY"))

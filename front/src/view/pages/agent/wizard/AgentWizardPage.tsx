@@ -16,8 +16,10 @@ import DefineIntents from "./steps/DefineIntents";
 import DefineFacts from "./steps/DefineFacts";
 import PolicyAndPermissions from "./steps/PolicyAndPermissions";
 import DeployAgent from "./steps/DeployAgent";
+import YamlUpload from "./components/YamlUpload";
 
 const steps = [
+  "Configuration File Upload",
   "Basic Information",
   // "Integrations",
   "Intents",
@@ -64,8 +66,14 @@ export default function AgentWizard() {
     setAgentConfig({ ...agentConfig, ...newData });
   };
 
+  const handleConfigLoaded = (loadedConfig: any) => {
+    updateConfig(loadedConfig);
+  };
+
   const renderStep = () => {
     switch (steps[currentStep]) {
+      case "Configuration File Upload":
+        return <YamlUpload onConfigLoaded={handleConfigLoaded} />;
       case "Basic Information":
         return (
           <AgentInitialization

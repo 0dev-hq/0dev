@@ -1,19 +1,27 @@
+import { InteractionMessage } from "@/view/pages/agent/single/components/chatbox-messages/messageTypes";
 import { agentApiClient } from "./apiClient";
 
 export type AgentSession = {
   sessionId: string;
-  createdAt: string;
+  createAt: string;
 };
 
 const baseRoute = "agent";
 
 export const agentService = {
   async listSessions(agentId: string): Promise<AgentSession[]> {
+    type RawAgentSession = {
+      session_id: string;
+      created_at: string;
+    };
     try {
-      const response = await agentApiClient.get(
+      const response = await agentApiClient.get<RawAgentSession[]>(
         `${baseRoute}/${agentId}/session`
       );
-      return response.data;
+      return response.data?.map((session) => ({
+        sessionId: session.session_id,
+        createAt: session.created_at,
+      }));
     } catch (error) {
       console.error("Error listing agents", error);
       throw error;
@@ -24,7 +32,7 @@ export const agentService = {
     agentId: string,
     sessionId: string,
     input: string
-  ): Promise<string> {
+  ): Promise<InteractionMessage> {
     try {
       const response = await agentApiClient.post(
         `${baseRoute}/${agentId}/interact`,
@@ -36,6 +44,25 @@ export const agentService = {
       return response.data;
     } catch (error) {
       console.error("Error interacting with agent", error);
+      throw error;
+    }
+  },
+
+  async loadChatHistory(
+    agentId: string,
+    sessionId: string
+  ): Promise<InteractionMessage[]> {
+    try {
+      type RawInteractionHistory = {
+        interaction: InteractionMessage;
+        timestamp: string;
+      };
+      const response = await agentApiClient.get<RawInteractionHistory[]>(
+        `${baseRoute}/${agentId}/session/${sessionId}/history`
+      );
+      return response.data?.map((history) => history.interaction);
+    } catch (error) {
+      console.error("Error loading chat history", error);
       throw error;
     }
   },

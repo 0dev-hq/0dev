@@ -21,24 +21,16 @@ class BaseAgent(ABC):
         self.agent_type = agent_type
         self.action_history = []
 
-    # @abstractmethod
-    # def get_identity(self) -> str:
-    #     """
-    #     Return the identity of the agent.
-    #     """
-    #     pass
+    @abstractmethod
+    def get_identity(self) -> dict:
+        """
+        Return the identity of the agent.
+        """
+        pass
 
-    # @abstractmethod
-    # def log_action(self, action: str):
-    #     """
-    #     Log the action performed by the agent.
-    #     :param action: Description of the action.
-    #     """
-    #     pass
-
-    # @abstractmethod
-    # def get_action_history(self) -> list:
-    #     """
-    #     Return the history of actions performed by the agent.
-    #     """
-    #     pass
+    @abstractmethod
+    def get_history(self) -> list:
+        """
+        Return the history of interactions with the agent.
+        """
+        pass

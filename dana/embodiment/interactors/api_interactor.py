@@ -1,4 +1,4 @@
-from requests import post
+from requests import post, get, exceptions
 
 from .base_interactor import BaseInteractor
 
@@ -24,7 +24,26 @@ class APIInteractor(BaseInteractor):
                 json=payload,
                 headers=headers,
             )
+            response.raise_for_status()
             return response.json()
-        except Exception as e:
-            print(f"opps issue error: {str(e)}")
-            return {"error": f"ops issue: {str(e)}"}
+        except exceptions.RequestException as e:
+            print(f"Error interacting with agent: {str(e)}")
+            return {"error": f"Error interacting with agent: {str(e)}"}
+
+    def get_history(self, session_id: str, agent_url: str) -> dict:
+        """
+        Retrieve interaction history for a session.
+
+        :param session_id: Session ID to filter by.
+        :param agent_url: The URL of the agent to interact with.
+        :return: A dictionary representing the interaction history.
+        """
+        url = f"{agent_url}/history"
+
+        try:
+            response = get(url, params={"session_id": session_id})
+            response.raise_for_status()
+            return response.json()
+        except exceptions.RequestException as e:
+            print(f"Error retrieving history: {str(e)}")
+            return {"error": f"Error retrieving history: {str(e)}"}

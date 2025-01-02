@@ -55,7 +55,12 @@ class InteractiveAgent(BaseAgent):
         """
         Return the identity of the agent.
         """
-        return f"Interactive Agent: {self.name}"
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "account_id": self.account_id,
+        }
 
     def interact(self, user_input: str, session_id: str):
         """
@@ -70,6 +75,7 @@ class InteractiveAgent(BaseAgent):
 
         next_step_type = self.navigator.get_next_step_type(user_input, context)
         print(f"Next Step Type: {next_step_type}")
+        self._save_user_input(session_id, user_input)
 
         response = self.step_handler.handle_step(
             step_type=next_step_type,
@@ -99,18 +105,28 @@ class InteractiveAgent(BaseAgent):
             "policies": self.policies,
         }
 
-    def _save_interaction(self, session_id: str, user_input: str, response: dict):
+    def _save_user_input(self, session_id: str, user_input: str):
         """
-        Save the interaction to the history manager.
+        Save the user's input to the interaction history.
 
         :param session_id: The session ID for this interaction.
         :param user_input: The user's input string.
-        :param response: The agent's response or action plan.
         """
-        interaction = {"user_input": user_input, "response": response}
+        interaction = {"type": "user_input", "content": user_input}
         self.history_manager.save_interaction(
             account_id=self.account_id,
             agent_id=self.id,
             session_id=session_id,
             interaction=interaction,
+        )
+
+    def get_history(self, session_id: str):
+        """
+        Retrieve the interaction history for a given session.
+
+        :param session_id: The session ID to filter by.
+        :return: A list of interactions sorted by timestamp in descending order.
+        """
+        return self.history_manager.get_history(
+            account_id=self.account_id, agent_id=self.id, session_id=session_id
         )

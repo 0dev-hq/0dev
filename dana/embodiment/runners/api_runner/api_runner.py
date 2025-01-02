@@ -50,7 +50,18 @@ class APIRunner:
             self.logger.info(f"Received input: {user_input}")
 
             response = self.agent.interact(user_input, session_id)
-            return jsonify({"response": response})
+            return jsonify(response)
+
+        @self.app.route("/history", methods=["GET"])
+        def history():
+            session_id = request.args.get("session_id", "")
+            if not session_id:
+                self.logger.error("Missing session_id in request.")
+                return jsonify({"error": "Required field(s) missing."}), 400
+            self.logger.info(f"Retrieving history for session: {session_id}")
+
+            history = self.agent.get_history(session_id)
+            return jsonify(history)
 
         @self.app.route("/status", methods=["GET"])
         def status():
