@@ -1,13 +1,17 @@
 from abc import ABC, abstractmethod
 from collections import namedtuple
+import json
 import uuid
 import secrets
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 import os
 
+from core.perception_handler import InputItemFormat
+
 
 CreateJobResult = namedtuple("CreateJobResult", ["job_id", "secret"])
+
 
 class BaseCodeExecutor(ABC):
     def __init__(self):
@@ -31,8 +35,8 @@ class BaseCodeExecutor(ABC):
             session.execute(
                 text(
                     """
-                    INSERT INTO jobs (account_id, agent_id, job_id, session_id, status, secret)
-                    VALUES (:account_id, :agent_id, :job_id, :session_id, 'pending', :secret)
+                    INSERT INTO agent_jobs (account_id, agent_id, job_id, session_id, status, secret, created_at)
+                    VALUES (:account_id, :agent_id, :job_id, :session_id, 'pending', :secret, NOW())
                 """
                 ),
                 {
@@ -47,21 +51,36 @@ class BaseCodeExecutor(ABC):
         return CreateJobResult(job_id=job_id, secret=secret)
 
     def update_job_status(self, job_id, status, secret, result=None):
+
+        serialized_result = json.dumps(result) if result else None
         with self.Session() as session:
+
             session.execute(
                 text(
                     """
-                    UPDATE jobs
+                    UPDATE agent_jobs
                     SET status = :status, updated_at = NOW(), result = COALESCE(:result, result)
                     WHERE job_id = :job_id AND secret = :secret
                 """
                 ),
-                {"status": status, "result": result, "job_id": job_id, "secret": secret},
+                {
+                    "status": status,
+                    "result": serialized_result,
+                    "job_id": job_id,
+                    "secret": secret,
+                },
             )
             session.commit()
 
     @abstractmethod
-    def execute_job(self, job_id, secret, code, requirements, inputs):
+    def execute_job(
+        self,
+        job_id: str,
+        secret: str,
+        code: str,
+        requirements: list,
+        inputs: list[InputItemFormat],
+    ):
         """
         Execute the job and update its status in the database.
         :param job_id: The job ID.

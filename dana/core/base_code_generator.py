@@ -4,30 +4,35 @@ from pydantic import BaseModel
 from sqlalchemy import (
     create_engine,
     text,
-    Column,
-    Integer,
-    String,
-    DateTime,
-    JSON,
-    Table,
-    MetaData,
 )
 from sqlalchemy.orm import sessionmaker
 from core.agent_context import AgentContext
 import os
+import logging
+
+from core.perception_handler import InputItemFormat
+
+
+logger = logging.getLogger(__name__)
 
 
 class GeneratedCodeFormat(BaseModel):
     name: str
     description: str
     code: str
-    requirements: str
+    requirements: list[str]
 
 
 class GeneratedCodeWithInput(BaseModel):
     generated_code: GeneratedCodeFormat
-    inputs: dict
+    inputs: list[InputItemFormat]
     reference_id: str
+
+
+class AgentGeneratedCodeFormat(BaseModel):
+    reference_id: str
+    version: str
+    inputs: list[InputItemFormat]
 
 
 class BaseCodeGenerator(ABC):
@@ -102,7 +107,7 @@ class BaseCodeGenerator(ABC):
                         "name": generated_code.name,
                         "description": generated_code.description,
                         "code": generated_code.code,
-                        "requirements": generated_code.requirements,
+                        "requirements": ",".join(generated_code.requirements) if generated_code.requirements else "",
                     },
                 )
                 session.commit()
@@ -129,16 +134,15 @@ class BaseCodeGenerator(ABC):
         """
         try:
 
-            class AgentGeneratedCodeFormat(BaseModel):
-                reference_id: str
-                version: str
-                inputs: dict
+            logger.info("inside get_code_with_input")
 
             # Use LLM client to infer reference_id and version
             response = self.llm_client.answer(
                 prompt=self._build_inference_prompt(context),
                 formatter=AgentGeneratedCodeFormat,
             )
+
+            logger.info(f"LLM response: {response}")
 
             reference_id = response.reference_id
             # default to 'latest' if not specified
@@ -154,15 +158,20 @@ class BaseCodeGenerator(ABC):
             query = """
                 SELECT name, description, code, requirements
                 FROM agent_generated_codes
-                WHERE account_id = %s AND agent_id = %s AND session_id = %s AND reference_id = %s
+                WHERE account_id = :account_id AND agent_id = :agent_id AND session_id = :session_id AND reference_id = :reference_id
             """
-            params = [account_id, agent_id, session_id, reference_id]
+            params = {
+                "account_id": account_id,
+                "agent_id": agent_id,
+                "session_id": session_id,
+                "reference_id": reference_id,
+            }
 
-            if version == "latest":
-                query += " ORDER BY version DESC LIMIT 1"
+            if version != "latest":
+                query += " AND version = :version"
+                params["version"] = version
             else:
-                query += " AND version = %s"
-                params.append(version)
+                query += " ORDER BY version DESC LIMIT 1"
 
             with self.Session() as session:
                 result = session.execute(text(query), params).fetchone()
@@ -171,16 +180,20 @@ class BaseCodeGenerator(ABC):
                 name, description, code, requirements = result
                 return GeneratedCodeWithInput(
                     generated_code=GeneratedCodeFormat(
-                        name, description, code, requirements
+                        name=name,
+                        description=description,
+                        code=code,
+                        requirements=requirements.split(",") if requirements else [],
                     ),
                     # default to empty dict if no inputs provided
-                    inputs=response.inputs or {},
+                    inputs=response.inputs or [],
                     reference_id=reference_id,
                 )
 
         except Exception as e:
             print(f"Error retrieving generated code: {e}")
-        return None
+            # throw exception to be caught by the caller
+            raise e
 
     def _build_inference_prompt(self, context: AgentContext) -> list[dict]:
         """
@@ -201,8 +214,7 @@ class BaseCodeGenerator(ABC):
                 "role": "user",
                 "content": f"""
                     Given the following context:
-                    History: {context.history}
-                    Facts: {context.facts}
+                    History of interactions with the user: {context.get('history', 'No history available')}
                     Please determine:
                     1. The reference_id of the relevant code.
                     2. The version of the code (set to 'latest' if not specified).

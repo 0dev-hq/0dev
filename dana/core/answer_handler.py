@@ -41,10 +41,10 @@ class AnswerHandler:
         interactions. Be precise and helpful in your answer.
 
         Context:
-        - Intents: {context.get('intents', [])}
-        - Facts: {context.get('facts', [])}
-        - Policies: {context.get('policies', [])}
-        - Interaction History: {context.get('history', [])} if context.get('history') else 'No previous history available.'
+        - Intents: {context.get('intents', 'No intents available')}
+        - Facts: {context.get('facts', 'No facts available')}
+        - Policies: {context.get('policies', 'No policies available')}
+        - Interaction History: {context.get('history', 'No history available')}ß
         """
         user_content = (
             f"User's latest input: {user_input}\nProvide a relevant and concise answer."

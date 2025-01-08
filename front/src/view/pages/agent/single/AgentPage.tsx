@@ -25,9 +25,7 @@ const agent = {
 };
 
 export default function AgentPage() {
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
-    null
-  );
+  const [selectedSessionId, setSelectedSessionId] = useState<string>();
   const [activeTab, setActiveTab] = useState("chat");
 
   const params = useParams<{ id: string }>();
@@ -83,7 +81,12 @@ export default function AgentPage() {
               <CardTitle>Chat with {agent.name}</CardTitle>
             </CardHeader>
             <CardContent>
-              <ChatBox agentId={agentId} agentName={agent.name} sessionId={selectedSessionId} />
+              <ChatBox
+                agentId={agentId}
+                agentName={agent.name}
+                sessionId={selectedSessionId}
+                onSelectSession={handleSelectSession}
+              />
             </CardContent>
           </Card>
         </TabsContent>

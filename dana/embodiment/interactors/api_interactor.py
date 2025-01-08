@@ -24,7 +24,6 @@ class APIInteractor(BaseInteractor):
                 json=payload,
                 headers=headers,
             )
-            response.raise_for_status()
             return response.json()
         except exceptions.RequestException as e:
             print(f"Error interacting with agent: {str(e)}")

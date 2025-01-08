@@ -9,7 +9,7 @@ class AgentService:
     def __init__(self):
         self.interactor = InteractorFactory.create()
 
-    def _create_session(self, agent_id: str, account_id: str) -> str:
+    def create_session(self, agent_id: str, account_id: str) -> str:
         """
         Create a new session and return the session ID.
         """
@@ -74,11 +74,10 @@ class AgentService:
         if not agent:
             raise ValueError("Agent not found.")
 
-        # 2. Check if a session ID is provided, otherwise create a new session
         if not session_id:
-            session_id = self._create_session(agent_id, account_id)
+            raise ValueError("Session ID is required.")
 
-        # 3. Interact with the agent
+        # 2. Interact with the agent
         print(f"agent url: {agent.deployment_url}")
         response = self.interactor.interact(
             user_input, session_id, agent.deployment_url

@@ -5,7 +5,7 @@ export function ErrorMessageBubble({ message }: { message: ErrorMessage }) {
   return (
     <MessageBubble>
       <p className="text-red-500 font-bold">Error:</p>
-      <p>{message.message}</p>
+      <p>{message.content}</p>
     </MessageBubble>
   );
 }

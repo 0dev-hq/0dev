@@ -1,4 +1,5 @@
-import json
+import logging
+import traceback
 from core.agent_context import AgentContext
 from core.answer_handler import AnswerHandler
 from core.base_code_executor import BaseCodeExecutor
@@ -6,6 +7,8 @@ from core.base_code_generator import BaseCodeGenerator
 from core.base_history_manager import BaseHistoryManager
 from core.navigator import NextStep
 from core.perception_handler import PerceptionHandler
+
+logger = logging.getLogger(__name__)
 
 
 class StepHandler:
@@ -36,7 +39,6 @@ class StepHandler:
         self.perception_handler = perception_handler
         self.answer_handler = answer_handler
         self.code_executor = code_executor
-        self.interactions = []  # Collect interactions during the session
 
     def handle_step(
         self,
@@ -81,7 +83,7 @@ class StepHandler:
                 )
             elif step_type == NextStep.EXECUTE:
                 response = self._handle_execution(
-                    user_input, context, session_id, account_id, agent_id
+                    context, session_id, account_id, agent_id
                 )
             elif step_type == NextStep.NONE:
                 response = self._handle_none()
@@ -91,23 +93,13 @@ class StepHandler:
                     context,
                 )
             else:
-                response = self._handle_error(
-                    step_type, session_id, account_id, agent_id
-                )
+                logger.error(f"Invalid step type: {step_type}")
+                response = self._handle_error(f"Invalid step type: {step_type}")
         except Exception as e:
+            logger.error(f"Error handling step: {traceback.format_exc()}")
             response = self._handle_error(str(e))
         finally:
-            self._save_interaction(user_input, response)
             return response
-
-    def finalize_interactions(self, account_id: str, agent_id: str, session_id: str):
-        """
-        Save all collected interactions at once.
-        """
-        self.history_manager.save_interaction(
-            account_id, agent_id, session_id, self.interactions
-        )
-        self.interactions = []  # Reset interactions after saving
 
     def _handle_plan(
         self,
@@ -119,6 +111,7 @@ class StepHandler:
     ) -> dict:
         # Generate code using the code generator
         generated_code = self.code_generator.generate(user_input, context)
+        logger.info(f"Generated code: {generated_code}")
         reference_id = self.code_generator.save_code(
             account_id=account_id,
             agent_id=agent_id,
@@ -127,10 +120,11 @@ class StepHandler:
         )
 
         return {
-            "type": "action",
-            "plan": {
+            "type": "plan",
+            "content": {
                 "name": generated_code.name,
                 "code": generated_code.code,
+                "description": generated_code.description,
                 "requirements": generated_code.requirements,
                 "reference_id": reference_id,
             },
@@ -168,7 +162,7 @@ class StepHandler:
         confirmation = self.perception_handler.generate_confirmation(
             user_input, context
         )
-        return {"type": "confirmation", "content": confirmation}
+        return {"type": "confirmation", "content": confirmation.model_dump()}
 
     def _handle_execution(
         self,
@@ -177,24 +171,28 @@ class StepHandler:
         account_id: str,
         agent_id: str,
     ) -> dict:
-        (generated_code, inputs, reference_id) = (
-            self.code_generator.get_code_with_input(
-                account_id, agent_id, session_id, context
-            )
+        logger.info("Handling execution step")
+        generatedCodeWithInput = self.code_generator.get_code_with_input(
+            account_id, agent_id, session_id, context
         )
+
+        logger.info(f"Executing code: {generatedCodeWithInput.generated_code.code}")
+        logger.info(f"Inputs: {generatedCodeWithInput.inputs}")
+        logger.info(f"Reference ID: {generatedCodeWithInput.reference_id}")
+
         (job_id, secret) = self.code_executor.create_job(
             account_id=account_id, agent_id=agent_id, session_id=session_id
         )
         self.code_executor.execute_job(
             job_id=job_id,
             secret=secret,
-            code=generated_code.code,
-            requirements=generated_code.requirements,
-            inputs=inputs,
+            code=generatedCodeWithInput.generated_code.code,
+            requirements=generatedCodeWithInput.generated_code.requirements,
+            inputs=generatedCodeWithInput.inputs,
         )
         return {
             "type": "execution",
-            "content": f"Scheduled job {job_id} for execution for code {reference_id} with inputs {inputs}",
+            "content": f"Scheduled job {job_id} for execution for code {generatedCodeWithInput.reference_id} with inputs {generatedCodeWithInput.inputs}",
         }
 
     def _handle_none(
@@ -205,16 +203,6 @@ class StepHandler:
 
     def _handle_error(
         self,
-        step_type: str,
+        error_message: str,
     ) -> dict:
-        error_message = f"Invalid step type determined: {step_type}"
         return {"type": "error", "content": error_message}
-
-    def _save_interaction(
-        self,
-        user_input: str,
-        response: dict,
-    ):
-        # todo: only save the response, user_input should be saved separately
-        interaction = {"user_input": user_input, "response": response}
-        self.interactions.append(interaction)

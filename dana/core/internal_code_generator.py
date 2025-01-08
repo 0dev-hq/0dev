@@ -38,15 +38,26 @@ class InternalCodeGenerator(BaseCodeGenerator):
                 "role": "user",
                 "content": f"""
                     User's latest input: {user_input}
-                    Allowed agent intents: {', '.join(context.get('intents', []))}
-                    Facts: {', '.join(context.get('facts', []))}
-                    Policies: {', '.join(context.get('policies', []))}
-                    Communication history: {', '.join(context.get('history', []))}
-                    Output the result as a JSON object with two properties: "code" and "requirements.
-                    - code: Python code fulfilling the task. The code shouldn't use any placeholder values and environment variables. All inputs must be passed as function arguments.
-                    - requirements: List of Python packages required for the code.
+                    Allowed agent intents: {context.get('intents', 'No intents available')}
+                    Facts: {context.get('facts', 'No facts available')}
+                    Policies: {context.get('policies', 'No policies available')}
+                    Communication history: {context.get('history', 'No history available')}
+                    Output the result as a JSON object with properties: "code", "requirements", "name", and "description".
+                    - code: Python code fulfilling the task. The code shouldn't use any placeholder values and environment variables. All inputs must
+                    be passed as function arguments.
+                    - requirements: List of non-standard (third-party) Python packages required for the code. The packages will be installed using pip. Do not include standard library packages like 'os' or 'sys', only third-party packages.
                     - name: A unique name that describes the code. While being concise, try to make it descriptive enough to easily which scenario the code is used for.
                     - description: A brief description of the code.
+                    Notes:
+                    - The code MUST have a function named 'main' that takes all the required inputs as arguments.
+                    - The `main` function MUST be the entry point of the code, but you can have additional functions if needed.
+                    - All the code MUST be contained within a single file.
+                    - DO NOT CALL THE 'main' FUNCTION IN THE CODE.
+                    - AVOID using any placeholder values in the code. Even if the value is constant, e.g. how many retries to attempt, it should be
+                    passed as an argument to the 'main' function.
+                    - NO hard-coded values should be present in the code. All values should be passed as arguments to the 'main' function even if it
+                    causes to have many arguments.
+                    - Do not use any dummy values unless explicitly mentioned in the user input.
                     """,
             },
         ]
@@ -61,12 +72,7 @@ class InternalCodeGenerator(BaseCodeGenerator):
             )
             logger.info(f"Generated response: {response}")
 
-            return {
-                "code": response.code,
-                "requirements": response.requirements,
-                "name": response.name,
-                "description": response.description,
-            }
+            return response
         except Exception as e:
             logger.error(f"Error generating code: {e}")
             logger.error(f"Error details: {traceback.format_exc()}")

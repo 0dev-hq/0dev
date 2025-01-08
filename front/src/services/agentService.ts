@@ -9,6 +9,17 @@ export type AgentSession = {
 const baseRoute = "agent";
 
 export const agentService = {
+  async createSession(agentId: string): Promise<string> {
+    try {
+      const response = await agentApiClient.post<string>(
+        `${baseRoute}/${agentId}/session`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error creating session", error);
+      throw error;
+    }
+  },
   async listSessions(agentId: string): Promise<AgentSession[]> {
     type RawAgentSession = {
       session_id: string;
@@ -38,7 +49,7 @@ export const agentService = {
         `${baseRoute}/${agentId}/interact`,
         {
           input,
-          ...(sessionId && { session_id: sessionId }),
+          session_id: sessionId,
         }
       );
       return response.data;

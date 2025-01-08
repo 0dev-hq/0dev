@@ -4,21 +4,29 @@ type MessageContent<T> = T extends "text"
   ? { content: string }
   : T extends "plan"
   ? {
-      plan: {
+      content: {
         name: string;
         code: string;
         requirements: string;
         reference_id: string;
       };
     }
-  : T extends "question" | "answer" | "confirmation" | "user_input"
+  : T extends "question" | "answer" | "user_input"
   ? { content: string }
+  : T extends "confirmation"
+  ? {
+      content: {
+        reference_id: string;
+        version: string;
+        input?: object;
+      };
+    }
   : T extends "options"
   ? { content: string[] }
   : T extends "execution"
   ? { status: string }
   : T extends "none" | "error"
-  ? { message: string }
+  ? { content: string }
   : never;
 
 type Message<T extends string> = MessageBase<T> & MessageContent<T>;

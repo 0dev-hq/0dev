@@ -1,5 +1,4 @@
 import logging
-import json
 
 from pydantic import BaseModel
 from core.agent_context import AgentContext
@@ -7,10 +6,32 @@ from core.agent_context import AgentContext
 logger = logging.getLogger(__name__)
 
 
+class InputItemFormat(BaseModel):
+    name: str
+    value: str
+    type: str
+
+    def get_typed_value(self):
+        if self.type == "int" or self.type == "integer" or self.type == "number":
+            return int(self.value)
+        elif self.type == "float" or self.type == "decimal" or self.type == "double":
+            return float(self.value)
+        elif self.type == "bool" or self.type == "boolean":
+            return self.value.lower() in {"true", "1"}
+        elif self.type == "dict":
+            import json
+            return json.loads(self.value)
+        elif self.type == "list":
+            import json
+            return json.loads(self.value)
+        else:
+            return self.value
+
+
 class ConfirmationFormat(BaseModel):
     reference_id: str
-    version: str = "latest"
-    input: dict = {}
+    version: str
+    input: list[InputItemFormat]
 
 
 class OptionsFormat(BaseModel):
@@ -40,12 +61,12 @@ class PerceptionHandler:
 
         # Generate the confirmation using the LLM
 
-        llm_response = self.llm_client.answer(
+        response = self.llm_client.answer(
             prompt=self._build_confirmation_prompt(user_input, context),
             formatter=ConfirmationFormat,
         )
 
-        return llm_response
+        return response
 
     def _build_confirmation_prompt(
         self, user_input: str, context: AgentContext
@@ -54,17 +75,22 @@ class PerceptionHandler:
         Build a prompt for the LLM to generate a confirmation message.
         """
 
+        # - 'input': A JSON object containing the inputs required for the code execution. The inputs should match the parameters needed by the code.
+        # If no inputs are required, set this to an empty object.
         system_content = f"""You are the brain of an agent that is constrained by its intents list and policies.
             The agent has dynamically generated a code and is waiting for the user's confirmation.
             You have to identify the code and inputs based on the user's input and the history of interactions.
             The code and inputs you identify will be used to generate a confirmation message for the user.
-            Your answer should be in JSON format with these keys: 
+            Your answer should be in JSON format with these keys:
+            - 'input': A list of input items required for the code execution. Each item should have a 'name', 'value' and 'type' field.
+            The list should cover all the arguments
+            of the 'main' function in the code. If no inputs are required, set this to an empty list.
             - 'reference_id': The reference ID of the generated code.
-            - 'version': The version of the generated code to be confirmed.(default to 'latest')
-            - 'input': A JSON object containing the inputs required for the code execution. The inputs should match the parameters needed by the code.
+            - 'version': The version of the generated code to be confirmed. Set this to 'latest' to confirm the latest version.
             The purpose of the confirmation is to ensure that the user agrees with the generated plan.
             Context:
             History of interactions with the user: {context.get('history', 'No history available')}
+            Facts: {context.get('facts', 'No facts available')}
             """
         user_content = f"Generate a confirmation message as described, with this as user's latest input: '{user_input}'."
 
@@ -99,9 +125,6 @@ class PerceptionHandler:
         """
         Build a prompt for the LLM to generate a question.
         """
-        intents_summary = "\n".join(
-            [f",{intent}" for intent in context.get("intents", [])]
-        )
 
         system_content = f"""You are the brain of an agent that is constrained by its intents list and policies.
             You have to generate a question for the agent to ask the user.
@@ -112,7 +135,8 @@ class PerceptionHandler:
             you are doing this to prepare for executing a plan.
             Context:
             History of interactions with the user: {context.get('history', 'No history available')}
-            Allowed intents: {intents_summary}
+            Allowed intents: {context.get('intents', 'No intents available')}
+            Facts: {context.get('facts', 'No facts available')}
             Policies: {context.get('policies', 'No policies available')}
             """
         user_content = f"Generate a question as described, with this as user's latest input: '{user_input}'."
@@ -148,10 +172,6 @@ class PerceptionHandler:
         """
         Build a prompt for the LLM to generate a question with options.
         """
-        intents_summary = "\n".join(
-            [f",{intent}" for intent in context.get("intents", [])]
-        )
-
         system_content = f"""You are the brain of an agent that is constrained by its intents list and policies.
             You have to generate multiple options for the agent to ask the user.
             Your answer should be in JSON format.
@@ -160,7 +180,8 @@ class PerceptionHandler:
             If you choose 'options', you can provide up to {max_options} options based on the allowed intents or an arbitrary combination of them.
             Context:
             History of interactions with the user: {context.get('history', 'No history available')}
-            Allowed intents: {intents_summary}
+            Allowed intents: {context.get('intents', 'No intents available')}
+            Facts: {context.get('facts', 'No facts available')}
             Policies: {context.get('policies', 'No policies available')}
             """
         user_content = f"Generate options as described, with this as user's latest input: '{user_input}'."

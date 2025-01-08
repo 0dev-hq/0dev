@@ -6,8 +6,8 @@ export function PlanMessageBubble({ message }: { message: PlanMessage }) {
   return (
     <MessageBubble>
       <CodeMessage
-        name={message.plan.name}
-        code={message.plan.code}
+        name={message.content.name}
+        code={message.content.code}
         language="python"
       />
     </MessageBubble>

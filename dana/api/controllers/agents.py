@@ -5,6 +5,16 @@ agents_bp = Blueprint("agents", __name__)
 agent_service = AgentService()
 
 
+@agents_bp.route("/<agent_id>/session", methods=["POST"])
+def create_session(agent_id):
+    """
+    Create a new session for the specified agent.
+    """
+    account_id = g.get("account_id")
+    session = agent_service.create_session(agent_id, account_id)
+    return jsonify(session), 201
+
+
 @agents_bp.route("/<agent_id>/session", methods=["GET"])
 def list_sessions(agent_id):
     """

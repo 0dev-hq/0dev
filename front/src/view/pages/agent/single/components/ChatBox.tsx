@@ -1,27 +1,47 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, KeyboardEvent } from "react";
 import { Send } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { agentService, InteractionResponse } from "@/services/agentService";
+import { agentService } from "@/services/agentService";
 import { useMutation } from "react-query";
 import { TypingIndicator } from "./TypingIndicator";
 import { InteractionMessage } from "./chatbox-messages/messageTypes";
 import { MessageFactory } from "./chatbox-messages/MessageBubbleFactory";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ChatBoxProps {
   agentId: string;
   agentName: string;
-  sessionId: string;
+  sessionId?: string;
+  onSelectSession: (sessionId: string) => void;
 }
 
-export function ChatBox({ agentId, agentName, sessionId }: ChatBoxProps) {
+export function ChatBox({
+  agentId,
+  agentName,
+  sessionId,
+  onSelectSession,
+}: ChatBoxProps) {
   const [messages, setMessages] = useState<InteractionMessage[]>([]);
   const [input, setInput] = useState("");
   const [isAgentTyping, setIsAgentTyping] = useState(false);
+
+  const sessionMutation = useMutation(
+    () => agentService.createSession(agentId),
+    {
+      onSuccess: (sessionId: string) => {
+        onSelectSession(sessionId);
+      },
+    }
+  );
+
+  const onStartNewSession = () => {
+    sessionMutation.mutate();
+  };
 
   const interactMutation = useMutation(
     ({
@@ -34,7 +54,7 @@ export function ChatBox({ agentId, agentName, sessionId }: ChatBoxProps) {
       input: string;
     }) => agentService.interact(agentId, sessionId, input),
     {
-      onSuccess: (response: InteractionResponse) => {
+      onSuccess: (response: InteractionMessage) => {
         setMessages((prevMessages) => [...prevMessages, response]);
         setIsAgentTyping(false);
       },
@@ -45,7 +65,7 @@ export function ChatBox({ agentId, agentName, sessionId }: ChatBoxProps) {
   );
 
   const { mutate: loadInteractionHistory, isLoading } = useMutation(
-    () => agentService.loadChatHistory(agentId, sessionId),
+    () => agentService.loadChatHistory(agentId, sessionId!),
     {
       onSuccess: (history: InteractionMessage[]) => {
         console.log(JSON.stringify(history, null, 2));
@@ -54,8 +74,7 @@ export function ChatBox({ agentId, agentName, sessionId }: ChatBoxProps) {
       onError: () => {
         setMessages([]);
       },
-      onSettled: () => {
-      },
+      onSettled: () => {},
     }
   );
 
@@ -66,6 +85,13 @@ export function ChatBox({ agentId, agentName, sessionId }: ChatBoxProps) {
       setMessages([]);
     }
   }, [sessionId, loadInteractionHistory]);
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(input);
+    }
+  };
 
   const handleSendMessage = (content: string) => {
     const newUserMessage: InteractionMessage = {
@@ -79,8 +105,8 @@ export function ChatBox({ agentId, agentName, sessionId }: ChatBoxProps) {
 
     interactMutation.mutate({
       agentId,
-      sessionId,
-      input,
+      sessionId: sessionId!,
+      input: content,
     });
   };
 
@@ -90,6 +116,19 @@ export function ChatBox({ agentId, agentName, sessionId }: ChatBoxProps) {
 
   if (isLoading) {
     return <div>Loading chat history...</div>;
+  }
+
+  if (!sessionId) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center">
+        <p className="text-muted-foreground mb-6">
+          Start a new chat session with the agent.
+        </p>
+        <Button onClick={onStartNewSession} size="lg">
+          Start a new chat
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -130,26 +169,24 @@ export function ChatBox({ agentId, agentName, sessionId }: ChatBoxProps) {
           </div>
         )}
       </ScrollArea>
-      <div className="mt-4">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSendMessage(input);
-          }}
-          className="flex items-center space-x-2"
+      <div className="mt-4 relative">
+        <Textarea
+          placeholder="Message your agent..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="flex-grow min-h-[60px] pr-12 resize-none"
+          rows={1}
+        />
+        <Button
+          type="submit"
+          size="icon"
+          className="absolute right-2 bottom-2 h-8 w-8"
+          onClick={() => handleSendMessage(input?.trim())}
         >
-          <Input
-            type="text"
-            placeholder="Type a message..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            className="flex-grow"
-          />
-          <Button type="submit" size="icon">
-            <Send className="h-4 w-4" />
-            <span className="sr-only">Send</span>
-          </Button>
-        </form>
+          <Send className="h-4 w-4" />
+          <span className="sr-only">Send</span>
+        </Button>
       </div>
     </div>
   );

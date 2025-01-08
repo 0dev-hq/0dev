@@ -1,7 +1,17 @@
 import os
 import uuid
 from datetime import datetime
-from sqlalchemy import create_engine, text, Column, Integer, String, DateTime, JSON, Table, MetaData
+from sqlalchemy import (
+    create_engine,
+    text,
+    Column,
+    Integer,
+    String,
+    DateTime,
+    JSON,
+    Table,
+    MetaData,
+)
 from sqlalchemy.orm import sessionmaker
 from core.base_history_manager import BaseHistoryManager
 import json
@@ -29,7 +39,9 @@ class PostgresHistoryManager(BaseHistoryManager):
         db_host = os.getenv("INTERNAL_DB_HOST")
         db_port = os.getenv("INTERNAL_DB_PORT")
         db_name = os.getenv("INTERNAL_DB_NAME")
-        return create_engine(f"postgresql+psycopg2://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}")
+        return create_engine(
+            f"postgresql+psycopg2://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}"
+        )
 
     def initialize_table(self):
         """Create the interaction_history table if it does not exist."""
@@ -55,10 +67,12 @@ class PostgresHistoryManager(BaseHistoryManager):
         """
         return str(uuid.uuid4())
 
-    def save_interaction(self, account_id: str, agent_id: str, session_id: str, interaction: dict):
+    def save_interaction(
+        self, account_id: str, agent_id: str, session_id: str, interaction: dict
+    ):
         """
         Save a new interaction and update the moving summary.
-        
+
         :param account_id: The ID of the account the agent belongs to.
         :param agent_id: The id of the agent.
         :param session_id: The session ID this interaction belongs to.
@@ -67,14 +81,20 @@ class PostgresHistoryManager(BaseHistoryManager):
         with self.Session() as session:
             # Fetch the current summary for the session
             result = session.execute(
-                text("""
+                text(
+                    """
                     SELECT summary
                     FROM interaction_history
                     WHERE account_id = :account_id AND agent_id = :agent_id AND session_id = :session_id
                     ORDER BY timestamp DESC
                     LIMIT 1
-                """),
-                {"account_id": account_id, "agent_id": agent_id, "session_id": session_id}
+                """
+                ),
+                {
+                    "account_id": account_id,
+                    "agent_id": agent_id,
+                    "session_id": session_id,
+                },
             ).fetchone()
 
             current_summary = result[0] if result else ""
@@ -84,25 +104,29 @@ class PostgresHistoryManager(BaseHistoryManager):
 
             # Save the new interaction with the updated summary
             session.execute(
-                text("""
+                text(
+                    """
                     INSERT INTO interaction_history (account_id, agent_id, session_id, timestamp, interaction, summary)
                     VALUES (:account_id, :agent_id, :session_id, :timestamp, :interaction, :summary)
-                """),
+                """
+                ),
                 {
                     "account_id": account_id,
                     "agent_id": agent_id,
                     "session_id": session_id,
                     "timestamp": datetime.utcnow(),
                     "interaction": json.dumps(interaction),
-                    "summary": updated_summary
-                }
+                    "summary": updated_summary,
+                },
             )
             session.commit()
 
-    def get_history(self, account_id: str, agent_id: str, session_id: str, n: int = 10) -> list:
+    def get_history(
+        self, account_id: str, agent_id: str, session_id: str, n: int = 10
+    ) -> list:
         """
         Retrieve the last 'n' interactions for a given session.
-        
+
         :param account_id: The ID of the account to filter by.
         :param agent_id: The id of the agent to filter by.
         :param session_id: The session ID to filter by.
@@ -111,14 +135,21 @@ class PostgresHistoryManager(BaseHistoryManager):
         """
         with self.Session() as session:
             result = session.execute(
-                text("""
+                text(
+                    """
                     SELECT timestamp, interaction
                     FROM interaction_history
                     WHERE account_id = :account_id AND agent_id = :agent_id AND session_id = :session_id
-                    ORDER BY timestamp DESC
+                    ORDER BY timestamp ASC
                     LIMIT :n
-                """),
-                {"account_id": account_id, "agent_id": agent_id, "session_id": session_id, "n": n}
+                """
+                ),
+                {
+                    "account_id": account_id,
+                    "agent_id": agent_id,
+                    "session_id": session_id,
+                    "n": n,
+                },
             ).fetchall()
             return [{"timestamp": row[0], "interaction": row[1]} for row in result]
 
@@ -133,14 +164,20 @@ class PostgresHistoryManager(BaseHistoryManager):
         """
         with self.Session() as session:
             result = session.execute(
-                text("""
+                text(
+                    """
                     SELECT summary
                     FROM interaction_history
                     WHERE account_id = :account_id AND agent_id = :agent_id AND session_id = :session_id
                     ORDER BY timestamp DESC
                     LIMIT 1
-                """),
-                {"account_id": account_id, "agent_id": agent_id, "session_id": session_id}
+                """
+                ),
+                {
+                    "account_id": account_id,
+                    "agent_id": agent_id,
+                    "session_id": session_id,
+                },
             ).fetchone()
             return result[0] if result else "No summary available."
 
@@ -154,8 +191,14 @@ class PostgresHistoryManager(BaseHistoryManager):
         """
         try:
             prompt = [
-                {"role": "system", "content": "You are a summarizer that creates very concise summaries of an agent's interactions."},
-                {"role": "user", "content": f"Current Summary: {current_summary}\nNew Interaction: {new_interaction}\nUpdate the summary to include the new interaction."}
+                {
+                    "role": "system",
+                    "content": "You are a summarizer that creates very concise summaries of an agent's interactions.",
+                },
+                {
+                    "role": "user",
+                    "content": f"Current Summary: {current_summary}\nNew Interaction: {new_interaction}\nUpdate the summary to include the new interaction.",
+                },
             ]
             response = self.llm_client.answer(prompt=prompt)
             return response.strip()

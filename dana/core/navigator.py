@@ -1,6 +1,8 @@
 import logging
 from enum import Enum
 
+from pydantic import BaseModel
+
 logger = logging.getLogger(__name__)
 
 
@@ -12,6 +14,11 @@ class NextStep(Enum):
     CONFIRM_EXECUTION = "confirm_execution"  # Require user confirmation for execution
     EXECUTE = "execute"  # Execute a confirmed plan
     NONE = "none"  # Deny the request
+
+
+class NavigationFormat(BaseModel):
+    next_step: NextStep
+    justification: str
 
 
 class Navigator:
@@ -38,11 +45,13 @@ class Navigator:
         :return: The type of the next step to be taken.
         """
 
-        next_step = self.llm_client.answer(
-            prompt=self._create_prompt(user_input, context)
+        response = self.llm_client.answer(
+            prompt=self._create_prompt(user_input, context),
+            formatter=NavigationFormat,
         )
 
-        return NextStep(next_step)
+        logger.info(f"Navigation response: {response}")
+        return NextStep(response.next_step)
 
     def _create_prompt(self, user_input: str, context: dict) -> str:
         """
@@ -66,7 +75,7 @@ class Navigator:
                 you should generate a question and try to get as much information as possible with a single question.
                 If you can provide options to choose from, you should do so to help the user make a decision.
                 Note that agent is constrained by its intents, policies, and available actions.
-                Your response should be one of the following options without any explanation, punctuation, or additional information or formatting:
+                The next_step you specify must be one of the following options:
                 1. {NextStep.PLAN.value}: If the agent needs to generate a plan or custom code to fulfill the user's request.
                 2. {NextStep.Question.value}: If the agent needs to ask the user for more information to proceed with the request.
                 3. {NextStep.Option.value}: If the agent needs to provide options to choose from.
@@ -74,35 +83,24 @@ class Navigator:
                 5. {NextStep.EXECUTE.value}: If the agent has received confirmation and is ready to execute the plan. This step can only occur if the user has explicitly approved the plan.
                 6. {NextStep.NONE.value}: If the request is outside the agent's scope, violates policies, or cannot be fulfilled.
                 7. {NextStep.ANSWER.value}: If the agent needs to generate an answer to a question based on the user's input and the context.
+                'justification' should provide a brief explanation of why the agent should take the specified next_step.
+                Facts: {context.get('facts', 'No facts available')}
+                Agent's allowed intents: {context.get('intents', 'No intents available')}
+                Agent's policies: {context.get('policies', 'No policies available')}
+                History of interactions with the user: {context.get('history', 'No history available')}
+                Notes:
+                - If you don't have enough information but are allowed to act based on the intents and policies, 
+                prioritize asking the user for more details (`perception`) instead of proceeding with incomplete or placeholder values.
+                - If you're following up on a generated plan(code), you cannot ask for confirmation of execution until you have the values for all the arguments of the 
+                entry function (usually named 'main') of the code.
+                - Avoid repeatedly asking for the same information unless the situation has changed.
+                - Try to understand the situation based on the user's attitude and the context.
                 """,
-            },
-            {
-                "role": "system",
-                "content": f"Facts: {context.get('facts', 'No facts available')}",
-            },
-            {
-                "role": "system",
-                "content": f"Agent's allowed intents: {context.get('intents', 'No intents available')}",
-            },
-            {
-                "role": "system",
-                "content": f"Agent's policies: {context.get('policies', 'No policies available')}",
-            },
-            {
-                "role": "system",
-                "content": f"History of interactions with the user: {context.get('history', 'No history available')}",
-            },
-            {
-                "role": "system",
-                "content": """If you don't have enough information but are allowed to act based on the intents and policies, 
-                prioritize asking the user for more details (`perception`) instead of proceeding with incomplete or placeholder values.""",
             },
             {
                 "role": "user",
                 "content": f"User's latest input: '{user_input}'. What should the agent do next?",
             },
         ]
-
-        logger.info(f"Generated prompt: {prompt}")
 
         return prompt

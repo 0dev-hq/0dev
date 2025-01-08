@@ -12,7 +12,7 @@ const apiClient = axios.create({
 
 const agentApiClient = axios.create({
   baseURL: `${import.meta.env.VITE_AGENT_API_BASE_URL}`,
-  timeout: 10000,
+  timeout: 20000,
   headers: {
     "Content-Type": "application/json",
   },

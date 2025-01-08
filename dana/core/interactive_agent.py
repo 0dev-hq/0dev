@@ -1,9 +1,10 @@
+import logging
 from core.base_agent import BaseAgent
-from core.base_code_executor import BaseCodeExecutor
-from core.base_code_generator import BaseCodeGenerator
 from core.navigator import Navigator
 from core.base_history_manager import BaseHistoryManager
 from core.step_handler import StepHandler
+
+logger = logging.getLogger(__name__)
 
 
 class InteractiveAgent(BaseAgent):
@@ -71,11 +72,13 @@ class InteractiveAgent(BaseAgent):
         :return: A dictionary representing the agent's response or next step.
         """
 
+        self._save_user_input(session_id, user_input)
+
         context = self._get_context(session_id)
+        logger.info(f"Context: {context}")
 
         next_step_type = self.navigator.get_next_step_type(user_input, context)
         print(f"Next Step Type: {next_step_type}")
-        self._save_user_input(session_id, user_input)
 
         response = self.step_handler.handle_step(
             step_type=next_step_type,
@@ -86,6 +89,8 @@ class InteractiveAgent(BaseAgent):
             agent_id=self.id,
         )
 
+        self._save_response(session_id, response)
+
         return response
 
     def _get_context(self, session_id: str) -> dict:
@@ -95,7 +100,7 @@ class InteractiveAgent(BaseAgent):
         :param session_id: The session ID for this interaction.
         :return: A dictionary representing the current context.
         """
-        history = self.history_manager.get_summary(
+        history = self.history_manager.get_history(
             account_id=self.account_id, agent_id=self.id, session_id=session_id
         )
         return {
@@ -104,6 +109,20 @@ class InteractiveAgent(BaseAgent):
             "facts": self.facts,
             "policies": self.policies,
         }
+
+    def _save_response(self, session_id: str, response: str):
+        """
+        Save the agent's response to the interaction history.
+
+        :param session_id: The session ID for this interaction.
+        :param response: The agent's response string.
+        """
+        self.history_manager.save_interaction(
+            account_id=self.account_id,
+            agent_id=self.id,
+            session_id=session_id,
+            interaction=response,
+        )
 
     def _save_user_input(self, session_id: str, user_input: str):
         """
