@@ -17,6 +17,7 @@ import DefineFacts from "./steps/DefineFacts";
 import PolicyAndPermissions from "./steps/PolicyAndPermissions";
 import DeployAgent from "./steps/DeployAgent";
 import YamlUpload from "./components/YamlUpload";
+import { AgentConfig } from "@/services/agentControllerService";
 
 const steps = [
   "Configuration File Upload",
@@ -28,15 +29,6 @@ const steps = [
   "Deploy",
 ];
 
-export type AgentConfig = {
-  name: string;
-  description: string;
-  selectedIntegrations: string[];
-  intents: string[];
-  facts: string[];
-  policies: string[];
-  categories: string[];
-};
 
 export default function AgentWizard() {
   const [currentStep, setCurrentStep] = useState(0);

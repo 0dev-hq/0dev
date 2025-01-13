@@ -15,6 +15,10 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import { useQuery } from "react-query";
+import {
+  AgentConfig,
+  agentControllerService,
+} from "@/services/agentControllerService";
 
 const agent = {
   id: 1,
@@ -33,6 +37,11 @@ export default function AgentPage() {
 
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get("s");
+
+  const { data: agent, isLoading } = useQuery<AgentConfig>(
+    ["agent", agentId],
+    async () => agentControllerService.getAgent(agentId!)
+  );
 
   useEffect(() => {
     if (sessionId) {
@@ -53,6 +62,14 @@ export default function AgentPage() {
     return <div>Nope!</div>;
   }
 
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!agent) {
+    return <div>Agent not found</div>;
+  }
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -64,7 +81,13 @@ export default function AgentPage() {
         <Button>Edit Agent</Button>
       </div>
 
-      <AgentHeader agent={agent} />
+      <AgentHeader
+        agent={{
+          name: agent.name,
+          categories: agent.categories,
+          status: "Online",
+        }}
+      />
 
       <Tabs
         value={activeTab}

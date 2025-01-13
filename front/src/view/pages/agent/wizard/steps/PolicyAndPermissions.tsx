@@ -1,4 +1,4 @@
-import { AgentConfig } from "../AgentWizardPage";
+import { AgentConfig } from "@/services/agentControllerService";
 import ListEditor from "../components/ListEditor";
 
 type DefinePoliciesProps = {

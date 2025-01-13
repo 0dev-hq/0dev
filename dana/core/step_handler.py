@@ -183,6 +183,8 @@ class StepHandler:
         (job_id, secret) = self.code_executor.create_job(
             account_id=account_id, agent_id=agent_id, session_id=session_id
         )
+
+        logger.info(f"Created job: {job_id}")
         self.code_executor.execute_job(
             job_id=job_id,
             secret=secret,

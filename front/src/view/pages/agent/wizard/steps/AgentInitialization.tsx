@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { AgentConfig } from "../AgentWizardPage";
+import { AgentConfig } from "@/services/agentControllerService";
 import ListEditor from "../components/ListEditor";
 
 type AgentInitializationProps = {

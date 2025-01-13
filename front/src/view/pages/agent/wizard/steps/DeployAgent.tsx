@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle } from "lucide-react";
-import { AgentConfig } from "../AgentWizardPage";
+import { AgentConfig } from "@/services/agentControllerService";
 import { useMutation } from "react-query";
 import { agentControllerService } from "@/services/agentControllerService";
 import { toast } from "react-toastify";
@@ -76,7 +76,7 @@ export default function DeployAgent({ config }: DeployAgentProps) {
               <div>
                 <h3 className="font-semibold">Selected Integrations:</h3>
                 <ul className="list-disc list-inside">
-                  {config.selectedIntegrations.map((integration, index) => (
+                  {config.selectedIntegrations?.map((integration, index) => (
                     <li key={index}>{integration}</li>
                   ))}
                 </ul>

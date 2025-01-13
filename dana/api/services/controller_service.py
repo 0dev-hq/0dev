@@ -47,11 +47,39 @@ class ControllerService:
             for agent in agents
         ]
 
-    def get_agent(self, agent_id: str):
+    def get_agent(self, agent_id: str) -> dict:
         """
         Get details of a specific agent.
         """
-        return self.registry.get_agent(agent_id)
+        agent = (
+            db.session.query(
+                Agent.agent_id,
+                Agent.name,
+                Agent.description,
+                Agent.intents,
+                Agent.policies,
+                Agent.facts,
+                Agent.deployment_url,
+                Agent.status,
+                Agent.categories,
+            )
+            .filter(
+                Agent.agent_id == agent_id and Agent.account_id == g.get("account_id")
+            )
+            .first()
+        )
+        if agent:
+            return {
+                "id": agent.agent_id,
+                "name": agent.name,
+                "description": agent.description,
+                "intents": agent.intents.split(",") if agent.intents else [],
+                "policies": agent.policies.split(",") if agent.policies else [],
+                "facts": agent.facts.split(",") if agent.facts else [],
+                "status": agent.status.value if agent.status else "",
+                "categories": agent.categories.split(",") if agent.categories else [],
+            }
+        return None
 
     def update_agent(self, agent_id: str, updates: dict) -> bool:
         """

@@ -58,6 +58,7 @@ def get_agent_details(agent_id):
     Get details of a specific agent.
     """
     agent = controller_service.get_agent(agent_id)
+    print(f"agent: {agent}")
     if agent:
         return jsonify(agent), 200
     return jsonify({"error": f"Agent '{agent_id}' not found."}), 404

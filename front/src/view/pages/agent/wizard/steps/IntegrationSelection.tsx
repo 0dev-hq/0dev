@@ -449,7 +449,7 @@ export default function IntegrationSelection({ config, updateConfig }) {
         <TabsContent value="selected" className="space-y-6">
           <ScrollArea className="h-[600px] pr-4">
             <AnimatePresence>
-              {config.selectedIntegrations.map((integration) => {
+              {config.selectedIntegrations?.map((integration) => {
                 const integ = availableIntegrations.find(
                   (i) => i.name === integration
                 );

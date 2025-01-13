@@ -1,12 +1,14 @@
 import { agentApiClient } from "./apiClient";
 
 export type AgentConfig = {
+  id?: string;
   name: string;
   description: string;
-  // selectedIntegrations: string[];
+  selectedIntegrations?: string[];
   intents: string[];
   facts: string[];
   policies: string[];
+  categories: string[];
 };
 
 export type AgentListItem = {
@@ -39,6 +41,17 @@ export const agentControllerService = {
       return response.data;
     } catch (error) {
       console.error("Error listing agents", error);
+      throw error;
+    }
+  },
+  async getAgent(agentId: string): Promise<AgentConfig> {
+    try {
+      const response = await agentApiClient.get<AgentConfig>(
+        `${baseRoute}/agent/${agentId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error getting agent", error);
       throw error;
     }
   },

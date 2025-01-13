@@ -4,9 +4,9 @@ import { Badge } from "@/components/ui/badge";
 interface AgentHeaderProps {
   agent: {
     name: string;
-    type: string;
+    categories: string[];
     status: string;
-    avatar: string;
+    avatar?: string;
   };
 }
 
@@ -19,11 +19,18 @@ export function AgentHeader({ agent }: AgentHeaderProps) {
       </Avatar>
       <div>
         <h1 className="text-2xl font-bold">{agent.name}</h1>
-        <p className="text-muted-foreground">{agent.type}</p>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {agent.categories.map((category) => (
+            <Badge key={category} variant="secondary">
+              {category}
+            </Badge>
+          ))}
+        </div>
         <Badge
           variant={
             agent.status.toLowerCase() === "online" ? "default" : "secondary"
           }
+          className="mt-2"
         >
           {agent.status}
         </Badge>
