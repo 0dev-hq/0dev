@@ -16,12 +16,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AgentRegistryAction, agentRegistryService } from "@/services/agentRegistryService";
+import {
+  AgentRegistryAction,
+  agentRegistryService,
+} from "@/services/agentRegistryService";
 import { useQuery } from "react-query";
 
 // todo: use this for the agent with fixed actions/tools
 
-export default function AllowedActions({ config, updateConfig }) {
+interface AllowedActionsProps {
+  config: {
+    selectedActions: AgentRegistryAction[];
+  };
+  updateConfig: (config: { selectedActions: AgentRegistryAction[] }) => void;
+}
+
+export default function AllowedActions({
+  config,
+  updateConfig,
+}: AllowedActionsProps) {
   const {
     data: actions = [],
     isLoading: actionsLoading,
@@ -34,11 +47,14 @@ export default function AllowedActions({ config, updateConfig }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTag, setSelectedTag] = useState("all");
   const [selectedService, setSelectedService] = useState("all");
-  const [filteredActions, setFilteredActions] = useState<AgentRegistryAction[]>([]);
-  const [selectedAction, setSelectedAction] = useState(null);
+  const [filteredActions, setFilteredActions] = useState<AgentRegistryAction[]>(
+    []
+  );
+  const [selectedAction, setSelectedAction] =
+    useState<AgentRegistryAction | null>(null);
 
-  const allTags = [...new Set(actions.flatMap(action => action.tags))];
-  const allServices = [...new Set(actions.map(action => action.service))];
+  const allTags = [...new Set(actions.flatMap((action) => action.tags))];
+  const allServices = [...new Set(actions.map((action) => action.service))];
 
   useEffect(() => {
     if (!actionsLoading && !actionsError) {
@@ -50,17 +66,26 @@ export default function AllowedActions({ config, updateConfig }) {
       );
       setFilteredActions(filtered);
     }
-  }, [searchTerm, selectedTag, selectedService, actions, actionsLoading, actionsError]);
+  }, [
+    searchTerm,
+    selectedTag,
+    selectedService,
+    actions,
+    actionsLoading,
+    actionsError,
+  ]);
 
-  const addAction = (action) => {
+  const addAction = (action: AgentRegistryAction) => {
     if (!config.selectedActions.find((a) => a.id === action.id)) {
       updateConfig({ selectedActions: [...config.selectedActions, action] });
     }
   };
 
-  const removeAction = (actionId) => {
+  const removeAction = (actionId: string) => {
     updateConfig({
-      selectedActions: config.selectedActions.filter((a) => a.id !== actionId),
+      selectedActions: config.selectedActions.filter(
+        (a) => a.id.toString() !== actionId
+      ),
     });
   };
 
@@ -71,16 +96,16 @@ export default function AllowedActions({ config, updateConfig }) {
       </div>
     );
   }
-  
+
   if (actionsError) {
     return (
       <div className="flex items-center justify-center h-[600px]">
-        <p className="text-red-500">Error loading actions. Please try again later.</p>
+        <p className="text-red-500">
+          Error loading actions. Please try again later.
+        </p>
       </div>
     );
   }
-
-
 
   return (
     <div className="space-y-6">
@@ -176,7 +201,7 @@ export default function AllowedActions({ config, updateConfig }) {
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => removeAction(action.id)}
+                            onClick={() => removeAction(action.id.toString())}
                           >
                             <X className="h-4 w-4 mr-2" />
                             Remove
@@ -223,7 +248,7 @@ export default function AllowedActions({ config, updateConfig }) {
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => removeAction(action.id)}
+                    onClick={() => removeAction(action.id.toString())}
                   >
                     <X className="h-4 w-4 mr-2" />
                     Remove
@@ -275,7 +300,7 @@ export default function AllowedActions({ config, updateConfig }) {
                 <Button
                   variant="destructive"
                   onClick={() => {
-                    removeAction(selectedAction.id);
+                    removeAction(selectedAction.id.toString());
                     setSelectedAction(null);
                   }}
                 >

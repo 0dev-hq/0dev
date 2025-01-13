@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import Report from "../models/report";
+import Report from "../models/Report";
 import { extractFormattedContent, generateAIResponse } from "./ai-util";
-import Query from "../models/query";
+import Query from "../models/Query";
 import logger from "../utils/logger";
 
 // Save or update a report

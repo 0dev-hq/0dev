@@ -1,14 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  ArrowLeft,
-  Plus,
-  Check,
-  X,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { ArrowLeft, Plus, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +21,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 
 // This would typically come from an API or database
@@ -63,17 +55,12 @@ const agent = {
 
 export default function MarketplaceAgentDetailsPage() {
   const [isAdding, setIsAdding] = useState(false);
-  const toast = useToast();
 
   const handleAddToAccount = () => {
     setIsAdding(true);
     // Simulate API call
     setTimeout(() => {
       setIsAdding(false);
-      toast({
-        title: "Agent added to your account",
-        description: `${agent.name} has been successfully added to your account.`,
-      });
     }, 2000);
   };
 
@@ -188,11 +175,11 @@ export default function MarketplaceAgentDetailsPage() {
                             </ul>
                             <h4 className="font-medium mt-2">Sensors:</h4>
                             <ul className="list-disc list-inside ml-4">
-                              {agent.sensors[service].map(
+                              {/* {agent.sensors[service].map(
                                 (sensor, sensorIndex) => (
                                   <li key={sensorIndex}>{sensor}</li>
                                 )
-                              )}
+                              )} */}
                             </ul>
                           </div>
                         </AccordionContent>

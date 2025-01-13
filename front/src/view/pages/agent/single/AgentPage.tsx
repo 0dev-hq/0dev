@@ -20,14 +20,6 @@ import {
   agentControllerService,
 } from "@/services/agentControllerService";
 
-const agent = {
-  id: 1,
-  name: "Agent Smith",
-  type: "Customer Support",
-  status: "Online",
-  avatar: "/placeholder.svg?height=100&width=100",
-};
-
 export default function AgentPage() {
   const [selectedSessionId, setSelectedSessionId] = useState<string>();
   const [activeTab, setActiveTab] = useState("chat");

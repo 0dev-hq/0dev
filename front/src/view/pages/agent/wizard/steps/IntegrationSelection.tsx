@@ -22,6 +22,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { AgentConfig } from "@/services/agentControllerService";
 
 // Types for connection states
 type ConnectionStatus = {
@@ -106,7 +107,15 @@ const availableIntegrations = [
   },
 ];
 
-export default function IntegrationSelection({ config, updateConfig }) {
+type IntegrationSelectionProps = {
+  config: AgentConfig;
+  updateConfig: (config: { selectedIntegrations: string[] }) => void;
+};
+
+export default function IntegrationSelection({
+  config,
+  updateConfig,
+}: IntegrationSelectionProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [connectionStatus, setConnectionStatus] = useState<
@@ -136,11 +145,11 @@ export default function IntegrationSelection({ config, updateConfig }) {
   }, []);
 
   const handleToggleIntegration = (integration: string) => {
-    const newSelectedIntegrations = config.selectedIntegrations.includes(
+    const newSelectedIntegrations = config.selectedIntegrations?.includes(
       integration
     )
       ? config.selectedIntegrations.filter((i) => i !== integration)
-      : [...config.selectedIntegrations, integration];
+      : [...(config.selectedIntegrations || []), integration];
 
     updateConfig({ selectedIntegrations: newSelectedIntegrations });
 
@@ -181,7 +190,8 @@ export default function IntegrationSelection({ config, updateConfig }) {
         ...prev,
         [integration]: {
           state: "error",
-          errorMessage: error.message || "Failed to connect",
+          errorMessage:
+            error instanceof Error ? error.message : "Failed to connect",
         },
       }));
     }
@@ -209,7 +219,8 @@ export default function IntegrationSelection({ config, updateConfig }) {
         ...prev,
         [integration]: {
           state: "error",
-          errorMessage: error.message || "Invalid credentials",
+          errorMessage:
+            error instanceof Error ? error.message : "Invalid credentials",
         },
       }));
     }
@@ -400,7 +411,7 @@ export default function IntegrationSelection({ config, updateConfig }) {
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg flex justify-between items-center">
                         {integration.name}
-                        {config.selectedIntegrations.includes(
+                        {config.selectedIntegrations?.includes(
                           integration.name
                         ) && (
                           <Badge variant="secondary" className="ml-2">
@@ -429,12 +440,14 @@ export default function IntegrationSelection({ config, updateConfig }) {
                           handleToggleIntegration(integration.name)
                         }
                         className={`w-full ${
-                          config.selectedIntegrations.includes(integration.name)
+                          config.selectedIntegrations?.includes(
+                            integration.name
+                          )
                             ? "bg-gray-200 text-gray-800 hover:bg-gray-300"
                             : "bg-black text-white hover:bg-gray-800"
                         }`}
                       >
-                        {config.selectedIntegrations.includes(integration.name)
+                        {config.selectedIntegrations?.includes(integration.name)
                           ? "Remove"
                           : "Add Integration"}
                       </Button>

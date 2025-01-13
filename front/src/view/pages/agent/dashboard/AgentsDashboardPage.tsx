@@ -1,44 +1,15 @@
-import { Plus, ShoppingCart } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AgentCard } from "./AgentCard";
 import { Link } from "react-router-dom";
 import { agentControllerService } from "@/services/agentControllerService";
 import { useQuery } from "react-query";
 
-const agents = [
-  {
-    id: 1,
-    name: 'CustomerSupportBot',
-    description: 'Assists with customer queries and manages support tickets. This advanced AI agent is designed to handle a wide range of customer inquiries, from simple product questions to complex troubleshooting. It seamlessly integrates with your existing support systems to provide efficient and accurate responses.',
-    categories: ['Customer Support', 'Ticketing'],
-    totalSessions: 1000,
-  },
-  {
-    id: 2,
-    name: 'SalesAssistant',
-    description: 'Manages leads and provides sales forecasts. Utilizes advanced analytics to identify potential customers and optimize sales strategies.',
-    categories: ['Sales', 'Analytics'],
-    totalSessions: 800,
-  },
-  {
-    id: 3,
-    name: 'TechSupportAgent',
-    description: 'Handles technical issues and provides troubleshooting assistance. Equipped with a vast knowledge base of common technical problems and their solutions.',
-    categories: ['Technical Support', 'Knowledge Base'],
-    totalSessions: 1200,
-  },
-  {
-    id: 4,
-    name: 'BillingHelper',
-    description: 'Assists with billing inquiries and payment processing. Securely handles financial transactions and provides detailed explanations of charges and invoices.',
-    categories: ['Billing Support', 'Finance'],
-    totalSessions: 600,
-  },
-]
-
 export default function AgentDashboardPage() {
-
-  const { data: agents, isLoading } = useQuery("agents", agentControllerService.listAgents);
+  const { data: agents, isLoading } = useQuery(
+    "agents",
+    agentControllerService.listAgents
+  );
 
   if (isLoading) {
     return <div>Loading...</div>;
