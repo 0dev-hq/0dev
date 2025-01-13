@@ -7,7 +7,6 @@ import {
   File,
   FileSpreadsheet,
   FileText,
-  Import,
   MoreVertical,
   Plus,
   Trash,

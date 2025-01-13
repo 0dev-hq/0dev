@@ -29,13 +29,12 @@ const steps = [
   "Deploy",
 ];
 
-
 export default function AgentWizard() {
   const [currentStep, setCurrentStep] = useState(0);
   const [agentConfig, setAgentConfig] = useState<AgentConfig>({
+    selectedIntegrations: [],
     name: "",
     description: "",
-    selectedIntegrations: [],
     intents: [],
     facts: [],
     policies: [],

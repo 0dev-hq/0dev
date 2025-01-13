@@ -7,29 +7,38 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CheckCircle2, AlertCircle } from 'lucide-react'
 
-const services = ['Slack', 'Zendesk', 'Jira']
 
 // todo: use this for the agent with fixed actions/tools
 
-export default function ServiceIntegration({ config, updateConfig }) {
-  const [integrationStatus, setIntegrationStatus] = useState({})
+interface Config {
+  selectedActions: { service: string }[];
+  services: string[];
+}
+
+interface ServiceIntegrationProps {
+  config: Config;
+  updateConfig: (newConfig: Config) => void;
+}
+
+export default function ServiceIntegration({ config, updateConfig }: ServiceIntegrationProps) {
+  const [integrationStatus, setIntegrationStatus] = useState<{ [key: string]: 'authenticated' | 'required' }>({})
 
   useEffect(() => {
     const requiredServices = [...new Set(config.selectedActions.map(action => action.service))]
-    const status = {}
+    const status: { [key: string]: 'authenticated' | 'required' } = {}
     requiredServices.forEach(service => {
       status[service] = config.services.includes(service) ? 'authenticated' : 'required'
     })
     setIntegrationStatus(status)
   }, [config.selectedActions, config.services])
 
-  const handleAuthenticate = (service) => {
+  const handleAuthenticate = (service: string) => {
     // In a real application, this would initiate the OAuth flow
     console.log(`Authenticating with ${service}`)
     // Simulating successful authentication
     setTimeout(() => {
       setIntegrationStatus(prev => ({ ...prev, [service]: 'authenticated' }))
-      updateConfig({ services: [...config.services, service] })
+      updateConfig({ services: [...config.services, service], selectedActions: config.selectedActions })
     }, 1000)
   }
 

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import Query from "../models/query";
+import Query from "../models/Query";
 import DataSource, { DataSourceType, IDataSource } from "../models/data-source";
 import logger from "../utils/logger";
 import { GenerativeAIProviderFactory } from "../services/generative-ai-providers/generative-ai-provider-factory";
