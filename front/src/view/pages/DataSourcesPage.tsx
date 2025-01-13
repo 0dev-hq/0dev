@@ -56,9 +56,9 @@ const DataSourcesPage: React.FC = () => {
         </button>
       </div>
       <div>
-        <h2 className="text-2xl font-bold mb-4">Existing Data Sources</h2>
+        <h2 className="text-2xl font-bold mb-4">Data Sources</h2>
         {dataSources?.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 px-auto">
+          <div className="grid grid-cols-3 gap-4 px-auto">
             {dataSources.map((dataSource: DataSource) => (
               <DataSourceBlock
                 key={dataSource._id}

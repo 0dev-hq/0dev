@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import Logo from "../../assets/0dev-logo.png";
-import { FaDatabase, FaFileAlt, FaChartBar, FaUser, FaSignOutAlt } from "react-icons/fa";
+import { FaDatabase, FaFileAlt, FaChartBar, FaUser, FaSignOutAlt, FaRobot } from "react-icons/fa";
 import { FaDiscord } from "react-icons/fa";
 
 const Sidebar: React.FC = () => {
@@ -52,6 +52,13 @@ const Sidebar: React.FC = () => {
             className="flex items-center text-cream opacity-75 hover:opacity-100"
           >
             <FaFileAlt className="mr-2" /> Files
+          </Link>
+          {/* Agents */}
+          <Link
+            to="/agent"
+            className="flex items-center text-cream opacity-75 hover:opacity-100"
+          >
+            <FaRobot className="mr-2" /> Agents
           </Link>
         </nav>
       </div>

@@ -1,0 +1,84 @@
+name: send_email
+service: email
+tags:
+  - communication
+  - email
+  - automation
+description: >
+  The `send_email` action provides a robust utility for sending emails programmatically using 
+  an SMTP server. It supports sending plain text or HTML-formatted emails to a single recipient. 
+  This action is ideal for scenarios requiring automated email notifications, alerts, or customized 
+  email workflows. Key considerations:
+  
+  1. **Email Format**: Supports both plain text and HTML email content for the `body` input. HTML 
+     allows embedding rich text, links, and images within the email.
+  2. **Authentication**: Requires valid SMTP credentials (username and password) to authenticate 
+     with the email server.
+  3. **Encryption**: Ensures secure transmission using TLS or SSL protocols, depending on the SMTP 
+     server's configuration.
+  4. **Sender Customization**: Allows specifying a custom "From" email address, enabling flexible 
+     sender identity.
+  5. **Error Handling**: Provides detailed error messages in case of failure, making it easier to 
+     debug issues like invalid credentials, unreachable servers, or recipient errors.
+  6. **Limitations**: This action does not support sending attachments or multiple recipients. 
+     Developers requiring these features should consider extending the action or using alternative 
+     solutions.
+  
+  This action simplifies email integration within applications, allowing developers to configure 
+  email operations with minimal effort.
+
+inputs:
+  - name: recipient
+    type: string
+    description: >
+      The recipient's email address. Must be a valid email in the format "user@example.com".
+  - name: subject
+    type: string
+    description: >
+      The email's subject line, summarizing its content. Example: "Weekly Performance Metrics".
+  - name: body
+    type: string
+    description: >
+      The email's content. Can be plain text or HTML. Use plain text for simple messages or HTML 
+      for styled content, including links, images, and formatting.
+  - name: sender
+    type: string
+    description: >
+      The sender's email address appearing in the "From" field. Must be valid and authorized by 
+      the SMTP server's configuration.
+  - name: smtp_server
+    type: string
+    description: >
+      The domain or IP address of the SMTP server used to send the email. Examples: "smtp.gmail.com" 
+      for Gmail, "smtp.mail.yahoo.com" for Yahoo Mail.
+  - name: smtp_port
+    type: integer
+    description: >
+      The port number for the SMTP server. Common values:
+      - **587**: TLS-secured connection (recommended).
+      - **465**: SSL-secured connection.
+      - **25**: Unsecured (deprecated and not recommended).
+  - name: smtp_username
+    type: string
+    description: >
+      The SMTP username for authentication, typically the sender's email address or a username 
+      provided by the email service.
+  - name: smtp_password
+    type: string
+    description: >
+      The SMTP password for authentication. Ensure secure storage of this value, avoiding 
+      hard-coded secrets in production environments.
+
+outputs:
+  - name: status
+    type: string
+    description: >
+      Indicates the result of the email operation. Possible values are:
+      - **success**: The email was sent successfully.
+      - **failure**: The email failed to send due to an error.
+  - name: message
+    type: string
+    description: >
+      Provides additional context or error details for the email operation. For successful 
+      operations, it includes a confirmation message. For failures, it specifies the error 
+      encountered (e.g., "Invalid recipient address", "SMTP authentication failed").
