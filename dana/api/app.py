@@ -32,8 +32,10 @@ def create_app():
         if request.method == "OPTIONS":
             return jsonify({"message": "CORS preflight check"}), 200
 
-        if request.endpoint not in ["health"]:
-            return authenticate()
+        if request.path == "/health":
+            return None
+
+        return authenticate()
 
     # Register Blueprints
     register_blueprints(app)
