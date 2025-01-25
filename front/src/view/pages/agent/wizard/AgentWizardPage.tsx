@@ -1,6 +1,4 @@
-"use client";
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,25 +9,31 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import AgentInitialization from "./steps/AgentInitialization";
-import IntegrationSelection from "./steps/IntegrationSelection";
+import IntegrationSelection from "./steps/integration-selection/IntegrationSelection";
 import DefineIntents from "./steps/DefineIntents";
 import DefineFacts from "./steps/DefineFacts";
 import PolicyAndPermissions from "./steps/PolicyAndPermissions";
 import DeployAgent from "./steps/DeployAgent";
 import YamlUpload from "./components/YamlUpload";
-import { AgentConfig } from "@/services/agentControllerService";
+import {
+  AgentConfig,
+  agentControllerService,
+} from "@/services/agentControllerService";
+import { useMutation } from "react-query";
+import Secrets from "./steps/Secrets";
 
 const steps = [
   "Configuration File Upload",
   "Basic Information",
-  // "Integrations",
+  "Integrations",
   "Intents",
   "Facts",
+  "Secrets",
   "Policy and Permissions",
   "Deploy",
 ];
 
-export default function AgentWizard() {
+export default function AgentWizard({ agentId }: { agentId?: string }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [agentConfig, setAgentConfig] = useState<AgentConfig>({
     selectedIntegrations: [],
@@ -39,7 +43,23 @@ export default function AgentWizard() {
     facts: [],
     policies: [],
     categories: [],
+    secrets: [],
   });
+
+  const { mutate: getAgent } = useMutation(
+    () => agentControllerService.getAgent(agentId!),
+    {
+      onSuccess: (data) => {
+        setAgentConfig(data);
+      },
+    }
+  );
+
+  useEffect(() => {
+    if (agentId) {
+      getAgent();
+    }
+  }, [agentId, getAgent]);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -53,11 +73,12 @@ export default function AgentWizard() {
     }
   };
 
-  const updateConfig = (newData: Partial<typeof agentConfig>) => {
+  const updateConfig = (newData: Partial<AgentConfig>) => {
     setAgentConfig({ ...agentConfig, ...newData });
+    console.log(`Updated config`, JSON.stringify({ ...agentConfig, ...newData }, null, 2));
   };
 
-  const handleConfigLoaded = (loadedConfig: any) => {
+  const handleConfigLoaded = (loadedConfig: Partial<AgentConfig>) => {
     updateConfig(loadedConfig);
   };
 
@@ -85,6 +106,8 @@ export default function AgentWizard() {
         );
       case "Facts":
         return <DefineFacts config={agentConfig} updateConfig={updateConfig} />;
+      case "Secrets":
+        return <Secrets config={agentConfig} updateConfig={updateConfig} />;
       case "Policy and Permissions":
         return (
           <PolicyAndPermissions
@@ -93,7 +116,7 @@ export default function AgentWizard() {
           />
         );
       case "Deploy":
-        return <DeployAgent config={agentConfig} />;
+        return <DeployAgent config={agentConfig} isEdit={!!agentId} />;
       default:
         return null;
     }

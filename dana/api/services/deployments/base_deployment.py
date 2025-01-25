@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Dict
 
 
 class BaseDeployment(ABC):
@@ -8,7 +7,7 @@ class BaseDeployment(ABC):
     """
 
     @abstractmethod
-    def package(self, agent_id: str, agent_details: Dict) -> str:
+    def package(self, agent_id: str, agent_details: dict) -> str:
         """
         Package the agent details into a configuration or directory.
         :param agent_id: Unique identifier for the agent.
@@ -18,10 +17,18 @@ class BaseDeployment(ABC):
         pass
 
     @abstractmethod
-    def deploy(self, package_path: str) -> Dict:
+    def deploy(self, package_path: str) -> dict:
         """
         Deploy the packaged agent and return deployment metadata.
         :param package_path: Path to the packaged agent.
         :return: Dictionary containing deployment metadata (e.g., URL, ARN).
+        """
+        pass
+
+    @abstractmethod
+    def destroy(self, deployment_metadata: dict) -> None:
+        """
+        Destroy the deployed agent based on the deployment metadata.
+        :param deployment_metadata: Dictionary containing deployment metadata.
         """
         pass

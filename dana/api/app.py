@@ -35,6 +35,9 @@ def create_app():
         if request.path == "/health":
             return None
 
+        if request.path.startswith("/integration/oauth"):
+            return None
+
         return authenticate()
 
     # Register Blueprints

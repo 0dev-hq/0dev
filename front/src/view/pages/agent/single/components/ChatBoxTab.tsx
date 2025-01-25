@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect, KeyboardEvent } from "react";
 import { Send } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,35 +10,25 @@ import { InteractionMessage } from "./chatbox-messages/messageTypes";
 import { MessageFactory } from "./chatbox-messages/MessageBubbleFactory";
 import { Textarea } from "@/components/ui/textarea";
 
-interface ChatBoxProps {
+interface ChatBoxTabProps {
   agentId: string;
   agentName: string;
   sessionId?: string;
-  onSelectSession: (sessionId: string) => void;
+  shouldLoadHistory?: boolean;
+  onStartNewSession: () => void;
 }
 
-export function ChatBox({
+export function ChatBoxTab({
   agentId,
   agentName,
   sessionId,
-  onSelectSession,
-}: ChatBoxProps) {
+  shouldLoadHistory,
+  onStartNewSession,
+}: ChatBoxTabProps) {
   const [messages, setMessages] = useState<InteractionMessage[]>([]);
   const [input, setInput] = useState("");
   const [isAgentTyping, setIsAgentTyping] = useState(false);
 
-  const sessionMutation = useMutation(
-    () => agentService.createSession(agentId),
-    {
-      onSuccess: (sessionId: string) => {
-        onSelectSession(sessionId);
-      },
-    }
-  );
-
-  const onStartNewSession = () => {
-    sessionMutation.mutate();
-  };
 
   const interactMutation = useMutation(
     ({
@@ -78,12 +66,12 @@ export function ChatBox({
   );
 
   useEffect(() => {
-    if (sessionId) {
+    if (shouldLoadHistory) {
       loadInteractionHistory();
     } else {
       setMessages([]);
     }
-  }, [sessionId, loadInteractionHistory]);
+  }, [shouldLoadHistory, loadInteractionHistory]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {

@@ -11,12 +11,12 @@ import {
 import { useQuery } from "react-query";
 import { agentService } from "@/services/agentService";
 
-interface SessionsListProps {
+interface SessionsListTabProps {
   agentId: string;
   onSelectSession: (sessionId: string) => void;
 }
 
-export function SessionsList({ onSelectSession, agentId }: SessionsListProps) {
+export function SessionsListTab({ onSelectSession, agentId }: SessionsListTabProps) {
   const {
     data: sessions,
     isLoading,

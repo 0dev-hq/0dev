@@ -3,11 +3,13 @@ import traceback
 from flask import g
 from sqlalchemy import func
 from api.models.agent import Agent, AgentStatus
+from api.models.agent_secret import AgentSecret
 from api.models.session import AgentSession
 from api.db import db
 import uuid
 from api.services.deployments.deployment_factory import DeploymentFactory
-from api.models.agent_registry import AgentRegistry  # todo: get rid of this import
+from cryptography.fernet import Fernet
+import os
 
 
 class ControllerService:
@@ -17,7 +19,22 @@ class ControllerService:
 
     def __init__(self):
         self.deployment_strategy = DeploymentFactory.create()
-        self.registry = AgentRegistry()
+        encryption_key = os.getenv("SECRETS_ENCRYPTION_KEY")
+        if not encryption_key:
+            raise EnvironmentError("SECRETS_ENCRYPTION_KEY is not set.")
+        self.fernet = Fernet(encryption_key.encode())
+
+    def _encrypt_secret(self, value: str) -> str:
+        """
+        Encrypt a secret value.
+        """
+        return self.fernet.encrypt(value.encode()).decode()
+
+    def _decrypt_secret(self, value: str) -> str:
+        """
+        Decrypt a secret value.
+        """
+        return self.fernet.decrypt(value.encode()).decode()
 
     def list_agents(self):
         """
@@ -49,7 +66,7 @@ class ControllerService:
 
     def get_agent(self, agent_id: str) -> dict:
         """
-        Get details of a specific agent.
+        Get details of a specific agent, including its secrets.
         """
         agent = (
             db.session.query(
@@ -59,16 +76,31 @@ class ControllerService:
                 Agent.intents,
                 Agent.policies,
                 Agent.facts,
-                Agent.deployment_url,
+                Agent.deployment_metadata,
                 Agent.status,
                 Agent.categories,
             )
             .filter(
-                Agent.agent_id == agent_id and Agent.account_id == g.get("account_id")
+                Agent.agent_id == agent_id,
+                Agent.account_id == g.get("account_id"),
             )
             .first()
         )
         if agent:
+            secrets = (
+                db.session.query(AgentSecret)
+                .filter(AgentSecret.agent_id == agent_id)
+                .all()
+            )
+            secrets_list = [
+                {
+                    "name": secret.name,
+                    "description": secret.description,
+                    "value": self._decrypt_secret(secret.value),
+                }
+                for secret in secrets
+            ]
+
             return {
                 "id": agent.agent_id,
                 "name": agent.name,
@@ -78,6 +110,7 @@ class ControllerService:
                 "facts": agent.facts.split(",") if agent.facts else [],
                 "status": agent.status.value if agent.status else "",
                 "categories": agent.categories.split(",") if agent.categories else [],
+                "secrets": secrets_list,
             }
         return None
 
@@ -85,11 +118,66 @@ class ControllerService:
         """
         Update an existing agent's configuration.
         """
-        agent = self.registry.get_agent(agent_id)
-        if agent:
-            agent.update(updates)
-            return True
-        return False
+        # 1. Find the agent based on the ID and account ID
+
+        agent = (
+            db.session.query(Agent)
+            .filter(
+                Agent.agent_id == agent_id and Agent.account_id == g.get("account_id")
+            )
+            .first()
+        )
+
+        if not agent:
+            return False
+
+        # 2. Update the agent's fields
+
+        new_agent = {
+            "name": updates.get("name", agent.name),
+            "description": updates.get("description", agent.description),
+            "intents": updates.get("intents", agent.intents),
+            "policies": updates.get("policies", agent.policies),
+            "facts": updates.get("facts", agent.facts),
+            "categories": updates.get("categories", agent.categories),
+        }
+
+        # 3. Destroy the existing agent
+
+        self.deployment_strategy.destroy(agent.deployment_metadata)
+
+        # 4. Deploy the updated agent
+
+        package_path = self.deployment_strategy.package(agent_id, new_agent)
+        deployment_metadata = self.deployment_strategy.deploy(package_path)
+
+        # 5. Update the agent in the database
+
+        agent.name = new_agent["name"]
+        agent.description = new_agent["description"]
+        agent.intents = ",".join(new_agent["intents"])
+        agent.policies = ",".join(new_agent["policies"])
+        agent.facts = ",".join(new_agent["facts"])
+        agent.categories = ",".join(new_agent["categories"])
+        agent.deployment_metadata = deployment_metadata
+        agent.status = AgentStatus.RUNNING
+
+        # Update secrets
+        if "secrets" in updates:
+            db.session.query(AgentSecret).filter(
+                AgentSecret.agent_id == agent_id
+            ).delete()
+            for secret in updates["secrets"]:
+                new_secret = AgentSecret(
+                    agent_id=agent_id,
+                    name=secret["name"],
+                    value=self._encrypt_secret(secret["value"]),
+                    description=secret.get("description", ""),
+                )
+                db.session.add(new_secret)
+
+        db.session.commit()
+        return True
 
     def create_agent(self, agent_details: dict) -> dict:
         """
@@ -112,6 +200,7 @@ class ControllerService:
                 "intents": agent_details.get("intents", []),
                 "policies": agent_details.get("policies", []),
                 "facts": agent_details.get("facts", []),
+                "secrets": agent_details.get("secrets", []),
             }
             package_path = self.deployment_strategy.package(agent_id, agent_config)
 
@@ -127,11 +216,22 @@ class ControllerService:
                 intents=",".join(agent_details.get("intents", [])),
                 policies=",".join(agent_details.get("policies", [])),
                 facts=",".join(agent_details.get("facts", [])),
-                deployment_url=deployment_metadata["url"],
+                deployment_metadata=deployment_metadata,
                 status=AgentStatus.RUNNING,
                 categories=",".join(agent_details.get("categories", [])),
             )
             db.session.add(new_agent)
+
+            # Add secrets to the agent
+            for secret in agent_details.get("secrets", []):
+                new_secret = AgentSecret(
+                    agent_id=agent_id,
+                    name=secret["name"],
+                    value=self._encrypt_secret(secret["value"]),
+                    description=secret.get("description", ""),
+                )
+                db.session.add(new_secret)
+
             db.session.commit()
 
             return {
@@ -152,7 +252,29 @@ class ControllerService:
         :param agent_id: ID of the agent.
         :return: True if successful, False otherwise.
         """
-        return self.registry.remove_agent(agent_id)
+
+        # 1. Find the agent based on the ID and account ID
+        agent = (
+            db.session.query(Agent)
+            .filter(
+                Agent.agent_id == agent_id and Agent.account_id == g.get("account_id")
+            )
+            .first()
+        )
+
+        if not agent:
+            return False
+
+        # 2. Destroy the agent
+        self.deployment_strategy.destroy(agent.deployment_metadata)
+
+        # 3. Delete the agent from the database
+
+        # Delete associated secrets
+        db.session.query(AgentSecret).filter(AgentSecret.agent_id == agent_id).delete()
+        db.session.delete(agent)
+        db.session.commit()
+        return True
 
     def pause_agent(self, agent_id: str) -> bool:
         """
@@ -160,10 +282,7 @@ class ControllerService:
         :param agent_id: ID of the agent.
         :return: True if paused successfully.
         """
-        agent = self.registry.get_agent(agent_id)
-        if agent and "status" in agent:
-            agent["status"] = "paused"
-            return True
+
         return False
 
     def scale_agent(self, agent_id: str, scale_factor: int) -> bool:
@@ -173,8 +292,5 @@ class ControllerService:
         :param scale_factor: Desired scale factor.
         :return: True if scaled successfully.
         """
-        agent = self.registry.get_agent(agent_id)
-        if agent:
-            agent["scale"] = scale_factor
-            return True
+
         return False

@@ -43,7 +43,7 @@ class AgentService:
             raise ValueError("Agent not found.")
 
         # 2. Get the history
-        history = self.interactor.get_history(session_id, agent.deployment_url)
+        history = self.interactor.get_history(session_id, agent.deployment_metadata)
 
         return history
 
@@ -78,8 +78,9 @@ class AgentService:
             raise ValueError("Session ID is required.")
 
         # 2. Interact with the agent
-        print(f"agent url: {agent.deployment_url}")
+        deployment_url = agent.deployment_metadata["url"]
+        print(f"agent url: {deployment_url}")
         response = self.interactor.interact(
-            user_input, session_id, agent.deployment_url
+            user_input, session_id, deployment_url
         )
         return response
