@@ -4,11 +4,11 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { IntegrationCard } from "./IntegrationCard";
 import type { Integration } from "./integration";
-import { SelectedIntegration } from "@/services/agentControllerService";
+import { IntegrationItem } from "@/services/agentControllerService";
 
 interface BrowseIntegrationsProps {
   availableIntegrations: Integration[];
-  selectedIntegrations: SelectedIntegration[];
+  selectedIntegrations: IntegrationItem[];
   onToggleIntegration: (integration: string) => void;
 }
 

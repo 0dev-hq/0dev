@@ -10,8 +10,9 @@ import {
   Key,
   EyeOff,
   Eye,
+  Share2,
 } from "lucide-react";
-import { AgentConfig, Secret } from "@/services/agentControllerService";
+import { AgentConfig, IntegrationItem, Secret } from "@/services/agentControllerService";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,15 +30,11 @@ export default function AgentConfigTabs({ agent }: AgentConfigTabsProps) {
 
   return (
     <Tabs defaultValue="categories" className="w-full">
-      <TabsList className="grid w-full grid-cols-5">
+      <TabsList className="grid w-full grid-cols-6">
         <TabsTrigger value="categories" className="flex items-center gap-2">
           <Target className="h-4 w-4" />
           Categories
         </TabsTrigger>
-        {/* <TabsTrigger value="integrations" className="flex items-center gap-2">
-          <Share2 className="h-4 w-4" />
-          Integrations
-        </TabsTrigger> */}
         <TabsTrigger value="intents" className="flex items-center gap-2">
           <MessageSquare className="h-4 w-4" />
           Intents
@@ -49,6 +46,10 @@ export default function AgentConfigTabs({ agent }: AgentConfigTabsProps) {
         <TabsTrigger value="policies" className="flex items-center gap-2">
           <Shield className="h-4 w-4" />
           Policies
+        </TabsTrigger>
+        <TabsTrigger value="integrations" className="flex items-center gap-2">
+          <Share2 className="h-4 w-4" />
+          Integrations
         </TabsTrigger>
         <TabsTrigger value="secrets" className="flex items-center gap-2">
           <Key className="h-4 w-4" />
@@ -68,13 +69,12 @@ export default function AgentConfigTabs({ agent }: AgentConfigTabsProps) {
 
       <TabsContent value="integrations" className="mt-6">
         <div className="flex flex-wrap gap-2">
-          {agent.selectedIntegrations?.map(
-            (integration: string, index: number) => (
-              <Badge key={index} variant="outline">
-                {integration}
-              </Badge>
-            )
-          )}
+          {agent.integrations.map((integration: IntegrationItem
+          , index: number) => (
+            <Badge key={index} variant="outline">
+              {integration.name}
+            </Badge>
+          ))}
         </div>
       </TabsContent>
 

@@ -2,7 +2,7 @@ import { AlertCircle, CheckCircle2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ConnectionStatus } from "./integration";
 import {
-  SelectedIntegration,
+  IntegrationItem,
 } from "@/services/agentControllerService";
 
 export default function OAuthIntegration({
@@ -10,7 +10,7 @@ export default function OAuthIntegration({
   status,
   onInitiateOAuth,
 }: {
-  integration: SelectedIntegration;
+  integration: IntegrationItem;
   status?: ConnectionStatus;
   onInitiateOAuth: (integration: string) => void;
 }) {

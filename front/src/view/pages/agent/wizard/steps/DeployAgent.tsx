@@ -28,6 +28,8 @@ export default function DeployAgent({ config, isEdit }: DeployAgentProps) {
 
   const deployMutation = useMutation(
     (agentConfig: AgentConfig) => {
+      console.log(`agentConfig: ${JSON.stringify(agentConfig)}`);
+      console.log(`isEdit: ${isEdit}`);
       if (isEdit) {
         return agentControllerService.updateAgent(config.id!, agentConfig);
       } else {
@@ -42,6 +44,11 @@ export default function DeployAgent({ config, isEdit }: DeployAgentProps) {
           navigate("/agent");
         }, 2000);
       },
+      onError: (error: any) => {
+        toast.error("Failed to deploy agent");
+        console.error("Failed to deploy agent", error);
+        setDeploymentStatus("idle");
+      },
     }
   );
 
@@ -55,7 +62,7 @@ export default function DeployAgent({ config, isEdit }: DeployAgentProps) {
       facts: config.facts,
       policies: config.policies,
       secrets: config.secrets,
-      selectedIntegrations: config.selectedIntegrations,
+      integrations: config.integrations,
     };
     deployMutation.mutate(agentConfig);
   };
@@ -87,7 +94,7 @@ export default function DeployAgent({ config, isEdit }: DeployAgentProps) {
               <div>
                 <h3 className="font-semibold">Selected Integrations:</h3>
                 <ul className="list-disc list-inside">
-                  {config.selectedIntegrations?.map((integration, index) => (
+                  {config.integrations?.map((integration, index) => (
                     <li key={index}>{integration.name}
                     {/* todo: lazy check, should be improved */}
                     {integration.credentials && <Badge className='ml-2 bg-green-600'> connected</Badge>}

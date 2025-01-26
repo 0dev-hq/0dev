@@ -36,7 +36,7 @@ const steps = [
 export default function AgentWizard({ agentId }: { agentId?: string }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [agentConfig, setAgentConfig] = useState<AgentConfig>({
-    selectedIntegrations: [],
+    integrations: [],
     name: "",
     description: "",
     intents: [],

@@ -4,7 +4,7 @@ export type AgentConfig = {
   id?: string;
   name: string;
   description: string;
-  selectedIntegrations: SelectedIntegration[];
+  integrations: IntegrationItem[];
   intents: string[];
   facts: string[];
   policies: string[];
@@ -37,7 +37,7 @@ export type IntegrationCredentials<T extends "oauth" | "custom"> =
       };
 
 // Define the SelectedIntegration type to handle either OAuth or Custom integrations
-export interface SelectedIntegration {
+export interface IntegrationItem {
   name: string;
   credentials:
     | IntegrationCredentials<"oauth">

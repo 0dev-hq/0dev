@@ -1,9 +1,11 @@
+import json
 import traceback
 
 from flask import g
 from sqlalchemy import func
 from api.models.agent import Agent, AgentStatus
 from api.models.agent_secret import AgentSecret
+from api.models.integration import Integration
 from api.models.session import AgentSession
 from api.db import db
 import uuid
@@ -92,6 +94,7 @@ class ControllerService:
                 .filter(AgentSecret.agent_id == agent_id)
                 .all()
             )
+
             secrets_list = [
                 {
                     "name": secret.name,
@@ -99,6 +102,23 @@ class ControllerService:
                     "value": self._decrypt_secret(secret.value),
                 }
                 for secret in secrets
+            ]
+
+            integrations = (
+                db.session.query(Integration)
+                .filter(Integration.agent_id == agent_id)
+                .all()
+            )
+
+            integrations_list = [
+                {
+                    "name": integration.name,
+                    "type": integration.type.value,
+                    "credentials": json.loads(
+                        self._decrypt_secret(integration.credentials)
+                    ),
+                }
+                for integration in integrations
             ]
 
             return {
@@ -111,6 +131,7 @@ class ControllerService:
                 "status": agent.status.value if agent.status else "",
                 "categories": agent.categories.split(",") if agent.categories else [],
                 "secrets": secrets_list,
+                "integrations": integrations_list,
             }
         return None
 
@@ -176,6 +197,22 @@ class ControllerService:
                 )
                 db.session.add(new_secret)
 
+        # Update integrations
+        if "integrations" in updates:
+            db.session.query(Integration).filter(
+                Integration.agent_id == agent_id
+            ).delete()
+            for integration in updates["integrations"]:
+                new_integration = Integration(
+                    agent_id=agent_id,
+                    name=integration["name"],
+                    type=integration["credentials"]["type"].upper(),
+                    credentials=self._encrypt_secret(
+                        json.dumps(integration["credentials"])
+                    ),
+                )
+                db.session.add(new_integration)
+
         db.session.commit()
         return True
 
@@ -201,13 +238,14 @@ class ControllerService:
                 "policies": agent_details.get("policies", []),
                 "facts": agent_details.get("facts", []),
                 "secrets": agent_details.get("secrets", []),
+                "integrations": agent_details.get("integrations", []),
             }
             package_path = self.deployment_strategy.package(agent_id, agent_config)
 
             # Step 2: Deploy the agent
             deployment_metadata = self.deployment_strategy.deploy(package_path)
 
-            # Step 3: Save agent to the database
+            # Step 3: Save the agent to the database
             new_agent = Agent(
                 agent_id=agent_id,
                 account_id=g.get("account_id"),
@@ -231,6 +269,18 @@ class ControllerService:
                     description=secret.get("description", ""),
                 )
                 db.session.add(new_secret)
+
+            # Add integrations to the agent
+            for integration in agent_details.get("integrations", []):
+                new_integration = Integration(
+                    agent_id=agent_id,
+                    name=integration["name"],
+                    type=integration["credentials"]["type"].upper(),
+                    credentials=self._encrypt_secret(
+                        json.dumps(integration["credentials"])
+                    ),
+                )
+                db.session.add(new_integration)
 
             db.session.commit()
 
@@ -270,8 +320,8 @@ class ControllerService:
 
         # 3. Delete the agent from the database
 
-        # Delete associated secrets
-        db.session.query(AgentSecret).filter(AgentSecret.agent_id == agent_id).delete()
+        # Delete associated secrets and integrations with cascade
+        # db.session.query(AgentSecret).filter(AgentSecret.agent_id == agent_id).delete()
         db.session.delete(agent)
         db.session.commit()
         return True

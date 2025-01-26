@@ -6,7 +6,7 @@ from api.db import Base
 class AgentSecret(Base):
     __tablename__ = "agent_secrets"
 
-    agent_id = Column(String, ForeignKey("agents.agent_id"), nullable=False)
+    agent_id = Column(String, ForeignKey("agents.agent_id", ondelete="CASCADE"), nullable=False)
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
     value = Column(String, nullable=False)

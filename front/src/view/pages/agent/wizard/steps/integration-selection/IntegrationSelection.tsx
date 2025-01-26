@@ -41,7 +41,7 @@ export default function IntegrationSelection({
             },
           }));
           updateConfig({
-            selectedIntegrations: config.selectedIntegrations.map((i) =>
+            integrations: config.integrations.map((i) =>
               i.name === integration
                 ? {
                     ...i,
@@ -81,18 +81,18 @@ export default function IntegrationSelection({
 
     window.addEventListener("message", handleOAuthCallback);
     return () => window.removeEventListener("message", handleOAuthCallback);
-  }, [config.selectedIntegrations, updateConfig]);
+  }, [config.integrations, updateConfig]);
 
   const handleToggleIntegration = (
     integration: string,
     integrationType: "oauth" | "custom"
   ) => {
-    const newSelectedIntegrations = config.selectedIntegrations.some(
+    const newSelectedIntegrations = config.integrations.some(
       (i) => i.name === integration
     )
-      ? config.selectedIntegrations.filter((i) => i.name !== integration)
+      ? config.integrations.filter((i) => i.name !== integration)
       : [
-          ...config.selectedIntegrations,
+          ...config.integrations,
           {
             name: integration,
             credentials:
@@ -109,7 +109,7 @@ export default function IntegrationSelection({
           },
         ];
 
-    updateConfig({ selectedIntegrations: newSelectedIntegrations });
+    updateConfig({ integrations: newSelectedIntegrations });
 
     if (!newSelectedIntegrations.some((i) => i.name === integration)) {
       setConnectionStatus((prev) => {
@@ -190,7 +190,7 @@ export default function IntegrationSelection({
           },
         }));
         updateConfig({
-          selectedIntegrations: config.selectedIntegrations.map((i) =>
+          integrations: config.integrations.map((i) =>
             i.name === variables.integration
               ? { ...i, credentials: variables.credentials }
               : i
@@ -225,7 +225,7 @@ export default function IntegrationSelection({
     values: CustomCredentialValue[]
   ) => {
     updateConfig({
-      selectedIntegrations: config.selectedIntegrations.map((i) =>
+      integrations: config.integrations.map((i) =>
         i.name === integrationName
           ? {
               ...i,
@@ -257,14 +257,14 @@ export default function IntegrationSelection({
         <TabsContent value="browse">
           <BrowseIntegrations
             availableIntegrations={availableIntegrations}
-            selectedIntegrations={config.selectedIntegrations}
+            selectedIntegrations={config.integrations}
             onToggleIntegration={handleToggleIntegration}
           />
         </TabsContent>
 
         <TabsContent value="selected">
           <SelectedIntegrations
-            selectedIntegrations={config.selectedIntegrations}
+            selectedIntegrations={config.integrations}
             availableIntegrations={availableIntegrations}
             connectionStatus={connectionStatus}
             onRemoveIntegration={handleToggleIntegration}

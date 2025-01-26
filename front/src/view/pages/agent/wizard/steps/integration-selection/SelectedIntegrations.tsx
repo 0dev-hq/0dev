@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/accordion";
 import type { ConnectionStatus, Integration } from "./integration";
 import {
-  SelectedIntegration,
+  IntegrationItem,
   AgentConfig,
   CustomCredentialValue,
 } from "@/services/agentControllerService";
@@ -25,7 +25,7 @@ import OAuthIntegration from "./OAuthIntegration";
 import CustomIntegration from "./CustomIntegration";
 
 interface SelectedIntegrationsProps {
-  selectedIntegrations: SelectedIntegration[];
+  selectedIntegrations: IntegrationItem[];
   availableIntegrations: Integration[];
   connectionStatus: Record<string, ConnectionStatus>;
   onRemoveIntegration: (integration: string) => void;
