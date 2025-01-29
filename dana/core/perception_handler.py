@@ -20,9 +20,11 @@ class InputItemFormat(BaseModel):
             return self.value.lower() in {"true", "1"}
         elif self.type == "dict":
             import json
+
             return json.loads(self.value)
         elif self.type == "list":
             import json
+
             return json.loads(self.value)
         else:
             return self.value
@@ -32,6 +34,8 @@ class ConfirmationFormat(BaseModel):
     reference_id: str
     version: str
     input: list[InputItemFormat]
+    secrets: list[str]
+    integrations: list[str]
 
 
 class OptionsFormat(BaseModel):
@@ -83,8 +87,12 @@ class PerceptionHandler:
             The code and inputs you identify will be used to generate a confirmation message for the user.
             Your answer should be in JSON format with these keys:
             - 'input': A list of input items required for the code execution. Each item should have a 'name', 'value' and 'type' field.
-            The list should cover all the arguments
             of the 'main' function in the code. If no inputs are required, set this to an empty list.
+            The list should cover all the inputs (except secrets and integrations) required for the code execution.
+            - 'secrets': A list of secrets required for the code execution. Use the exact name of the secret from the secrets list.
+              If no secrets are required, set this to an empty list.
+            - 'integrations': A list of integrations required for the code execution. Use the exact name of the integration from the integrations list.
+            If no integrations are required, set this to an empty list.
             - 'reference_id': The reference ID of the generated code.
             - 'version': The version of the generated code to be confirmed. Set this to 'latest' to confirm the latest version.
             The purpose of the confirmation is to ensure that the user agrees with the generated plan.

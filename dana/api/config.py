@@ -1,3 +1,4 @@
+import logging
 import os
 from dotenv import load_dotenv
 
@@ -25,3 +26,17 @@ class Config:
     PORT = os.getenv("PORT", 5000)
     SQLALCHEMY_DATABASE_URI = _get_database_url()  # Maps DB_URL to SQLAlchemy
     SQLALCHEMY_TRACK_MODIFICATIONS = False  # Best practice to disable this
+    # set the log level used by logger to most verbose
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG")
+
+    @staticmethod
+    def configure_logging():
+        """
+        Configures logging based on the LOG_LEVEL.
+        """
+        logging.basicConfig(
+            level=getattr(logging, Config.LOG_LEVEL, logging.INFO),
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        )
+        logger = logging.getLogger(__name__)
+        logger.info("Logging configured with level: %s", Config.LOG_LEVEL)

@@ -9,7 +9,10 @@ import { IntegrationItem } from "@/services/agentControllerService";
 interface BrowseIntegrationsProps {
   availableIntegrations: Integration[];
   selectedIntegrations: IntegrationItem[];
-  onToggleIntegration: (integration: string) => void;
+  onToggleIntegration: (
+    integrationName: string,
+    integration: "oauth" | "custom"
+  ) => void;
 }
 
 export function BrowseIntegrations({
@@ -73,7 +76,9 @@ export function BrowseIntegrations({
               isSelected={selectedIntegrations.some(
                 (i) => i.name === integration.name
               )}
-              onToggle={() => onToggleIntegration(integration.name, integration.authType)}
+              onToggle={() =>
+                onToggleIntegration(integration.name, integration.authType)
+              }
             />
           ))}
         </div>

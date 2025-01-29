@@ -109,7 +109,7 @@ class StepHandler:
         account_id: str,
         agent_id: str,
     ) -> dict:
-        # Generate code using the code generator
+
         generated_code = self.code_generator.generate(user_input, context)
         logger.info(f"Generated code: {generated_code}")
         reference_id = self.code_generator.save_code(
@@ -172,13 +172,13 @@ class StepHandler:
         agent_id: str,
     ) -> dict:
         logger.debug("Handling execution step")
-        generatedCodeWithInput = self.code_generator.get_code_with_input(
+        executionContext = self.code_generator.get_code_with_input(
             account_id, agent_id, session_id, context
         )
 
-        logger.debug(f"Executing code: {generatedCodeWithInput.generated_code.code}")
-        logger.debug(f"Inputs: {generatedCodeWithInput.inputs}")
-        logger.debug(f"Reference ID: {generatedCodeWithInput.reference_id}")
+        logger.debug(f"Executing code: {executionContext.generated_code.code}")
+        logger.debug(f"Inputs: {executionContext.inputs}")
+        logger.debug(f"Reference ID: {executionContext.reference_id}")
 
         (job_id, secret_token) = self.code_executor.create_job(
             account_id=account_id, agent_id=agent_id, session_id=session_id
@@ -189,21 +189,31 @@ class StepHandler:
         secrets = {
             secret["name"]: secret["value"]
             for secret in context["secrets"]
-            if secret["name"] in generatedCodeWithInput.generated_code.secrets
+            if secret["name"] in executionContext.generated_code.secrets
+        }
+
+        # filter the integrations to only include the ones that are required by the code
+        integrations = {
+            integration["name"]: {
+                "credentials": integration["credentials"],
+            }
+            for integration in context["integrations"]
+            if integration["name"] in executionContext.generated_code.integrations
         }
 
         self.code_executor.execute_job(
             job_id=job_id,
             secret_token=secret_token,
-            code=generatedCodeWithInput.generated_code.code,
-            requirements=generatedCodeWithInput.generated_code.requirements,
-            inputs=generatedCodeWithInput.inputs,
+            code=executionContext.generated_code.code,
+            requirements=executionContext.generated_code.requirements,
+            inputs=executionContext.inputs,
             secrets=secrets,
+            integrations=integrations,
         )
         logger.info(f"Scheduled job: {job_id}")
         return {
             "type": "execution",
-            "content": f"Scheduled job {job_id} for execution for code {generatedCodeWithInput.reference_id} with inputs {generatedCodeWithInput.inputs}",
+            "content": f"Scheduled job {job_id} for execution for code {executionContext.reference_id} with inputs {executionContext.inputs}",
         }
 
     def _handle_none(

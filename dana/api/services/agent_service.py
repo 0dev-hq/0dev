@@ -68,8 +68,6 @@ class AgentService:
 
         # 1. Find the agent's url if it exists. If not, raise an error.
 
-        print(f"filtering by agent_id: {agent_id}, account_id: {account_id}")
-
         agent = Agent.query.filter_by(agent_id=agent_id, account_id=account_id).first()
         if not agent:
             raise ValueError("Agent not found.")
@@ -78,9 +76,7 @@ class AgentService:
             raise ValueError("Session ID is required.")
 
         # 2. Interact with the agent
-        deployment_url = agent.deployment_metadata["url"]
-        print(f"agent url: {deployment_url}")
         response = self.interactor.interact(
-            user_input, session_id, deployment_url
+            user_input, session_id, agent.deployment_metadata
         )
         return response

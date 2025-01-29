@@ -26,6 +26,7 @@ class InteractiveAgent(BaseAgent):
         facts: list,
         policies: list,
         secrets: list[dict],
+        integrations: list[dict],
         account_id: str,
     ):
         """
@@ -43,6 +44,10 @@ class InteractiveAgent(BaseAgent):
         :param facts: Set of facts that give the agent context.
         :param policies: Set of policies defining agent behavior.
         :param secrets: List of secrets associated with the agent. Each secret is a dict with keys: name, description, and value.
+        :param integrations: List of integrations associated with the agent. Each integration is a dict with keys: name, and credentials.
+        Credentials is a dict with keys: type which can be "oauth" or "custom", and values. 
+        If the credentials type is "oauth", values is a dict with the keys access_token, refresh_token, and expires_at.
+        If the credentials type is "custom", values is a list of dicts with keys: name, type (password or text), and value.
         :param account_id: Account ID associated with the agent.
         """
         super().__init__(id, name, description, agent_type="Interactive")
@@ -50,6 +55,7 @@ class InteractiveAgent(BaseAgent):
         self.facts = facts
         self.intents = intents
         self.secrets = secrets
+        self.integrations = integrations
         self.account_id = account_id
         self.navigator = navigator
         self.step_handler = step_handler
@@ -112,6 +118,7 @@ class InteractiveAgent(BaseAgent):
             "facts": self.facts,
             "policies": self.policies,
             "secrets": self.secrets,
+            "integrations": self.integrations,
         }
 
     def _save_response(self, session_id: str, response: str):

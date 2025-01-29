@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
-import { useMutation, useQueryClient } from "react-query";
+import { useMutation } from "react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BrowseIntegrations } from "./BrowseIntegrations";
 import { SelectedIntegrations } from "./SelectedIntegrations";
 import { availableIntegrations } from "./availableIntegrations";
 
-import type { ConnectionStatus, Integration } from "./integration";
+import type { ConnectionStatus } from "./integration";
 import {
   AgentConfig,
   CustomCredentialValue,
-  IntegrationCredentials,
 } from "@/services/agentControllerService";
 import { useToast } from "@/hooks/use-toast";
 import { agentIntegrationService } from "@/services/agentIntegrationService";
@@ -21,7 +20,6 @@ export default function IntegrationSelection({
   config: AgentConfig;
   updateConfig: (newData: Partial<AgentConfig>) => void;
 }) {
-  const queryClient = useQueryClient();
   const [connectionStatus, setConnectionStatus] = useState<
     Record<string, ConnectionStatus>
   >({});
@@ -82,6 +80,14 @@ export default function IntegrationSelection({
     window.addEventListener("message", handleOAuthCallback);
     return () => window.removeEventListener("message", handleOAuthCallback);
   }, [config.integrations, updateConfig]);
+
+  const handleRemoveIntegration = (integrationName: string) => {
+    updateConfig({
+      integrations: config.integrations.filter(
+        (i) => i.name !== integrationName
+      ),
+    });
+  }
 
   const handleToggleIntegration = (
     integration: string,
@@ -164,62 +170,6 @@ export default function IntegrationSelection({
     }
   );
 
-  const { mutate: handleAPIKeyConnection } = useMutation(
-    async ({
-      integration,
-      credentials,
-    }: {
-      integration: string;
-      credentials: IntegrationCredentials;
-    }) => {
-      await agentIntegrationService.connectWithApiKey(integration, credentials);
-    },
-    {
-      onMutate: (variables) => {
-        setConnectionStatus((prev) => ({
-          ...prev,
-          [variables.integration]: { state: "connecting" },
-        }));
-      },
-      onSuccess: (data, variables) => {
-        setConnectionStatus((prev) => ({
-          ...prev,
-          [variables.integration]: {
-            state: "connected",
-            lastChecked: new Date(),
-          },
-        }));
-        updateConfig({
-          integrations: config.integrations.map((i) =>
-            i.name === variables.integration
-              ? { ...i, credentials: variables.credentials }
-              : i
-          ),
-        });
-        queryClient.invalidateQueries("integrations");
-        toast({
-          title: "Integration Connected",
-          description: `Successfully connected to ${variables.integration}`,
-          variant: "default",
-        });
-      },
-      onError: (error, variables) => {
-        setConnectionStatus((prev) => ({
-          ...prev,
-          [variables.integration]: {
-            state: "error",
-            errorMessage: "Failed to connect",
-          },
-        }));
-        toast({
-          title: "Connection Failed",
-          description: `Failed to connect to ${variables.integration}`,
-          variant: "destructive",
-        });
-      },
-    }
-  );
-
   const updateCustomIntegrationCredentials = (
     integrationName: string,
     values: CustomCredentialValue[]
@@ -267,7 +217,7 @@ export default function IntegrationSelection({
             selectedIntegrations={config.integrations}
             availableIntegrations={availableIntegrations}
             connectionStatus={connectionStatus}
-            onRemoveIntegration={handleToggleIntegration}
+            onRemoveIntegration={handleRemoveIntegration}
             onInitiateOAuth={(integration: string) =>
               initiateOAuthFlow(integration)
             }
@@ -275,16 +225,6 @@ export default function IntegrationSelection({
             onUpdateCustomIntegrationCredentials={
               updateCustomIntegrationCredentials
             }
-            // onInitiateAuth={(integration, credentials) => {
-            //   const integ = availableIntegrations.find(
-            //     (i) => i.name === integration
-            //   );
-            //   if (integ?.authType === "oauth") {
-            //     initiateOAuthFlow(integration);
-            //   } else if (integ?.authType === "custom") {
-            //     handleAPIKeyConnection({ integration, credentials });
-            //   }
-            // }}
           />
         </TabsContent>
       </Tabs>

@@ -12,3 +12,4 @@ class AgentContext:
     facts: list[str]
     policies: list[str]
     secrets: list[dict]
+    integrations: list[dict]

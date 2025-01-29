@@ -4,12 +4,12 @@ from flask_migrate import Migrate
 from api.config import Config
 from api.db import db
 from api.controllers import register_blueprints
-from dotenv import load_dotenv
 from api.hooks.before import authenticate
 from api.models import *
 import os
+import logging
 
-load_dotenv()
+logger = logging.getLogger(__name__)
 
 
 def create_app():
@@ -18,6 +18,7 @@ def create_app():
     """
     app = Flask(__name__)
     app.config.from_object(Config)
+    Config.configure_logging()
 
     # Enable CORS for the front-end URL
     frontend_url = os.getenv("FRONTEND_URL", "*")
@@ -48,4 +49,5 @@ def create_app():
 
 if __name__ == "__main__":
     app = create_app()
+    logger.info(f"API server started on port {Config.PORT}")
     app.run(host="0.0.0.0", port=int(Config.PORT), debug=False, use_reloader=False)

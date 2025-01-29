@@ -28,10 +28,19 @@ class LocalCodeGenerator(BaseCodeGenerator):
         :param policies: The list of policies.
         :return: A formatted prompt as a string.
         """
+        logger.info(f"Secrets: {context.get('secrets', [])}")
+        logger.info(f"Integrations: {context.get('integrations', [])}")
 
         secrets = {
             secret["name"]: secret["description"]
             for secret in context.get("secrets", [])
+        }
+        integrations = {
+            integration["name"]: {
+                # todo: remove the actual credentials from the prompt
+                "credentials": integration["credentials"],
+            }
+            for integration in context["integrations"]
         }
 
         return [
@@ -48,14 +57,17 @@ class LocalCodeGenerator(BaseCodeGenerator):
                     Facts: {context.get('facts', 'No facts available')}
                     Policies: {context.get('policies', 'No policies available')}
                     Secrets: {secrets if secrets else 'No secrets available'}
+                    Integrations: {integrations if integrations else 'No integrations available'}
                     Communication history: {context.get('history', 'No history available')}
-                    Output the result as a JSON object with properties: "code", "requirements", "secrets", "name", and "description".
+                    Output the result as a JSON object with properties: "code", "requirements", "secrets", "integrations", "name", and "description".
                     - code: Python code fulfilling the task. The code shouldn't use any placeholder values and environment variables. All inputs must
                     be passed as function arguments.
                     - requirements: List of non-standard (third-party) Python packages required for the code. The packages will be installed using
                     pip. Do not include standard library packages like 'os' or 'sys', only third-party packages.
                     - secrets: List of secrets required for the code. If any secret is used in the code, it's exact name from the secrets list should
                     be used.
+                    - integrations: List of integrations required for the code. If any integration is used in the code, it's exact name from the
+                    integrations list should be used.
                     - name: A unique name that describes the code. While being concise, try to make it descriptive enough to easily which scenario
                     the code is used for.
                     - description: A brief description of the code.

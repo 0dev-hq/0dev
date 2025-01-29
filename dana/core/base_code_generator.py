@@ -20,8 +20,9 @@ class GeneratedCodeFormat(BaseModel):
     name: str
     description: str
     code: str
-    requirements: list[str] = []
-    secrets: list[str] = []
+    requirements: list[str]
+    secrets: list[str]
+    integrations: list[str]
 
 
 class GeneratedCodeWithInput(BaseModel):
@@ -95,9 +96,10 @@ class BaseCodeGenerator(ABC):
                         """
                         INSERT INTO agent_generated_codes (
                             reference_id, account_id, agent_id, session_id,
-                            name, description, code, requirements, secrets, created_at
+                            name, description, code, requirements, secrets, integrations, created_at
                         )
-                        VALUES (:reference_id, :account_id, :agent_id, :session_id, :name, :description, :code, :requirements, :secrets, NOW())
+                        VALUES (:reference_id, :account_id, :agent_id, :session_id, :name, :description, :code, :requirements, :secrets,
+                        :integrations, NOW())
                         """
                     ),
                     {
@@ -110,6 +112,7 @@ class BaseCodeGenerator(ABC):
                         "code": generated_code.code,
                         "requirements": ",".join(generated_code.requirements) if generated_code.requirements else "",
                         "secrets": ",".join(generated_code.secrets) if generated_code.secrets else "",
+                        "integrations": ",".join(generated_code.integrations) if generated_code.integrations else "",
                     },
                 )
                 session.commit()
@@ -124,9 +127,10 @@ class BaseCodeGenerator(ABC):
         self, account_id: str, agent_id: str, session_id: str, context: AgentContext
     ) -> GeneratedCodeWithInput:
         """
-        Retrieve the generated code from the database.
-        The reference_id and version are inferred using the LLM from the provided context.
+        This code first identifies (reference_id and version) which code to execute and with which inputs, secrets and integrations based on the context.
+        Then uses the reference_id and version to fetch the code from the database.
         If no version is specified, the latest version is fetched.
+        Note: Unlike the inputs, for secrets and integrations, we return only the names without the values in this function.
 
         :param account_id: Account ID associated with the agent.
         :param agent_id: Agent ID that generated the code.
@@ -140,7 +144,7 @@ class BaseCodeGenerator(ABC):
 
             # Use LLM client to infer reference_id and version
             response = self.llm_client.answer(
-                prompt=self._find_inference_id_version_prompt(context),
+                prompt=self._find_reference_id_version_prompt(context),
                 formatter=AgentGeneratedCodeFormat,
             )
 
@@ -159,7 +163,7 @@ class BaseCodeGenerator(ABC):
             # Query to fetch the specific version or the latest
             # todo: include version in the query
             query = """
-                SELECT name, description, code, requirements, secrets
+                SELECT name, description, code, requirements, secrets, integrations
                 FROM agent_generated_codes
                 WHERE account_id = :account_id AND agent_id = :agent_id AND session_id = :session_id AND reference_id = :reference_id
             """
@@ -180,7 +184,7 @@ class BaseCodeGenerator(ABC):
                 result = session.execute(text(query), params).fetchone()
 
             if result:
-                name, description, code, requirements, secrets = result
+                name, description, code, requirements, secrets, integrations = result
                 return GeneratedCodeWithInput(
                     generated_code=GeneratedCodeFormat(
                         name=name,
@@ -188,6 +192,7 @@ class BaseCodeGenerator(ABC):
                         code=code,
                         requirements=requirements.split(",") if requirements else [],
                         secrets=secrets.split(",") if secrets else [],
+                        integrations=integrations.split(",") if integrations else [],
                     ),
                     inputs=response.inputs or [],
                     reference_id=reference_id,
@@ -198,7 +203,7 @@ class BaseCodeGenerator(ABC):
             # throw exception to be caught by the caller
             raise e
 
-    def _find_inference_id_version_prompt(self, context: AgentContext) -> list[dict]:
+    def _find_reference_id_version_prompt(self, context: AgentContext) -> list[dict]:
         """
         Create a prompt for the LLM to infer the reference_id and version from the context.
 
@@ -221,7 +226,8 @@ class BaseCodeGenerator(ABC):
                     Please determine:
                     1. The reference_id of the relevant code.
                     2. The version of the code (set to 'latest' if not specified).
-                    3. The inputs required for the code execution with format that matches the code requirements.
+                    3. The inputs required for the code execution with format that matches the code requirements. Exclude the secrets and 
+                    integrations as they are passed separately.
                     Use only the available facts and history. Don't make up any fictional values.
                     Output as a JSON object with keys 'reference_id', 'version', 'inputs'.
                     """,
@@ -252,9 +258,10 @@ class BaseCodeGenerator(ABC):
                         """
                         INSERT INTO agent_generated_codes (
                             reference_id, account_id, agent_id, session_id,
-                            name, description, code, requirements, secrets, created_at
+                            name, description, code, requirements, secrets, integrations, created_at
                         )
-                        VALUES (:reference_id, :account_id, :agent_id, :session_id, :name, :description, :code, :requirements, :secrets, NOW())
+                        VALUES (:reference_id, :account_id, :agent_id, :session_id, :name, :description, :code, :requirements, :secrets,
+                         :integrations, NOW())
                         """
                     ),
                     {
@@ -267,6 +274,7 @@ class BaseCodeGenerator(ABC):
                         "code": generated_code.code,
                         "requirements": ",".join(generated_code.requirements) if generated_code.requirements else "",
                         "secrets": ",".join(generated_code.secrets) if generated_code.secrets else "",
+                        "integrations": ",".join(generated_code.integrations) if generated_code.integrations else "",
                         # todo: add version
                     },
                 )
