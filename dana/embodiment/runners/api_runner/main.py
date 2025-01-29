@@ -3,7 +3,7 @@ import json
 import logging
 from core.answer_handler import AnswerHandler
 from core.interactive_agent import InteractiveAgent
-from core.internal_code_generator import InternalCodeGenerator
+from core.local_code_generator import LocalCodeGenerator
 from core.local_code_executor import LocalCodeExecutor
 from core.navigator import Navigator
 from core.perception_handler import PerceptionHandler
@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     navigator = Navigator(llm_client)
     history_manager = PostgresHistoryManager(llm_client)
-    code_generator = InternalCodeGenerator(llm_client)
+    code_generator = LocalCodeGenerator(llm_client)
     code_executor = LocalCodeExecutor()
     perception_handler = PerceptionHandler(llm_client)
     answer_handler = AnswerHandler(llm_client)

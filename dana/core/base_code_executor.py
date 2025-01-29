@@ -10,7 +10,7 @@ import os
 from core.perception_handler import InputItemFormat
 
 
-CreateJobResult = namedtuple("CreateJobResult", ["job_id", "secret"])
+CreateJobResult = namedtuple("CreateJobResult", ["job_id", "secret_token"])
 
 
 class BaseCodeExecutor(ABC):
@@ -30,7 +30,7 @@ class BaseCodeExecutor(ABC):
 
     def create_job(self, account_id, agent_id, session_id) -> CreateJobResult:
         job_id = str(uuid.uuid4())
-        secret = secrets.token_urlsafe(32)
+        secret_token = secrets.token_urlsafe(32)
         with self.Session() as session:
             session.execute(
                 text(
@@ -44,13 +44,13 @@ class BaseCodeExecutor(ABC):
                     "agent_id": agent_id,
                     "job_id": job_id,
                     "session_id": session_id,
-                    "secret": secret,
+                    "secret": secret_token,
                 },
             )
             session.commit()
-        return CreateJobResult(job_id=job_id, secret=secret)
+        return CreateJobResult(job_id=job_id, secret_token=secret_token)
 
-    def update_job_status(self, job_id, status, secret, result=None):
+    def update_job_status(self, job_id, status, secret_token, result=None):
 
         serialized_result = json.dumps(result) if result else None
         with self.Session() as session:
@@ -67,7 +67,7 @@ class BaseCodeExecutor(ABC):
                     "status": status,
                     "result": serialized_result,
                     "job_id": job_id,
-                    "secret": secret,
+                    "secret": secret_token,
                 },
             )
             session.commit()
@@ -76,17 +76,19 @@ class BaseCodeExecutor(ABC):
     def execute_job(
         self,
         job_id: str,
-        secret: str,
+        secret_token: str,
         code: str,
         requirements: list,
         inputs: list[InputItemFormat],
+        secrets: dict,
     ):
         """
         Execute the job and update its status in the database.
         :param job_id: The job ID.
-        :param secret: The secret key to authenticate the job.
+        :param secret_token: The secret token to authenticate the job.
         :param code: The code to execute.
         :param requirements: The requirements for the code.
         :param inputs: The inputs for the code.
+        :param secrets: The secrets required by the code.
         """
         pass

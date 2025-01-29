@@ -5,6 +5,9 @@ import subprocess
 import socket
 from typing import Dict
 from api.services.deployments.base_deployment import BaseDeployment
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class LocalAPIDeployment(BaseDeployment):
@@ -35,7 +38,7 @@ class LocalAPIDeployment(BaseDeployment):
         with open(config_file, "w") as f:
             json.dump(agent_details, f, indent=4)
 
-        print(f"Packaged agent configuration at: {config_file}")
+        logger.debug(f"Packaged agent configuration at: {config_file}")
         return agent_path
 
     def deploy(self, package_path: str) -> Dict:
@@ -48,7 +51,7 @@ class LocalAPIDeployment(BaseDeployment):
         port = self._find_free_port()
 
         # Step 2: Build the environment variables
-        env = {}  # os.environ.copy()
+        env = {}
         env.update(
             {
                 "INTERNAL_DB_USER": os.getenv("AGENT_INTERNAL_DB_USER"),
@@ -77,16 +80,46 @@ class LocalAPIDeployment(BaseDeployment):
             )
 
         except Exception as e:
-            print(f"Failed to deploy agent API: {e}")
-            print("error")
+            logger.error(f"Failed to deploy agent API: {e}")
             raise RuntimeError(f"Failed to deploy agent API: {e}")
 
         # Step 4: Prepare the deployment metadata
         api_url = f"http://localhost:{port}"
-        print(f"Deployed agent at: {api_url} (PID: {process.pid})")
+        logger.debug(f"Deployed agent at: {api_url} (PID: {process.pid})")
 
         return {
             "url": api_url,
             "port": port,
+            "package_path": package_path,
             "pid": process.pid,
         }
+
+    def destroy(self, deployment_metadata: dict) -> None:
+        """
+        Destroy the deployed agent, terminating its subprocess and cleaning up resources.
+        :param deployment_metadata: Metadata containing information about the deployed agent, including its PID and package path.
+        """
+        pid = deployment_metadata.get("pid")
+        package_path = deployment_metadata.get("package_path")
+
+        if pid:
+            try:
+                # Terminate the subprocess
+                os.kill(pid, 9)  # Use signal.SIGKILL (9) for termination
+                logger.debug(f"Terminated process with PID: {pid}")
+            except ProcessLookupError:
+                logger.error(f"No process found with PID: {pid}")
+            except Exception as e:
+                logger.error(f"Failed to terminate process with PID {pid}: {e}")
+
+        if package_path and os.path.exists(package_path):
+            try:
+                # Remove the agent's package directory
+                import shutil
+
+                shutil.rmtree(package_path)
+                logger.debug(f"Cleaned up package at: {package_path}")
+            except Exception as e:
+                logger.error(f"Failed to clean up package at {package_path}: {e}")
+
+        logger.info("Agent destroyed successfully.")

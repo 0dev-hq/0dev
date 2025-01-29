@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,25 +14,43 @@ import { useMutation } from "react-query";
 import { agentControllerService } from "@/services/agentControllerService";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 
 type DeployAgentProps = {
   config: AgentConfig;
+  isEdit?: boolean;
 };
 
-export default function DeployAgent({ config }: DeployAgentProps) {
+export default function DeployAgent({ config, isEdit }: DeployAgentProps) {
   const [deploymentStatus, setDeploymentStatus] = useState("idle");
 
   const navigate = useNavigate();
 
-  const deployMutation = useMutation(agentControllerService.createAgent, {
-    onSuccess: () => {
-      toast.success("Agent create and deployed successfully!");
-      setDeploymentStatus("success");
-      setTimeout(() => {
-        navigate("/agent");
-      }, 2000);
+  const deployMutation = useMutation(
+    (agentConfig: AgentConfig) => {
+      console.log(`agentConfig: ${JSON.stringify(agentConfig)}`);
+      console.log(`isEdit: ${isEdit}`);
+      if (isEdit) {
+        return agentControllerService.updateAgent(config.id!, agentConfig);
+      } else {
+        return agentControllerService.createAgent(agentConfig);
+      }
     },
-  });
+    {
+      onSuccess: () => {
+        toast.success("Agent create and deployed successfully!");
+        setDeploymentStatus("success");
+        setTimeout(() => {
+          navigate("/agent");
+        }, 2000);
+      },
+      onError: (error: any) => {
+        toast.error("Failed to deploy agent");
+        console.error("Failed to deploy agent", error);
+        setDeploymentStatus("idle");
+      },
+    }
+  );
 
   const handleDeploy = () => {
     setDeploymentStatus("deploying");
@@ -45,6 +61,8 @@ export default function DeployAgent({ config }: DeployAgentProps) {
       intents: config.intents,
       facts: config.facts,
       policies: config.policies,
+      secrets: config.secrets,
+      integrations: config.integrations,
     };
     deployMutation.mutate(agentConfig);
   };
@@ -76,8 +94,12 @@ export default function DeployAgent({ config }: DeployAgentProps) {
               <div>
                 <h3 className="font-semibold">Selected Integrations:</h3>
                 <ul className="list-disc list-inside">
-                  {config.selectedIntegrations?.map((integration, index) => (
-                    <li key={index}>{integration}</li>
+                  {config.integrations?.map((integration, index) => (
+                    <li key={index}>{integration.name}
+                    {/* todo: lazy check, should be improved */}
+                    {integration.credentials && <Badge className='ml-2 bg-green-600'> connected</Badge>}
+                    {!integration.credentials && <Badge className='ml-2 bg-red-600'> not connected</Badge>}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -95,6 +117,15 @@ export default function DeployAgent({ config }: DeployAgentProps) {
                   {config.policies.map((policy, index) => (
                     <li key={index}>{policy}</li>
                   ))}
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold">Secrets:</h3>
+                <ul className="list-disc list-inside">
+                  {config.secrets &&
+                    config.secrets.map((secret, index) => (
+                      <li key={index}>{secret.name}</li>
+                    ))}
                 </ul>
               </div>
             </div>

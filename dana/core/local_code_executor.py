@@ -1,7 +1,6 @@
 import subprocess
 import tempfile
 import os
-import shutil
 import logging
 import sys
 import importlib.util
@@ -32,12 +31,14 @@ class LocalCodeExecutor(BaseCodeExecutor):
     def execute_job(
         self,
         job_id: str,
-        secret: str,
+        secret_token: str,
         code: str,
         requirements: list,
         inputs: list[InputItemFormat],
+        secrets: dict,
+        integrations: dict,
     ):
-        self.update_job_status(job_id, "in_progress", secret)
+        self.update_job_status(job_id, "in_progress", secret_token)
 
         logger.info(f"Updated job status to 'in_progress' for job_id: {job_id}")
 
@@ -78,12 +79,23 @@ class LocalCodeExecutor(BaseCodeExecutor):
                 f"Writing caller script to a temporary file: {temp_dir}/main.py"
             )
 
+            inputs = ", ".join(
+                [
+                    f"{input_item.name}={repr(input_item.get_typed_value())}"
+                    for input_item in inputs
+                ]
+            )
+            if secrets:
+                inputs += f", secrets={secrets}"
+            if integrations:
+                inputs += f", integrations={integrations}"
+
             with open(caller_script_path, "w") as caller_script_file:
                 caller_script_file.write(
                     f"""
 import task
 
-task.main({', '.join([f'{input_item.name}={repr(input_item.get_typed_value())}' for input_item in inputs])})
+task.main({inputs})
 """
                 )
 
@@ -107,15 +119,23 @@ task.main({', '.join([f'{input_item.name}={repr(input_item.get_typed_value())}' 
 
                 # Handle result
                 if result.returncode == 0:
-                    self.update_job_status(job_id, "completed", secret, {"output": result.stdout})
+                    self.update_job_status(
+                        job_id, "completed", secret_token, {"output": result.stdout}
+                    )
                 else:
-                    self.update_job_status(job_id, "failed", secret, {"error": result.stderr})
+                    self.update_job_status(
+                        job_id, "failed", secret_token, {"error": result.stderr}
+                    )
             except subprocess.TimeoutExpired as e:
                 logger.error(f"Subprocess timed out: {str(e)}")
-                self.update_job_status(job_id, "failed", secret, {"error": "Timeout expired"})
+                self.update_job_status(
+                    job_id, "failed", secret_token, {"error": "Timeout expired"}
+                )
             except Exception as e:
                 logger.error(f"Error during subprocess execution: {str(e)}")
-                self.update_job_status(job_id, "failed", secret, {"error": str(e)})
+                self.update_job_status(
+                    job_id, "failed", secret_token, {"error": str(e)}
+                )
         finally:
             # Clean up temporary directory
             # todo: uncomment this line

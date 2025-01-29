@@ -1,0 +1,5 @@
+INTERNAL_DB_USER=your-value
+INTERNAL_DB_PASS=your-value
+INTERNAL_DB_HOST=your-value
+INTERNAL_DB_PORT=your-value
+INTERNAL_DB_NAME=your-value
