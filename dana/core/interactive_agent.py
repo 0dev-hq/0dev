@@ -1,8 +1,9 @@
 import logging
+from core.agent_context import AgentContext
 from core.base_agent import BaseAgent
-from core.navigator import Navigator
-from core.base_history_manager import BaseHistoryManager
-from core.step_handler import StepHandler
+from core.navigation.navigator import Navigator
+from core.history_management.base_history_manager import BaseHistoryManager
+from core.navigation.step_handler import StepHandler
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +103,7 @@ class InteractiveAgent(BaseAgent):
 
         return response
 
-    def _get_context(self, session_id: str) -> dict:
+    def _get_context(self, session_id: str) -> AgentContext:
         """
         Get the current context of the agent, including history and configurations.
 

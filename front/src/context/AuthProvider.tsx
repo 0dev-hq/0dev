@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "react-query";
 import { loginRequest, logoutRequest } from "../services/authService";
@@ -8,7 +14,7 @@ import { jwtDecode, JwtPayload } from "jwt-decode";
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  loading: boolean;  // Add loading state to the context
+  loading: boolean; // Add loading state to the context
   login: (email: string, password: string, returnTo?: string) => Promise<void>;
   logout: () => Promise<void>;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
@@ -19,7 +25,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);  // Initialize loading to true
+  const [loading, setLoading] = useState(true); // Initialize loading to true
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -36,8 +42,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const storedToken = localStorage.getItem("authToken");
     if (storedToken && !isTokenExpired(storedToken)) {
       setToken(storedToken);
-      const decodedToken = jwtDecode<{ id: string; email: string }>(storedToken);
-      setUser({ id: decodedToken.id, email: decodedToken.email });
+      const decodedToken = jwtDecode<{
+        id: string;
+        email: string;
+        account: string;
+        plan: string;
+        role: string;
+      }>(storedToken);
+      setUser({
+        id: decodedToken.id,
+        email: decodedToken.email,
+        account: decodedToken.account,
+        plan: decodedToken.plan,
+        role: decodedToken.role,
+      });
     } else {
       // If token is expired or not present, clear it from local storage
       localStorage.removeItem("authToken");
@@ -47,7 +65,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const loginMutation = useMutation(
-    async ({ email, password }: { email: string; password: string; returnTo?: string }) => {
+    async ({
+      email,
+      password,
+    }: {
+      email: string;
+      password: string;
+      returnTo?: string;
+    }) => {
       return loginRequest(email, password);
     },
     {
@@ -95,7 +120,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, setUser }}>
+    <AuthContext.Provider
+      value={{ user, token, loading, login, logout, setUser }}
+    >
       {children}
     </AuthContext.Provider>
   );

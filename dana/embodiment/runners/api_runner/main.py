@@ -1,18 +1,17 @@
 import os
 import json
 import logging
-from core.answer_handler import AnswerHandler
+from core.info.answer_handler import AnswerHandler
 from core.interactive_agent import InteractiveAgent
-from core.local_code_generator import LocalCodeGenerator
-from core.local_code_executor import LocalCodeExecutor
-from core.navigator import Navigator
-from core.perception_handler import PerceptionHandler
-from core.postgres_history_manager import PostgresHistoryManager
-from core.step_handler import StepHandler
+from core.code_generation.local_code_generator import LocalCodeGenerator
+from core.execution.local_code_executor import LocalCodeExecutor
+from core.job_management.job_manager import JobManager
+from core.navigation.navigator import Navigator
+from core.perception.perception_handler import PerceptionHandler
+from core.history_management.postgres_history_manager import PostgresHistoryManager
+from core.navigation.step_handler import StepHandler
 from embodiment.runners.api_runner.api_runner import APIRunner
 from core.llms.openai import OpenAIClient
-
-# Load environment variables
 
 
 def load_agent_config(config_path: str) -> dict:
@@ -36,7 +35,9 @@ def configure_logger(agent_id: str) -> object:
     """
     Configure the logger for the agent.
     """
-    logging.basicConfig(format=f"{agent_id}- %(asctime)s ::: %(message)s", level=logging.INFO)
+    logging.basicConfig(
+        format=f"{agent_id}- %(asctime)s ::: %(message)s", level=logging.INFO
+    )
 
 
 if __name__ == "__main__":
@@ -57,7 +58,10 @@ if __name__ == "__main__":
     navigator = Navigator(llm_client)
     history_manager = PostgresHistoryManager(llm_client)
     code_generator = LocalCodeGenerator(llm_client)
-    code_executor = LocalCodeExecutor()
+    job_manager = JobManager(
+        auth_token=agent_config["auth_token"], dana_url=os.getenv("DANA_URL")
+    )
+    code_executor = LocalCodeExecutor(job_manager)
     perception_handler = PerceptionHandler(llm_client)
     answer_handler = AnswerHandler(llm_client)
     step_handler = StepHandler(
@@ -67,6 +71,8 @@ if __name__ == "__main__":
         code_executor=code_executor,
         answer_handler=answer_handler,
     )
+
+    del agent_config["auth_token"]
 
     # Inject dependencies into the agent configuration
     agent_config.update(

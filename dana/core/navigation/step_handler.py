@@ -1,12 +1,12 @@
 import logging
 import traceback
 from core.agent_context import AgentContext
-from core.answer_handler import AnswerHandler
-from core.base_code_executor import BaseCodeExecutor
-from core.base_code_generator import BaseCodeGenerator
-from core.base_history_manager import BaseHistoryManager
-from core.navigator import NextStep
-from core.perception_handler import PerceptionHandler
+from core.info.answer_handler import AnswerHandler
+from core.execution.base_code_executor import BaseCodeExecutor
+from core.code_generation.base_code_generator import BaseCodeGenerator
+from core.history_management.base_history_manager import BaseHistoryManager
+from core.navigation.navigator import NextStep
+from core.perception.perception_handler import PerceptionHandler
 
 logger = logging.getLogger(__name__)
 
@@ -180,11 +180,6 @@ class StepHandler:
         logger.debug(f"Inputs: {executionContext.inputs}")
         logger.debug(f"Reference ID: {executionContext.reference_id}")
 
-        (job_id, secret_token) = self.code_executor.create_job(
-            account_id=account_id, agent_id=agent_id, session_id=session_id
-        )
-        logger.debug(f"Created job: {job_id}")
-
         # filter the secrets to only include the ones that are required by the code
         secrets = {
             secret["name"]: secret["value"]
@@ -201,14 +196,17 @@ class StepHandler:
             if integration["name"] in executionContext.generated_code.integrations
         }
 
-        self.code_executor.execute_job(
-            job_id=job_id,
-            secret_token=secret_token,
+        job_id = self.code_executor.execute_code(
+            account_id=account_id,
+            agent_id=agent_id,
+            session_id=session_id,
             code=executionContext.generated_code.code,
             requirements=executionContext.generated_code.requirements,
             inputs=executionContext.inputs,
             secrets=secrets,
             integrations=integrations,
+            name=executionContext.generated_code.name,
+            description=executionContext.generated_code.description,
         )
         logger.info(f"Scheduled job: {job_id}")
         return {

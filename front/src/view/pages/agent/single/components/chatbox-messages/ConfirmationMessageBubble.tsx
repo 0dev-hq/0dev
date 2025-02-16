@@ -25,7 +25,7 @@ export function ConfirmationMessageBubble({
 
   const handleResponse = (answer: "Yes" | "No") => {
     setResponse(answer);
-    onResponse(`${answer}, I confirm`);
+    onResponse(answer);
   };
 
   return (

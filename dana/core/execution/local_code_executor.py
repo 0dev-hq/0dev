@@ -4,9 +4,11 @@ import os
 import logging
 import sys
 import importlib.util
+import traceback
+import json
 
-from core.base_code_executor import BaseCodeExecutor
-from core.perception_handler import InputItemFormat
+from core.execution.base_code_executor import BaseCodeExecutor
+from core.perception.perception_handler import InputItemFormat
 
 
 logger = logging.getLogger(__name__)
@@ -28,18 +30,30 @@ def is_standard_library(module_name: str) -> bool:
 
 
 class LocalCodeExecutor(BaseCodeExecutor):
-    def execute_job(
+    def execute_code(
         self,
-        job_id: str,
-        secret_token: str,
+        account_id: str,
+        agent_id: str,
+        session_id: str,
         code: str,
         requirements: list,
         inputs: list[InputItemFormat],
         secrets: dict,
         integrations: dict,
+        name: str,
+        description: str,
     ):
-        self.update_job_status(job_id, "in_progress", secret_token)
+        job_id = self.job_manager.create_job(
+            session_id=session_id, name=name, description=description
+        )
 
+        # todo: ideally this should be triggered when the code execution starts
+        self.job_manager.update_job_status(
+            job_id=job_id,
+            session_id=session_id,
+            status="in_progress",
+            payload={},
+        )
         logger.info(f"Updated job status to 'in_progress' for job_id: {job_id}")
 
         # Temporary directory for virtual environment and script
@@ -79,23 +93,33 @@ class LocalCodeExecutor(BaseCodeExecutor):
                 f"Writing caller script to a temporary file: {temp_dir}/main.py"
             )
 
-            inputs = ", ".join(
-                [
-                    f"{input_item.name}={repr(input_item.get_typed_value())}"
-                    for input_item in inputs
-                ]
+            inputs = (
+                ", ".join(
+                    [
+                        f"{input_item.name}={repr(input_item.get_typed_value())}"
+                        for input_item in inputs
+                    ]
+                )
+                if inputs
+                else ""
             )
             if secrets:
                 inputs += f", secrets={secrets}"
             if integrations:
                 inputs += f", integrations={integrations}"
 
+            output_file = os.path.join(temp_dir, "0dev.out")
+
             with open(caller_script_path, "w") as caller_script_file:
                 caller_script_file.write(
                     f"""
 import task
-
-task.main({inputs})
+import json
+import time
+import os
+result=task.main({inputs})
+with open('{output_file}', 'w') as f:
+    f.write(json.dumps(result))
 """
                 )
 
@@ -103,38 +127,48 @@ task.main({inputs})
             # Gets stuck here without any output or error
             python_executable = os.path.join(venv_dir, "bin", "python")
             logger.info(f"Executing script with Python: {python_executable}")
-            # Run subprocess with timeout and improved error handling
             try:
-                result = subprocess.run(
+                executionResult = subprocess.run(
                     [python_executable, caller_script_path],
-                    # stdout=subprocess.PIPE,
-                    # stderr=subprocess.PIPE,
-                    # text=True,
                     check=True,
-                    timeout=60,  # Prevent indefinite hangs
+                    cwd=temp_dir,
+                    timeout=240,
                 )
-                # logger.info(f"Subprocess stdout: {result.stdout}")
-                # logger.error(f"Subprocess stderr: {result.stderr}")
-                logger.info(f"Result: {result}")
 
-                # Handle result
-                if result.returncode == 0:
-                    self.update_job_status(
-                        job_id, "completed", secret_token, {"output": result.stdout}
+                logger.info(f"Result: {executionResult}")
+
+                # read the output file and store it in the result
+                with open(f"{output_file}", "r") as f:
+                    output = f.read()
+                logger.info(f"Output: {output}")
+                parsedOutput = json.loads(output)
+
+                if (
+                    executionResult.returncode == 0
+                    and parsedOutput.get("status") == "success"
+                ):
+                    self.job_manager.update_job_status(
+                        job_id=job_id,
+                        session_id=session_id,
+                        status="completed",
+                        payload=output,
                     )
                 else:
-                    self.update_job_status(
-                        job_id, "failed", secret_token, {"error": result.stderr}
+                    self.job_manager.update_job_status(
+                        job_id=job_id,
+                        session_id=session_id,
+                        status="failed",
+                        payload=output,
                     )
-            except subprocess.TimeoutExpired as e:
-                logger.error(f"Subprocess timed out: {str(e)}")
-                self.update_job_status(
-                    job_id, "failed", secret_token, {"error": "Timeout expired"}
-                )
             except Exception as e:
-                logger.error(f"Error during subprocess execution: {str(e)}")
-                self.update_job_status(
-                    job_id, "failed", secret_token, {"error": str(e)}
+                logger.error(
+                    f"Error during subprocess execution:\n {traceback.format_exc()}"
+                )
+                self.job_manager.update_job_status(
+                    job_id=job_id,
+                    session_id=session_id,
+                    status="failed",
+                    payload={"error": str(e)},
                 )
         finally:
             # Clean up temporary directory

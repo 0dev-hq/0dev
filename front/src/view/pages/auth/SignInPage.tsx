@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useMutation } from "react-query";
 import { loginRequest } from "../../../services/authService";
 import { jwtDecode } from "jwt-decode";
-import { useAuth } from "../../../hooks/useAuth";
+import { useAuth } from "../../../context/AuthProvider";
 import logo from "../../../assets/logo-black-bg-square.png";
 import backgroundImage from "../../../assets/signup-bg1.jpg";
 

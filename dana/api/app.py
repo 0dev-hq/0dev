@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_migrate import Migrate
+from api.socket_client import socket_client
 from api.config import Config
 from api.db import db
 from api.controllers import register_blueprints
@@ -41,7 +42,6 @@ def create_app():
 
         return authenticate()
 
-    # Register Blueprints
     register_blueprints(app)
 
     return app

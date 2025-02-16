@@ -62,6 +62,7 @@ class LocalAPIDeployment(BaseDeployment):
                 "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY"),
                 "AGENT_CONFIG_PATH": os.path.join(package_path, "config.json"),
                 "FLASK_RUN_PORT": str(port),
+                "DANA_URL": os.getenv("DANA_URL"),
             }
         )
 

@@ -16,18 +16,15 @@ class Config:
         DB_HOST = os.getenv("INTERNAL_DB_HOST", "localhost")
         DB_PORT = os.getenv("INTERNAL_DB_PORT", "5432")
         DB_NAME = os.getenv("INTERNAL_DB_NAME", "your_db_name")
-        print(
-            f"url in config: postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-        )
         return f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
     DEBUG = os.getenv("DEBUG", True)
-    SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
+    SECRET_KEY = os.getenv("JWT_SECRET", "supersecretkey")
     PORT = os.getenv("PORT", 5000)
     SQLALCHEMY_DATABASE_URI = _get_database_url()  # Maps DB_URL to SQLAlchemy
-    SQLALCHEMY_TRACK_MODIFICATIONS = False  # Best practice to disable this
-    # set the log level used by logger to most verbose
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
     LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG")
+    JWT_EXPIRY = os.getenv("JWT_EXPIRY", 3600 * 24 * 365)  # 1 year
 
     @staticmethod
     def configure_logging():

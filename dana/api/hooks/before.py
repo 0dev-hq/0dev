@@ -3,7 +3,10 @@ import jwt
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 import os
 
-SECRET_KEY = os.getenv("JWT_SECRET", "your-secret-key")
+from api.config import Config
+
+print(f"Config: {Config.SECRET_KEY}")
+print(f"Env: {os.getenv('JWT_SECRET')}")
 
 
 def authenticate():
@@ -19,9 +22,12 @@ def authenticate():
         if token.startswith("Bearer "):
             token = token.split(" ")[1]
 
-        decoded = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        decoded = jwt.decode(token, Config.SECRET_KEY, algorithms=["HS256"])
         g.account_id = decoded.get("account")
-        g.user_id = decoded.get("user")
+        if decoded.get("type") == "agent":
+            g.agent_id = decoded.get("agent_id")
+        else:
+            g.user_id = decoded.get("user")
 
     except ExpiredSignatureError:
         print("Token has expired")

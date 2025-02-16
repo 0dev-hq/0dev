@@ -2,7 +2,7 @@ from flask import Blueprint, g, jsonify, request
 from api.services.agent_service import AgentService
 
 agents_bp = Blueprint("agents", __name__)
-agent_service = AgentService()
+_agent_service = AgentService()
 
 
 @agents_bp.route("/<agent_id>/session", methods=["POST"])
@@ -11,7 +11,7 @@ def create_session(agent_id):
     Create a new session for the specified agent.
     """
     account_id = g.get("account_id")
-    session = agent_service.create_session(agent_id, account_id)
+    session = _agent_service.create_session(agent_id, account_id)
     return jsonify(session), 201
 
 
@@ -22,7 +22,7 @@ def list_sessions(agent_id):
     """
 
     account_id = g.get("account_id")
-    sessions = agent_service.get_sessions(agent_id=agent_id, account_id=account_id)
+    sessions = _agent_service.get_sessions(agent_id=agent_id, account_id=account_id)
     return jsonify(sessions), 200
 
 
@@ -31,7 +31,7 @@ def list_history(agent_id, session_id):
     """
     List the interaction history for a specific session.
     """
-    history = agent_service.get_history(agent_id, session_id)
+    history = _agent_service.get_history(agent_id, session_id)
     return jsonify(history), 200
 
 
@@ -40,7 +40,7 @@ def list_generated_codes(agent_id):
     """
     List all generated codes for a specific agent.
     """
-    codes = agent_service.get_generated_codes(agent_id)
+    codes = _agent_service.get_generated_codes(agent_id)
     return jsonify(codes), 200
 
 
@@ -57,7 +57,7 @@ def interact_agent(agent_id):
         return jsonify({"error": "Input is required."}), 400
 
     try:
-        response = agent_service.interact(
+        response = _agent_service.interact(
             account_id=account_id,
             agent_id=agent_id,
             user_input=user_input,

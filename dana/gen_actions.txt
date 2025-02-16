@@ -1,1 +1,0 @@
-send an email to the list of recipients. The inputs are the list of recipients, subject, message, sender's email, smtp server, port. The output is a boolean indicating whether the email was sent successfully.::::send_email

@@ -9,6 +9,17 @@ import { TypingIndicator } from "./TypingIndicator";
 import { InteractionMessage } from "./chatbox-messages/messageTypes";
 import { MessageFactory } from "./chatbox-messages/MessageBubbleFactory";
 import { Textarea } from "@/components/ui/textarea";
+import { useSocket } from "@/context/SocketProvider";
+import { JobUpdate } from "./JobUpdate";
+
+interface JobUpdateData {
+  jobId: string;
+  status: "running" | "completed" | "failed";
+  name: string;
+  description: string;
+  result?: string;
+  error?: string;
+}
 
 interface ChatBoxTabProps {
   agentId: string;
@@ -26,9 +37,10 @@ export function ChatBoxTab({
   onStartNewSession,
 }: ChatBoxTabProps) {
   const [messages, setMessages] = useState<InteractionMessage[]>([]);
+  const [jobUpdates, setJobUpdates] = useState<JobUpdateData[]>([]);
   const [input, setInput] = useState("");
   const [isAgentTyping, setIsAgentTyping] = useState(false);
-
+  const { socket, joinRoom, leaveRoom } = useSocket();
 
   const interactMutation = useMutation(
     ({
@@ -66,12 +78,41 @@ export function ChatBoxTab({
   );
 
   useEffect(() => {
+    if (!agentId || !sessionId) return;
+    const room = `dana:job-update:${agentId}:${sessionId}`;
+    console.log("Joining room", room);
+    joinRoom(room);
+
+    socket?.on("job_created", (data) => {
+      setJobUpdates((prevJobUpdates) => [...prevJobUpdates, data]);
+      console.log("Job created", data);
+    });
+
+    socket?.on("job_completed", (data) => {
+      setJobUpdates((prevJobUpdates) => [...prevJobUpdates, data]);
+      console.log("Job completed", data);
+    });
+
+    socket?.on("job_failed", (data) => {
+      setJobUpdates((prevJobUpdates) => [...prevJobUpdates, data]);
+      console.log("Job failed", data);
+    });
+
+    socket?.on("job_scheduled", (data) => {
+      setJobUpdates((prevJobUpdates) => [...prevJobUpdates, data]);
+      console.log("Job scheduled");
+    });
+
     if (shouldLoadHistory) {
       loadInteractionHistory();
     } else {
       setMessages([]);
     }
-  }, [shouldLoadHistory, loadInteractionHistory]);
+
+    return () => {
+      leaveRoom(room);
+    };
+  }, [agentId, sessionId, shouldLoadHistory, loadInteractionHistory]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -155,6 +196,9 @@ export function ChatBoxTab({
             <TypingIndicator />
           </div>
         )}
+        {jobUpdates.map((jobUpdate, i) => (
+          <JobUpdate key={i} {...jobUpdate} />
+        ))}
       </ScrollArea>
       <div className="mt-4 relative">
         <Textarea
