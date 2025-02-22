@@ -36,6 +36,18 @@ class AnswerHandler:
         :param context: The agent's context.
         :return: A structured prompt as a list of system/user roles.
         """
+        secrets = {
+            secret["name"]: secret["description"]
+            for secret in context.get("secrets", [])
+        }
+        integrations = {
+            integration["name"]: {
+                # todo: remove the actual credentials from the prompt
+                "credentials": integration["credentials"],
+            }
+            for integration in context["integrations"]
+        }
+
         system_content = f"""You are the brain of an intelligent agent tasked with providing clear, concise, and context-aware answers 
         to user queries. You must generate a response considering the agent's allowed intents, facts, policies, and the history of 
         interactions. Be precise and helpful in your answer.
@@ -44,7 +56,9 @@ class AnswerHandler:
         - Intents: {context.get('intents', 'No intents available')}
         - Facts: {context.get('facts', 'No facts available')}
         - Policies: {context.get('policies', 'No policies available')}
-        - Interaction History: {context.get('history', 'No history available')}ß
+        - Secrets shared with the agent: {secrets if secrets else 'No secrets available'}
+        - Integrations shared with the agent: {integrations if integrations else 'No integrations available'}
+        - Interaction History: {context.get('history', 'No history available')}
         """
         user_content = (
             f"User's latest input: {user_input}\nProvide a relevant and concise answer."

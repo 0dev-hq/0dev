@@ -10,7 +10,7 @@ from core.agent_context import AgentContext
 import os
 import logging
 
-from core.perception_handler import InputItemFormat
+from core.perception.perception_handler import InputItemFormat
 
 
 logger = logging.getLogger(__name__)
@@ -139,8 +139,6 @@ class BaseCodeGenerator(ABC):
         :return: Generated code with inputs and reference_id if found, None otherwise.
         """
         try:
-
-            logger.info("inside get_code_with_input")
 
             # Use LLM client to infer reference_id and version
             response = self.llm_client.answer(

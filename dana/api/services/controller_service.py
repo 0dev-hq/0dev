@@ -12,6 +12,11 @@ import uuid
 from api.services.deployments.deployment_factory import DeploymentFactory
 from cryptography.fernet import Fernet
 import os
+from logging import getLogger
+
+from api.services.token_service import TokenService
+
+logger = getLogger(__name__)
 
 
 class ControllerService:
@@ -224,13 +229,16 @@ class ControllerService:
         """
 
         try:
-            # Generate a unique ID for the agent
-            agent_id = str(uuid.uuid4())
-
             # Step 1: Package the agent
             # only the required fields are passed to the deployment strategy. Passing unsupported fields BREAKS the agent
+
+            agent_id = str(uuid.uuid4())
+            auth_token = TokenService.generate_token(
+                account_id=g.get("account_id"), agent_id=agent_id
+            )
             agent_config = {
                 "id": agent_id,
+                "auth_token": auth_token,
                 "account_id": g.get("account_id"),
                 "name": agent_details["name"],
                 "description": agent_details.get("description", ""),
@@ -245,7 +253,7 @@ class ControllerService:
             # Step 2: Deploy the agent
             deployment_metadata = self.deployment_strategy.deploy(package_path)
 
-            # Step 3: Save the agent to the database
+            # Step 3: Save the agent and its other details to the database
             new_agent = Agent(
                 agent_id=agent_id,
                 account_id=g.get("account_id"),
@@ -289,8 +297,7 @@ class ControllerService:
                 "deployment": deployment_metadata,
             }
         except Exception as e:
-            print(f"Error creating agent: {e}")
-            print(f"stack trace: {traceback.format_exc()}")
+            logger.error(traceback.format_exc())
             db.session.rollback()
             raise e
         finally:

@@ -13,7 +13,7 @@ from sqlalchemy import (
     MetaData,
 )
 from sqlalchemy.orm import sessionmaker
-from core.base_history_manager import BaseHistoryManager
+from core.history_management.base_history_manager import BaseHistoryManager
 import json
 
 

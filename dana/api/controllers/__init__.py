@@ -2,6 +2,7 @@ from .agents import agents_bp
 from .controller import controller_bp
 from .health import health_bp
 from .integration.integration import integration_bp
+from .job import job_bp
 
 
 def register_blueprints(app):
@@ -13,3 +14,4 @@ def register_blueprints(app):
     app.register_blueprint(controller_bp, url_prefix="/controller")
     app.register_blueprint(health_bp, url_prefix="/health")
     app.register_blueprint(integration_bp, url_prefix="/integration")
+    app.register_blueprint(job_bp, url_prefix="/job")

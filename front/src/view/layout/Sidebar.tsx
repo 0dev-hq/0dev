@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../context/AuthProvider";
 import Logo from "../../assets/0dev-logo.png";
 import { FaDatabase, FaFileAlt, FaChartBar, FaUser, FaSignOutAlt, FaRobot } from "react-icons/fa";
 import { FaDiscord } from "react-icons/fa";

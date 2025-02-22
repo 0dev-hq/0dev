@@ -11,7 +11,7 @@ class OpenAIClient:
     def __init__(self, api_key: str):
         self.api_key = api_key
         self.client = OpenAI(api_key=api_key)
-        # self.model = "chatgpt-4o-latest"
+        # self.model = "gpt-4o-2024-08-06"
         self.model = "gpt-4o-mini-2024-07-18"
 
     def answer(

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaBars, FaChevronDown, FaChevronRight, FaProjectDiagram } from 'react-icons/fa';
 import Logo from '../../assets/0dev-logo.png';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../context/AuthProvider';
 
 const Navbar: React.FC = () => {
   const { logout } = useAuth();

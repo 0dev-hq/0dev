@@ -2,6 +2,8 @@ import dotenv from "dotenv";
 // Load environment variables from .env file
 dotenv.config(); // This should be here
 
+import { createServer } from "http";
+
 import logger from "./utils/logger";
 
 import express, { Request, Response } from "express";
@@ -13,6 +15,7 @@ import "./config/passport"; // Initialize passport strategies
 
 import { sessionMiddleware } from "./middlewares/session-middleware";
 import { importAndRegisterRoutes } from "./routes/util/route-util";
+import { initSocket } from "./socket";
 
 // Initialize Express app
 const app: express.Application = express();
@@ -72,8 +75,11 @@ app.get("/health", (_req: Request, res: Response) => {
 
 importAndRegisterRoutes(app).then(() => {
   // Start the server
-  app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+  const server = createServer(app);
+  initSocket(server);
+
+  server.listen(PORT, () => {
+    logger.info(`Server running on port ${PORT}`);
   });
 });
 
