@@ -96,7 +96,7 @@ def update_status():
         return jsonify({"error": "Job already completed."}), 400
     except JobNotFound:
         return jsonify({"error": "Job not found."}), 404
-    except Exception as e:
+    except Exception:
         logger.error(f"Failed to update job status: {traceback.format_exc()}")
         return jsonify({"error": "Failed to update job status."}), 500
 

@@ -1,39 +1,23 @@
-"use client";
-
+import { JobMessage } from "./messageTypes";
 import { useState } from "react";
 import {
   CheckCircle,
-  XCircle,
-  Clock,
   ChevronDown,
   ChevronUp,
+  Clock,
+  XCircle,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-interface JobUpdateProps {
-  jobId: string;
-  status: "running" | "completed" | "failed";
-  name: string;
-  description: string;
-  result?: string;
-  error?: string;
-}
-
-export function JobUpdate({
-  jobId,
-  status,
-  name,
-  description,
-  result,
-  error,
-}: JobUpdateProps) {
+export function JobMessageBubble({ message }: { message: JobMessage }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const getStatusIcon = () => {
-    switch (status) {
-      case "running":
+    switch (message.content.status) {
+      case "in_progress":
+      case "created":
         return <Clock className="h-5 w-5 text-blue-500" />;
       case "completed":
         return <CheckCircle className="h-5 w-5 text-green-500" />;
@@ -43,21 +27,24 @@ export function JobUpdate({
   };
 
   return (
-    <Card className="mb-4">
+    <Card className="mb-4  w-3/4">
       <CardHeader className="flex flex-row items-center justify-between py-2">
-        <CardTitle className="text-sm font-medium">Job: {name}</CardTitle>
+        <CardTitle className="text-sm font-medium">
+          Job: {message.content.name}
+        </CardTitle>
         <div className="flex items-center space-x-2">
           {getStatusIcon()}
           <Badge
             variant={
-              status === "running"
+              message.content.status === "in_progress" ||
+              message.content.status === "created"
                 ? "default"
-                : status === "completed"
+                : message.content.status === "completed"
                 ? "success"
                 : "destructive"
             }
           >
-            {status}
+            {message.content.status}
           </Badge>
           <Button
             variant="ghost"
@@ -74,15 +61,21 @@ export function JobUpdate({
       </CardHeader>
       {isExpanded && (
         <CardContent>
-          <p className="text-sm text-muted-foreground mb-2">{description}</p>
-          {result && (
+          <p className="text-sm text-muted-foreground mb-2">
+            {message.content.description}
+          </p>
+          {message.content.status === "completed" && (
             <div className="bg-muted p-2 rounded-md">
-              <pre className="text-xs whitespace-pre-wrap">{result}</pre>
+              <pre className="text-xs whitespace-pre-wrap">
+                {JSON.stringify(message.content.payload)}
+              </pre>
             </div>
           )}
-          {error && (
+          {message.content.status === "failed" && (
             <div className="bg-red-100 text-red-800 p-2 rounded-md mt-2">
-              <pre className="text-xs whitespace-pre-wrap">{error}</pre>
+              <pre className="text-xs whitespace-pre-wrap">
+                {JSON.stringify(message.content.payload)}
+              </pre>
             </div>
           )}
         </CardContent>

@@ -8,6 +8,7 @@ import { ConfirmationMessageBubble } from "./ConfirmationMessageBubble";
 import { ExecutionMessageBubble } from "./ExecutionMessageBubble";
 import { NoneMessageBubble } from "./NoneMessageBubble";
 import { ErrorMessageBubble } from "./ErrorMessageBubble";
+import { JobMessageBubble } from "./JobMessageBubble";
 
 interface MessageFactoryProps {
   message: InteractionMessage;
@@ -33,6 +34,8 @@ export function MessageFactory({ message, onResponse }: MessageFactoryProps) {
       );
     case "execution":
       return <ExecutionMessageBubble message={message} />;
+    case "job":
+      return <JobMessageBubble message={message} />;
     case "none":
       return <NoneMessageBubble message={message} />;
     case "error":

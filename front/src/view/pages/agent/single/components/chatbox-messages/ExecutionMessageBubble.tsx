@@ -8,7 +8,7 @@ export function ExecutionMessageBubble({
 }) {
   return (
     <MessageBubble>
-      <p>{message.status}</p>
+      <p>{message.content}</p>
     </MessageBubble>
   );
 }

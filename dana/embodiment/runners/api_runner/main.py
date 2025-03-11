@@ -61,7 +61,7 @@ if __name__ == "__main__":
     job_manager = JobManager(
         auth_token=agent_config["auth_token"], dana_url=os.getenv("DANA_URL")
     )
-    code_executor = LocalCodeExecutor(job_manager)
+    code_executor = LocalCodeExecutor(job_manager=job_manager, history_manager=history_manager)
     perception_handler = PerceptionHandler(llm_client)
     answer_handler = AnswerHandler(llm_client)
     step_handler = StepHandler(

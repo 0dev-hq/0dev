@@ -6,20 +6,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { agentService } from "@/services/agentService";
 import { useMutation } from "react-query";
 import { TypingIndicator } from "./TypingIndicator";
-import { InteractionMessage } from "./chatbox-messages/messageTypes";
+import { InteractionMessage, JobMessage } from "./chatbox-messages/messageTypes";
 import { MessageFactory } from "./chatbox-messages/MessageBubbleFactory";
 import { Textarea } from "@/components/ui/textarea";
 import { useSocket } from "@/context/SocketProvider";
-import { JobUpdate } from "./JobUpdate";
-
-interface JobUpdateData {
-  jobId: string;
-  status: "running" | "completed" | "failed";
-  name: string;
-  description: string;
-  result?: string;
-  error?: string;
-}
 
 interface ChatBoxTabProps {
   agentId: string;
@@ -37,7 +27,6 @@ export function ChatBoxTab({
   onStartNewSession,
 }: ChatBoxTabProps) {
   const [messages, setMessages] = useState<InteractionMessage[]>([]);
-  const [jobUpdates, setJobUpdates] = useState<JobUpdateData[]>([]);
   const [input, setInput] = useState("");
   const [isAgentTyping, setIsAgentTyping] = useState(false);
   const { socket, joinRoom, leaveRoom } = useSocket();
@@ -54,6 +43,11 @@ export function ChatBoxTab({
     }) => agentService.interact(agentId, sessionId, input),
     {
       onSuccess: (response: InteractionMessage) => {
+        // Only valid case is handing the job_execution step in the backend
+        if (!response)
+        {
+          return;
+        }
         setMessages((prevMessages) => [...prevMessages, response]);
         setIsAgentTyping(false);
       },
@@ -67,8 +61,9 @@ export function ChatBoxTab({
     () => agentService.loadChatHistory(agentId, sessionId!),
     {
       onSuccess: (history: InteractionMessage[]) => {
-        console.log(JSON.stringify(history, null, 2));
-        setMessages(history);
+        // Remove null values from the history
+        const filteredHistory = history.filter((item) => item !== null);
+        setMessages(filteredHistory);
       },
       onError: () => {
         setMessages([]);
@@ -84,22 +79,66 @@ export function ChatBoxTab({
     joinRoom(room);
 
     socket?.on("job_created", (data) => {
-      setJobUpdates((prevJobUpdates) => [...prevJobUpdates, data]);
+      const msg: JobMessage = {
+        "type": "job",
+        "content": {
+          "name": data.name,
+          "description": data.description,
+          "job_id": data.job_id,
+          "status": data.status,
+          "payload": data.result
+        }
+      }
+      setMessages((prevMessages) => [...prevMessages, msg]);
+      // setJobUpdates((prevJobUpdates) => [...prevJobUpdates, data]);
       console.log("Job created", data);
     });
 
     socket?.on("job_completed", (data) => {
-      setJobUpdates((prevJobUpdates) => [...prevJobUpdates, data]);
+      const msg: JobMessage = {
+        "type": "job",
+        "content": {
+          "name": data.name,
+          "description": data.description,
+          "job_id": data.job_id,
+          "status": data.status,
+          "payload": data.result
+        }
+      }
+      setMessages((prevMessages) => [...prevMessages, msg]);
+      // setJobUpdates((prevJobUpdates) => [...prevJobUpdates, data]);
       console.log("Job completed", data);
     });
 
     socket?.on("job_failed", (data) => {
-      setJobUpdates((prevJobUpdates) => [...prevJobUpdates, data]);
+      const msg: JobMessage = {
+        "type": "job",
+        "content": {
+          "name": data.name,
+          "description": data.description,
+          "job_id": data.job_id,
+          "status": data.status,
+          "payload": data.result
+        }
+      }
+      setMessages((prevMessages) => [...prevMessages, msg]);
+      // setJobUpdates((prevJobUpdates) => [...prevJobUpdates, data]);
       console.log("Job failed", data);
     });
 
     socket?.on("job_scheduled", (data) => {
-      setJobUpdates((prevJobUpdates) => [...prevJobUpdates, data]);
+      const msg: JobMessage = {
+        "type": "job",
+        "content": {
+          "name": data.name,
+          "description": data.description,
+          "job_id": data.job_id,
+          "status": data.status,
+          "payload": data.result
+        }
+      }
+      setMessages((prevMessages) => [...prevMessages, msg]);
+      // setJobUpdates((prevJobUpdates) => [...prevJobUpdates, data]);
       console.log("Job scheduled");
     });
 
@@ -196,9 +235,6 @@ export function ChatBoxTab({
             <TypingIndicator />
           </div>
         )}
-        {jobUpdates.map((jobUpdate, i) => (
-          <JobUpdate key={i} {...jobUpdate} />
-        ))}
       </ScrollArea>
       <div className="mt-4 relative">
         <Textarea

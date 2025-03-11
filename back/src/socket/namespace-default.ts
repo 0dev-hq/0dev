@@ -19,26 +19,7 @@ export const setupDefaultNamespace = (io: Server) => {
     socket.on("join_room", (room: string) => {
       const toJoin = `${account}:${room}`;
       socket.join(toJoin);
-      const data = {
-        jobId: Date.now().toString(),
-        status:
-          Math.random() > 0.7
-            ? "completed"
-            : Math.random() > 0.3
-            ? "running"
-            : "failed",
-        name: `Job ${Math.floor(Math.random() * 1000)}`,
-        description: "Simulated job update for demonstration purposes.",
-        result:
-          Math.random() > 0.5
-            ? "Job completed successfully with some sample output."
-            : undefined,
-        error:
-          Math.random() > 0.8
-            ? "An error occurred during job execution."
-            : undefined,
-      };
-      io.of("/general").to(toJoin).emit("job_created", data);
+
       logger.info(`Client ${socket.id} joined room ${toJoin}`);
     });
 

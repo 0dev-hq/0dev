@@ -24,9 +24,19 @@ type MessageContent<T> = T extends "text"
   : T extends "options"
   ? { content: string[] }
   : T extends "execution"
-  ? { status: string }
+  ? { content: string }
   : T extends "none" | "error"
   ? { content: string }
+  : T extends "job"
+  ? {
+      content: {
+        name: string;
+        description: string;
+        job_id: string;
+        status: "created" | "in_progress" | "completed" | "failed";
+        payload: object;
+      };
+    }
   : never;
 
 type Message<T extends string> = MessageBase<T> & MessageContent<T>;
@@ -41,6 +51,7 @@ export type ConfirmationMessage = Message<"confirmation">;
 export type ExecutionMessage = Message<"execution">;
 export type NoneMessage = Message<"none">;
 export type ErrorMessage = Message<"error">;
+export type JobMessage = Message<"job">;
 
 export type InteractionMessage =
   | UserInputMessage
@@ -52,4 +63,5 @@ export type InteractionMessage =
   | ConfirmationMessage
   | ExecutionMessage
   | NoneMessage
-  | ErrorMessage;
+  | ErrorMessage
+  | JobMessage;
