@@ -209,10 +209,9 @@ class StepHandler:
             description=executionContext.generated_code.description,
         )
         logger.info(f"Scheduled job: {job_id}")
-        return {
-            "type": "execution",
-            "content": f"Scheduled job {job_id} for execution for code {executionContext.reference_id} with inputs {executionContext.inputs}",
-        }
+        # We return None here because we already inform the user that the job is scheduled. Once we switch to
+        # websocket for all interactions, we won't need to worry about this at all.
+        return None
 
     def _handle_none(
         self,

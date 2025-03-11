@@ -23,7 +23,7 @@ class LocalCodeGenerator(BaseCodeGenerator):
         """
         super().__init__(llm_client)
         # todo: make this configurable
-        self.max_revisions = 5
+        self.max_revisions = 6
         self.reviewer = LocalCodeGeneratorReviewer(llm_client, self.max_revisions)
 
     def _create_prompt(self, user_input, context: AgentContext, feedback: dict):
@@ -63,8 +63,24 @@ class LocalCodeGenerator(BaseCodeGenerator):
         return [
             {
                 "role": "system",
-                "content": "You are an advanced code generation assistant tasked with creating Python code to fulfill specific tasks inside an intelligent agent. "
-                "Ensure the code is modular, concise, and follows Python best practices. The answer should also include required dependencies.",
+                "content": """You are the code-generator component of an agent with specific requirements. You generate Python code based on the
+                provided context to fulfill the specified task. Your responsibility is to generate code for that purpose and follow the instructions.
+                The code you generate will be reviews and you might receive feedback to improve the code.
+                Ensure the code is modular, concise, and follows Python best practices.
+                The code you generate should have this structure:
+                <imports>
+                function main(arg1, arg2, ..., integrations (only if integrations are used), secrets (only if secrets are used)):
+                    try:
+                        / body of the code that implements the task /
+                        return {"status": "success", "message": "..."}
+                    except Exception as e:
+                        return {"status": "failure", "message": str(e)}
+
+                // no if __name__ == '__main__': block is needed as the code will be executed as a function
+
+                The code you generate will be invoked by the code-executor component of the agent with the input values provided based on the 
+                context that is available to you at the time of code generation.
+                """,
             },
             {
                 "role": "user",
@@ -98,9 +114,6 @@ class LocalCodeGenerator(BaseCodeGenerator):
                     - If any of the information needed in the code is provided as a secret, the 'secrets' argument should be used to pass the secret values.
                     - The main function should wrap the entire code in a final try-except block to catch any exceptions and return a JSON response in either case
                     (success or failure).
-                    - NO hard-coded values should be present in the code. All values should be passed as arguments to the 'main' function even if it
-                    causes to have many arguments. It's common for users to ask for a vague task, it's better to have many arguments than to have
-                    hard-coded or placeholder values. The values of the arguments will be later provided by the user.
                     - Do not use any dummy values unless explicitly mentioned in the user input.
                     - AVOID using any placeholder values in the code. Even if the value is constant, e.g. how many retries to attempt, it should be
                     passed as an argument to the 'main' function.

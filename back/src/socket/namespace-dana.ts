@@ -46,7 +46,6 @@ export const setupDanaNamespace = (io: Server) => {
       const room = getJobRoom(data);
       console.log("room", room);
       io.of("/general").to(room).emit("job_failed", data);
-      io.of("/general").to("abc").emit("job_failed", data);
     });
 
     socket.on("job_completed", (data: JobBaseData & { result: any }) => {

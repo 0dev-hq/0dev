@@ -42,9 +42,21 @@ class LocalCodeExecutor(BaseCodeExecutor):
         integrations: dict,
         name: str,
         description: str,
-    ):
+    ) -> str:
         job_id = self.job_manager.create_job(
             session_id=session_id, name=name, description=description
+        )
+
+        interaction = {
+            "type": "job",
+            "content": {"job_id": job_id, "name": name, "description": description, "status": "created"},
+        }
+
+        self.history_manager.save_interaction(
+            account_id=account_id,
+            agent_id=agent_id,
+            session_id=session_id,
+            interaction=interaction,
         )
 
         # todo: ideally this should be triggered when the code execution starts
@@ -54,6 +66,18 @@ class LocalCodeExecutor(BaseCodeExecutor):
             status="in_progress",
             payload={},
         )
+
+        interaction = {
+            "type": "job",
+            "content": {"job_id": job_id, "name": name, "description": description, "status": "in_progress"},
+        }
+        self.history_manager.save_interaction(
+            account_id=account_id,
+            agent_id=agent_id,
+            session_id=session_id,
+            interaction=interaction,
+        )
+
         logger.info(f"Updated job status to 'in_progress' for job_id: {job_id}")
 
         # Temporary directory for virtual environment and script
@@ -141,7 +165,11 @@ with open('{output_file}', 'w') as f:
                 with open(f"{output_file}", "r") as f:
                     output = f.read()
                 logger.info(f"Output: {output}")
-                parsedOutput = json.loads(output)
+                try:
+                    parsedOutput = json.loads(output)
+                    print("parsedOutput", parsedOutput)
+                except json.JSONDecodeError:
+                    parsedOutput = {"status": "failed", "error": "Invalid JSON output"}
 
                 if (
                     executionResult.returncode == 0
@@ -153,6 +181,8 @@ with open('{output_file}', 'w') as f:
                         status="completed",
                         payload=output,
                     )
+                    job_final_status = "completed"
+                    job_exec_result = parsedOutput
                 else:
                     self.job_manager.update_job_status(
                         job_id=job_id,
@@ -160,6 +190,8 @@ with open('{output_file}', 'w') as f:
                         status="failed",
                         payload=output,
                     )
+                    job_final_status = "failed"
+                    job_exec_result = parsedOutput
             except Exception as e:
                 logger.error(
                     f"Error during subprocess execution:\n {traceback.format_exc()}"
@@ -170,8 +202,28 @@ with open('{output_file}', 'w') as f:
                     status="failed",
                     payload={"error": str(e)},
                 )
+                job_final_status = "failed"
+                job_exec_result = {"error": str(e)}
+
         finally:
             # Clean up temporary directory
             # todo: uncomment this line
             # shutil.rmtree(temp_dir)
-            pass
+
+            interaction = {
+                "type": "job",
+                "content": {
+                    "job_id": job_id,
+                    "status": job_final_status,
+                    "payload": job_exec_result,
+                },
+            }
+
+            self.history_manager.save_interaction(
+                account_id=account_id,
+                agent_id=agent_id,
+                session_id=session_id,
+                interaction=interaction,
+            )
+
+            return job_id
