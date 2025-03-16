@@ -2,17 +2,18 @@ import logging
 from typing import Optional, Type, TypeVar, Union
 from openai import OpenAI
 from pydantic import BaseModel
+from core.llms.base_llm import BaseLLM
 
 logger = logging.getLogger(__name__)
 T = TypeVar("T", bound=BaseModel)
 
 
-class OpenAIClient:
-    def __init__(self, api_key: str):
+class OpenAIClient(BaseLLM):
+    def __init__(self, api_key: str, model: str = "gpt-4o-mini-2024-07-18"):
         self.api_key = api_key
         self.client = OpenAI(api_key=api_key)
         # self.model = "gpt-4o-2024-08-06"
-        self.model = "gpt-4o-mini-2024-07-18"
+        self.model = model
 
     def answer(
         self,

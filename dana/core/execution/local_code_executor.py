@@ -117,7 +117,8 @@ class LocalCodeExecutor(BaseCodeExecutor):
                 f"Writing caller script to a temporary file: {temp_dir}/main.py"
             )
 
-            inputs = (
+            args = {}
+            args["inputs"] = (
                 ", ".join(
                     [
                         f"{input_item.name}={repr(input_item.get_typed_value())}"
@@ -128,9 +129,11 @@ class LocalCodeExecutor(BaseCodeExecutor):
                 else ""
             )
             if secrets:
-                inputs += f", secrets={secrets}"
+                args["secrets"] = secrets
             if integrations:
-                inputs += f", integrations={integrations}"
+                args["integrations"] = integrations
+
+            args_str = ", ".join([f"{k}={v}" for k, v in args.items() if v])
 
             output_file = os.path.join(temp_dir, "0dev.out")
 
@@ -141,7 +144,7 @@ import task
 import json
 import time
 import os
-result=task.main({inputs})
+result=task.main({args_str})
 with open('{output_file}', 'w') as f:
     f.write(json.dumps(result))
 """
