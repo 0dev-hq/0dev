@@ -49,7 +49,12 @@ class LocalCodeExecutor(BaseCodeExecutor):
 
         interaction = {
             "type": "job",
-            "content": {"job_id": job_id, "name": name, "description": description, "status": "created"},
+            "content": {
+                "job_id": job_id,
+                "name": name,
+                "description": description,
+                "status": "created",
+            },
         }
 
         self.history_manager.save_interaction(
@@ -69,7 +74,12 @@ class LocalCodeExecutor(BaseCodeExecutor):
 
         interaction = {
             "type": "job",
-            "content": {"job_id": job_id, "name": name, "description": description, "status": "in_progress"},
+            "content": {
+                "job_id": job_id,
+                "name": name,
+                "description": description,
+                "status": "in_progress",
+            },
         }
         self.history_manager.save_interaction(
             account_id=account_id,
@@ -82,6 +92,8 @@ class LocalCodeExecutor(BaseCodeExecutor):
 
         # Temporary directory for virtual environment and script
         temp_dir = tempfile.mkdtemp()
+        job_final_status = "failed"
+        job_exec_result = {"error": "Execution did not complete"}
         try:
             # Create a virtual environment
             venv_dir = os.path.join(temp_dir, "venv")
@@ -151,62 +163,61 @@ with open('{output_file}', 'w') as f:
                 )
 
             # Execute the script in the virtual environment
-            # Gets stuck here without any output or error
             python_executable = os.path.join(venv_dir, "bin", "python")
             logger.info(f"Executing script with Python: {python_executable}")
+            executionResult = subprocess.run(
+                [python_executable, caller_script_path],
+                check=True,
+                cwd=temp_dir,
+                timeout=240,
+            )
+
+            logger.info(f"Result: {executionResult}")
+
+            # read the output file and store it in the result
+            with open(f"{output_file}", "r") as f:
+                output = f.read()
+            logger.info(f"Output: {output}")
             try:
-                executionResult = subprocess.run(
-                    [python_executable, caller_script_path],
-                    check=True,
-                    cwd=temp_dir,
-                    timeout=240,
+                parsedOutput = json.loads(output)
+                print("parsedOutput", parsedOutput)
+            except json.JSONDecodeError:
+                parsedOutput = {"status": "failed", "error": "Invalid JSON output"}
+
+            if (
+                executionResult.returncode == 0
+                and parsedOutput.get("status") == "success"
+            ):
+                self.job_manager.update_job_status(
+                    job_id=job_id,
+                    session_id=session_id,
+                    status="completed",
+                    payload=output,
                 )
-
-                logger.info(f"Result: {executionResult}")
-
-                # read the output file and store it in the result
-                with open(f"{output_file}", "r") as f:
-                    output = f.read()
-                logger.info(f"Output: {output}")
-                try:
-                    parsedOutput = json.loads(output)
-                    print("parsedOutput", parsedOutput)
-                except json.JSONDecodeError:
-                    parsedOutput = {"status": "failed", "error": "Invalid JSON output"}
-
-                if (
-                    executionResult.returncode == 0
-                    and parsedOutput.get("status") == "success"
-                ):
-                    self.job_manager.update_job_status(
-                        job_id=job_id,
-                        session_id=session_id,
-                        status="completed",
-                        payload=output,
-                    )
-                    job_final_status = "completed"
-                    job_exec_result = parsedOutput
-                else:
-                    self.job_manager.update_job_status(
-                        job_id=job_id,
-                        session_id=session_id,
-                        status="failed",
-                        payload=output,
-                    )
-                    job_final_status = "failed"
-                    job_exec_result = parsedOutput
-            except Exception as e:
-                logger.error(
-                    f"Error during subprocess execution:\n {traceback.format_exc()}"
-                )
+                job_final_status = "completed"
+                job_exec_result = parsedOutput
+            else:
                 self.job_manager.update_job_status(
                     job_id=job_id,
                     session_id=session_id,
                     status="failed",
-                    payload={"error": str(e)},
+                    payload=output,
                 )
                 job_final_status = "failed"
-                job_exec_result = {"error": str(e)}
+                job_exec_result = parsedOutput
+
+        except Exception as e:
+            logger.error(
+                f"Error during subprocess execution:\n {traceback.format_exc()}"
+            )
+            self.job_manager.update_job_status(
+                job_id=job_id,
+                session_id=session_id,
+                status="failed",
+                payload={"error": str(e)},
+            )
+            job_final_status = "failed"
+            job_exec_result = {"error": str(e)}
 
         finally:
             # Clean up temporary directory
