@@ -4,7 +4,7 @@ from core.agent_context import AgentContext
 from core.info.answer_handler import AnswerHandler
 from core.execution.base_code_executor import BaseCodeExecutor
 from core.code_generation.base_code_generator import BaseCodeGenerator
-from core.history_management.base_history_manager import BaseHistoryManager
+from core.interaction_manager.interaction_manager import InteractionManager
 from core.navigation.navigator import NextStep
 from core.perception.perception_handler import PerceptionHandler
 
@@ -20,7 +20,7 @@ class StepHandler:
     def __init__(
         self,
         code_generator: BaseCodeGenerator,
-        history_manager: BaseHistoryManager,
+        history_manager: InteractionManager, #todo: rename to interaction_manager
         perception_handler: PerceptionHandler,
         code_executor: BaseCodeExecutor,
         answer_handler: AnswerHandler,
@@ -29,13 +29,13 @@ class StepHandler:
         Initialize the StepHandler with dependencies.
 
         :param code_generator: Instance of CodeGenerator for generating code.
-        :param history_manager: Instance of HistoryManager for managing interaction history.
+        :param history_manager: Instance of InteractionManager for managing interactions.
         :param perception_handler: Instance of PerceptionHandler for generating perceptions.
         :param answer_handler: Instance of AnswerHandler for generating answers.
         :param code_executor: Instance of CodeExecutor for executing generated code.
         """
         self.code_generator = code_generator
-        self.history_manager = history_manager
+        # self.history_manager = history_manager #todo: delete this if we don't need it
         self.perception_handler = perception_handler
         self.answer_handler = answer_handler
         self.code_executor = code_executor

@@ -9,7 +9,7 @@ from core.execution.local_code_executor import LocalCodeExecutor
 from core.job_management.job_manager import JobManager
 from core.navigation.navigator import Navigator
 from core.perception.perception_handler import PerceptionHandler
-from core.history_management.postgres_history_manager import PostgresHistoryManager
+from core.interaction_manager.interaction_manager import InteractionManager
 from core.navigation.step_handler import StepHandler
 from embodiment.runners.api_runner.api_runner import APIRunner
 from core.llms.openai import OpenAIClient
@@ -68,7 +68,6 @@ if __name__ == "__main__":
     print(f"CODE_GEN_LLM_API_KEY: {os.getenv('CODE_GEN_LLM_API_KEY')}")
     print(f"CODE_GEN_LLM_MODEL: {os.getenv('CODE_GEN_LLM_MODEL')}")
 
-
     basic_llm_client = LLMFactory.create(
         provider=os.getenv("BASIC_LLM_PROVIDER"),
         api_key=os.getenv("BASIC_LLM_API_KEY"),
@@ -96,19 +95,23 @@ if __name__ == "__main__":
     # Initialize dependencies
 
     navigator = Navigator(reasoning_llm_client)
-    history_manager = PostgresHistoryManager(basic_llm_client)
+    interaction_manager = InteractionManager(
+        llm_client=basic_llm_client,
+        auth_token=agent_config["auth_token"],
+        dana_url=os.getenv("DANA_URL"),
+    )
     code_generator = LocalCodeGenerator(code_gen_llm_client)
     job_manager = JobManager(
         auth_token=agent_config["auth_token"], dana_url=os.getenv("DANA_URL")
     )
     code_executor = LocalCodeExecutor(
-        job_manager=job_manager, history_manager=history_manager
+        job_manager=job_manager, interaction_manager=interaction_manager
     )
     perception_handler = PerceptionHandler(basic_llm_client)
     answer_handler = AnswerHandler(basic_llm_client)
     step_handler = StepHandler(
         code_generator=code_generator,
-        history_manager=history_manager,
+        history_manager=interaction_manager,
         perception_handler=perception_handler,
         code_executor=code_executor,
         answer_handler=answer_handler,
@@ -121,7 +124,7 @@ if __name__ == "__main__":
         {
             "navigator": navigator,
             "step_handler": step_handler,
-            "history_manager": history_manager,
+            "interaction_manager": interaction_manager,
         }
     )
 

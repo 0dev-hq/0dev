@@ -41,7 +41,6 @@ class AnthropicClient(BaseLLM):
         if formatter:
             # The tool is used as a workaround to get the structured output from the model
             schema = formatter.model_json_schema()
-            print(f"Schema: {schema}")
             tools = [
                 {
                     "name": "format_result",

@@ -57,7 +57,7 @@ class LocalCodeExecutor(BaseCodeExecutor):
             },
         }
 
-        self.history_manager.save_interaction(
+        self.interaction_manager.save_interaction(
             account_id=account_id,
             agent_id=agent_id,
             session_id=session_id,
@@ -81,7 +81,7 @@ class LocalCodeExecutor(BaseCodeExecutor):
                 "status": "in_progress",
             },
         }
-        self.history_manager.save_interaction(
+        self.interaction_manager.save_interaction(
             account_id=account_id,
             agent_id=agent_id,
             session_id=session_id,
@@ -233,7 +233,7 @@ with open('{output_file}', 'w') as f:
                 },
             }
 
-            self.history_manager.save_interaction(
+            self.interaction_manager.save_interaction(
                 account_id=account_id,
                 agent_id=agent_id,
                 session_id=session_id,

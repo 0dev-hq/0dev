@@ -4,7 +4,9 @@ from abc import ABC, abstractmethod
 class BaseInteractor(ABC):
 
     @abstractmethod
-    def interact(self, user_input: str, session_id: str, agent_deployment_metadata) -> dict:
+    def interact(
+        self, user_input: str, session_id: str, agent_deployment_metadata
+    ) -> dict:
         """
         Interact with the agent to process input and determine actions or perceptions.
 

@@ -2,7 +2,7 @@ import logging
 from core.agent_context import AgentContext
 from core.base_agent import BaseAgent
 from core.navigation.navigator import Navigator
-from core.history_management.base_history_manager import BaseHistoryManager
+from core.interaction_manager.interaction_manager import InteractionManager
 from core.navigation.step_handler import StepHandler
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ class InteractiveAgent(BaseAgent):
         description: str,
         navigator: Navigator,
         step_handler: StepHandler,
-        history_manager: BaseHistoryManager,
+        interaction_manager: InteractionManager,
         intents: list,
         facts: list,
         policies: list,
@@ -38,7 +38,7 @@ class InteractiveAgent(BaseAgent):
         :param description: Description of the agent.
         :param navigator: Instance of Navigator for deciding the next step.
         :param step_handler: Instance of StepHandler for handling the next step.
-        :param history_manager: Instance of HistoryManager for managing interaction history.
+        :param interaction_manager: Instance of InteractionManager for managing interactions.
         :param code_generator: Instance of CodeGenerator for generating codes to implement actions.
         :param code_executor: Instance of CodeExecutor for executing generated code.
         :param intents: Set of intents supported by the agent.
@@ -60,7 +60,7 @@ class InteractiveAgent(BaseAgent):
         self.account_id = account_id
         self.navigator = navigator
         self.step_handler = step_handler
-        self.history_manager = history_manager
+        self.interaction_manager = interaction_manager
 
     def get_identity(self) -> str:
         """
@@ -99,6 +99,8 @@ class InteractiveAgent(BaseAgent):
             agent_id=self.id,
         )
 
+        logger.info(f"Response from step handler: {response}")
+
         self._save_response(session_id, response)
 
         return response
@@ -110,7 +112,7 @@ class InteractiveAgent(BaseAgent):
         :param session_id: The session ID for this interaction.
         :return: A dictionary representing the current context.
         """
-        history = self.history_manager.get_history(
+        history = self.interaction_manager.get_history(
             account_id=self.account_id, agent_id=self.id, session_id=session_id
         )
         return {
@@ -122,14 +124,14 @@ class InteractiveAgent(BaseAgent):
             "integrations": self.integrations,
         }
 
-    def _save_response(self, session_id: str, response: str):
+    def _save_response(self, session_id: str, response: dict):
         """
         Save the agent's response to the interaction history.
 
         :param session_id: The session ID for this interaction.
         :param response: The agent's response string.
         """
-        self.history_manager.save_interaction(
+        self.interaction_manager.save_interaction(
             account_id=self.account_id,
             agent_id=self.id,
             session_id=session_id,
@@ -144,7 +146,7 @@ class InteractiveAgent(BaseAgent):
         :param user_input: The user's input string.
         """
         interaction = {"type": "user_input", "content": user_input}
-        self.history_manager.save_interaction(
+        self.interaction_manager.save_interaction(
             account_id=self.account_id,
             agent_id=self.id,
             session_id=session_id,
@@ -158,6 +160,6 @@ class InteractiveAgent(BaseAgent):
         :param session_id: The session ID to filter by.
         :return: A list of interactions sorted by timestamp in descending order.
         """
-        return self.history_manager.get_history(
+        return self.interaction_manager.get_history(
             account_id=self.account_id, agent_id=self.id, session_id=session_id
         )

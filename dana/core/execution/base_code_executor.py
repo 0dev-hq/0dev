@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
-from core.history_management.base_history_manager import BaseHistoryManager
 from core.job_management.job_manager import JobManager
+from core.interaction_manager.interaction_manager import InteractionManager
 from core.perception.perception_handler import InputItemFormat
 
 
 class BaseCodeExecutor(ABC):
-    def __init__(self, job_manager: JobManager, history_manager: BaseHistoryManager):
+    def __init__(self, job_manager: JobManager, interaction_manager: InteractionManager):
         self.job_manager = job_manager
-        self.history_manager = history_manager
+        self.interaction_manager = interaction_manager
 
     @abstractmethod
     def execute_code(

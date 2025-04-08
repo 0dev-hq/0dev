@@ -1,8 +1,9 @@
 from flask import Blueprint, g, jsonify, request
 from api.services.agent_service import AgentService
-
+from api.services.interaction_history_service import InteractionHistoryService
 agents_bp = Blueprint("agents", __name__)
 _agent_service = AgentService()
+_interaction_history_service = InteractionHistoryService()
 
 
 @agents_bp.route("/<agent_id>/session", methods=["POST"])
@@ -31,7 +32,12 @@ def list_history(agent_id, session_id):
     """
     List the interaction history for a specific session.
     """
-    history = _agent_service.get_history(agent_id, session_id)
+    account_id = g.get("account_id")
+    history = _interaction_history_service.get_history(
+        account_id=account_id,
+        agent_id=agent_id,
+        session_id=session_id,
+    )
     return jsonify(history), 200
 
 

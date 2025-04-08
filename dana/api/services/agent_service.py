@@ -29,24 +29,6 @@ class AgentService:
             {"session_id": s.session_id, "created_at": s.created_at} for s in sessions
         ]
 
-    def get_history(self, agent_id: str, session_id: str) -> list:
-        """
-        Retrieve interaction history for a session.
-
-        :param agent_id: Agent ID to filter by.
-        :param session_id: Session ID to filter by.
-        """
-
-        # 1. Find the agent's url if it exists. If not, raise an error.
-        agent = Agent.query.filter_by(agent_id=agent_id).first()
-        if not agent:
-            raise ValueError("Agent not found.")
-
-        # 2. Get the history
-        history = self.interactor.get_history(session_id, agent.deployment_metadata)
-
-        return history
-
     def get_generated_codes(self, agent_id: str) -> dict:
         """
         Retrieve all generated codes for an agent.

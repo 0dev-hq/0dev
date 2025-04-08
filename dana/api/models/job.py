@@ -12,7 +12,7 @@ class JobType(enum.Enum):
 
 
 class Job(Base):
-    __tablename__ = "jobs"
+    __tablename__ = "agent_jobs"
 
     job_id = Column(String, primary_key=True, nullable=False)
     session_id = Column(String, nullable=False)

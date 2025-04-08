@@ -9,8 +9,20 @@ type JobBaseData = {
   job_id: string;
 };
 
+type InteractionBaseData = {
+  account_id: string;
+  session_id: string;
+  agent_id: string;
+  interaction: any;
+};
+
 const getJobRoom = (data: JobBaseData) => {
   return `${data.account_id}:dana:job-update:${data.agent_id}:${data.session_id}`;
+};
+
+const getInteractionRoom = (data: InteractionBaseData) => {
+  console.log("data", JSON.stringify(data));
+  return `${data.account_id}:dana:interaction:${data.agent_id}:${data.session_id}`;
 };
 
 export const setupDanaNamespace = (io: Server) => {
@@ -34,6 +46,13 @@ export const setupDanaNamespace = (io: Server) => {
 
   danaNamespace.on("connection", (socket) => {
     logger.info("Dana connected");
+
+    socket.on("new_interaction", (data: InteractionBaseData) => {
+      console.log("new_interaction", JSON.stringify(data));
+      const room = getInteractionRoom(data);
+      logger.info(`Sending new_interaction to ${room}`);
+      io.of("/general").to(room).emit("new_interaction", data);
+    });
 
     socket.on("job_created", (data: JobBaseData) => {
       const room = getJobRoom(data);
