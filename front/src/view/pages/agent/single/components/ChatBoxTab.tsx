@@ -1,4 +1,4 @@
-import { useState, useEffect, KeyboardEvent } from "react";
+import { useState, useEffect, KeyboardEvent, useRef } from "react";
 import { Send } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { agentService } from "@/services/agentService";
 import { useMutation } from "react-query";
 import { TypingIndicator } from "./TypingIndicator";
-import { InteractionMessage, JobMessage } from "./chatbox-messages/messageTypes";
+import {
+  InteractionMessage,
+  JobMessage,
+} from "./chatbox-messages/messageTypes";
 import { MessageFactory } from "./chatbox-messages/MessageBubbleFactory";
 import { Textarea } from "@/components/ui/textarea";
 import { useSocket } from "@/context/SocketProvider";
@@ -43,13 +46,8 @@ export function ChatBoxTab({
     }) => agentService.interact(agentId, sessionId, input),
     {
       onSuccess: (response: InteractionMessage) => {
-        // Only valid case is handing the job_execution step in the backend
-        if (!response)
-        {
-          return;
-        }
-        setMessages((prevMessages) => [...prevMessages, response]);
-        setIsAgentTyping(false);
+        // setMessages((prevMessages) => [...prevMessages, response]);
+        // setIsAgentTyping(false);
       },
       onError: () => {
         setIsAgentTyping(false);
@@ -72,75 +70,95 @@ export function ChatBoxTab({
     }
   );
 
+  const hasJoinedRoom = useRef(false);
+
   useEffect(() => {
     if (!agentId || !sessionId) return;
+
     const room = `dana:job-update:${agentId}:${sessionId}`;
-    console.log("Joining room", room);
-    joinRoom(room);
+    const interactionRoom = `dana:interaction:${agentId}:${sessionId}`;
 
-    socket?.on("job_created", (data) => {
-      const msg: JobMessage = {
-        "type": "job",
-        "content": {
-          "name": data.name,
-          "description": data.description,
-          "job_id": data.job_id,
-          "status": data.status,
-          "payload": data.result
-        }
-      }
-      setMessages((prevMessages) => [...prevMessages, msg]);
-      // setJobUpdates((prevJobUpdates) => [...prevJobUpdates, data]);
-      console.log("Job created", data);
-    });
+    if (!hasJoinedRoom.current) {
+      console.log("Joining room", room);
+      joinRoom(room);
+      console.log("Joining room", interactionRoom);
+      joinRoom(interactionRoom);
+      hasJoinedRoom.current = true;
 
-    socket?.on("job_completed", (data) => {
-      const msg: JobMessage = {
-        "type": "job",
-        "content": {
-          "name": data.name,
-          "description": data.description,
-          "job_id": data.job_id,
-          "status": data.status,
-          "payload": data.result
+      socket?.on(
+        "new_interaction",
+        (data: {
+          account_id: string;
+          agent_id: string;
+          session_id: string;
+          interaction: InteractionMessage;
+        }) => {
+          console.log("Received new_interaction event:", data);
+          setMessages((prevMessages) => [...prevMessages, data.interaction]);
+          setIsAgentTyping(false);
         }
-      }
-      setMessages((prevMessages) => [...prevMessages, msg]);
-      // setJobUpdates((prevJobUpdates) => [...prevJobUpdates, data]);
-      console.log("Job completed", data);
-    });
+      );
 
-    socket?.on("job_failed", (data) => {
-      const msg: JobMessage = {
-        "type": "job",
-        "content": {
-          "name": data.name,
-          "description": data.description,
-          "job_id": data.job_id,
-          "status": data.status,
-          "payload": data.result
-        }
-      }
-      setMessages((prevMessages) => [...prevMessages, msg]);
-      // setJobUpdates((prevJobUpdates) => [...prevJobUpdates, data]);
-      console.log("Job failed", data);
-    });
+      socket?.on("job_created", (data) => {
+        const msg: JobMessage = {
+          type: "job",
+          content: {
+            name: data.name,
+            description: data.description,
+            job_id: data.job_id,
+            status: data.status,
+            payload: data.result,
+          },
+        };
+        setMessages((prevMessages) => [...prevMessages, msg]);
+        console.log("Job created", data);
+      });
 
-    socket?.on("job_scheduled", (data) => {
-      const msg: JobMessage = {
-        "type": "job",
-        "content": {
-          "name": data.name,
-          "description": data.description,
-          "job_id": data.job_id,
-          "status": data.status,
-          "payload": data.result
-        }
-      }
-      setMessages((prevMessages) => [...prevMessages, msg]);
-      // setJobUpdates((prevJobUpdates) => [...prevJobUpdates, data]);
-      console.log("Job scheduled");
-    });
+      socket?.on("job_completed", (data) => {
+        const msg: JobMessage = {
+          type: "job",
+          content: {
+            name: data.name,
+            description: data.description,
+            job_id: data.job_id,
+            status: data.status,
+            payload: data.result,
+          },
+        };
+        setMessages((prevMessages) => [...prevMessages, msg]);
+        console.log("Job completed", data);
+      });
+
+      socket?.on("job_failed", (data) => {
+        const msg: JobMessage = {
+          type: "job",
+          content: {
+            name: data.name,
+            description: data.description,
+            job_id: data.job_id,
+            status: data.status,
+            payload: data.result,
+          },
+        };
+        setMessages((prevMessages) => [...prevMessages, msg]);
+        console.log("Job failed", data);
+      });
+
+      socket?.on("job_scheduled", (data) => {
+        const msg: JobMessage = {
+          type: "job",
+          content: {
+            name: data.name,
+            description: data.description,
+            job_id: data.job_id,
+            status: data.status,
+            payload: data.result,
+          },
+        };
+        setMessages((prevMessages) => [...prevMessages, msg]);
+        console.log("Job scheduled");
+      });
+    }
 
     if (shouldLoadHistory) {
       loadInteractionHistory();
@@ -150,6 +168,7 @@ export function ChatBoxTab({
 
     return () => {
       leaveRoom(room);
+      leaveRoom(interactionRoom);
     };
   }, [agentId, sessionId, shouldLoadHistory, loadInteractionHistory]);
 

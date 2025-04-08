@@ -14,6 +14,7 @@ job_bp = Blueprint("job", __name__)
 _job_service = JobService()
 
 
+# called by agent
 @job_bp.route("/", methods=["POST"])
 def create_job():
     """
@@ -66,6 +67,7 @@ def create_job():
     )
 
 
+# called by agent
 @job_bp.route("/update_status", methods=["POST"])
 def update_status():
     """

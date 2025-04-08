@@ -17,7 +17,7 @@ class IntegrationType(enum.Enum):
 
 
 class Integration(Base):
-    __tablename__ = "integrations"
+    __tablename__ = "agent_integrations"
 
     agent_id = Column(
         String, ForeignKey("agents.agent_id", ondelete="CASCADE"), nullable=False

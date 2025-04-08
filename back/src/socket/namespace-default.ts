@@ -14,6 +14,10 @@ export const setupDefaultNamespace = (io: Server) => {
   });
   generalNamespace.on("connection", (socket: Socket) => {
     logger.debug(`Client connected: ${socket.id}`);
+    // show the number of clients connected to the general namespace
+    logger.info(
+      `Number of clients connected to general namespace: ${generalNamespace.sockets.size}`
+    );
 
     const account = socket.data.user.account;
     socket.on("join_room", (room: string) => {
@@ -31,6 +35,9 @@ export const setupDefaultNamespace = (io: Server) => {
 
     socket.on("disconnect", () => {
       logger.info(`Client disconnected: ${socket.id}`);
+      logger.info(
+        `Number of clients connected to general namespace: ${generalNamespace.sockets.size}`
+      );
     });
   });
 

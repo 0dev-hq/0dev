@@ -1,5 +1,6 @@
 import logging
 from flask import Flask, request, jsonify
+import threading
 
 
 class APIRunner:
@@ -48,9 +49,11 @@ class APIRunner:
                 self.logger.error("Missing input or session_id in request.")
                 return jsonify({"error": "Required field(s) missing."}), 400
             self.logger.info(f"Received input: {user_input}")
-
-            response = self.agent.interact(user_input, session_id)
-            return jsonify(response)
+            thread = threading.Thread(
+                target=self.agent.interact, args=(user_input, session_id)
+            )
+            thread.start()
+            return '', 200
 
         @self.app.route("/history", methods=["GET"])
         def history():
