@@ -120,8 +120,8 @@ class BaseCodeGenerator(ABC):
             return reference_id
 
         except Exception as e:
-            print(f"Error saving generated code: {e}")
-            return ""
+            logger.error(f"Error saving generated code: {e}")
+            raise Exception("Internal error: Error saving generated code.")
 
     def get_code_with_input(
         self, account_id: str, agent_id: str, session_id: str, context: AgentContext
@@ -152,11 +152,9 @@ class BaseCodeGenerator(ABC):
             # default to 'latest' if not specified
             version = response.version or "latest"
 
-            # Validate reference_id
-            if not reference_id:
-                raise ValueError(
-                    "The LLM response did not provide a valid 'reference_id'."
-                )
+            # Validate reference_id. It should be a valid UUID
+            if not uuid.UUID(reference_id):
+                raise ValueError("Invalid reference_id")
 
             # Query to fetch the specific version or the latest
             # todo: include version in the query
@@ -222,8 +220,8 @@ class BaseCodeGenerator(ABC):
                     Given the following context:
                     History of interactions with the user: {context.get('history', 'No history available')}
                     Please determine:
-                    1. The reference_id of the relevant code.
-                    2. The version of the code (set to 'latest' if not specified).
+                    1. The reference_id of the relevant code. Hint: reference_id is a UUID, so don't confuse it with the name of the code or the version.
+                    2. The version of the code (set to 'latest' if not specified or unable to determine).
                     3. The inputs required for the code execution with format that matches the code requirements. Exclude the secrets and 
                     integrations as they are passed separately.
                     Use only the available facts and history. Don't make up any fictional values.

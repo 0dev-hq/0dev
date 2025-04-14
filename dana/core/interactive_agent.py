@@ -4,6 +4,7 @@ from core.base_agent import BaseAgent
 from core.navigation.navigator import Navigator
 from core.interaction_manager.interaction_manager import InteractionManager
 from core.navigation.step_handler import StepHandler
+from core.navigation.navigator import NextStep
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +99,9 @@ class InteractiveAgent(BaseAgent):
             account_id=self.account_id,
             agent_id=self.id,
         )
+
+        if next_step_type == NextStep.EXECUTE:
+            return None
 
         logger.info(f"Response from step handler: {response}")
 

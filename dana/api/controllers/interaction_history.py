@@ -60,6 +60,10 @@ def update_interaction(session_id):
     agent_id = g.get("agent_id")
     interaction = request.json.get("interaction")
     summary = request.json.get("summary")
+
+    if not interaction:
+        return jsonify({"error": "Interaction is required"}), 400
+
     _interaction_history_service.save_interaction(
         account_id=account_id,
         agent_id=agent_id,
@@ -76,7 +80,7 @@ def update_interaction(session_id):
     }
     logger.info(f"Payload: {payload}")
 
-    if interaction.get("type") != "user_input":
+    if interaction.get("type") not in ["user_input", "job"]:
         socket_client.emit_event("new_interaction", payload)
 
     return jsonify(interaction), 200

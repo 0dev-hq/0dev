@@ -29,13 +29,11 @@ class StepHandler:
         Initialize the StepHandler with dependencies.
 
         :param code_generator: Instance of CodeGenerator for generating code.
-        :param history_manager: Instance of InteractionManager for managing interactions.
         :param perception_handler: Instance of PerceptionHandler for generating perceptions.
         :param answer_handler: Instance of AnswerHandler for generating answers.
         :param code_executor: Instance of CodeExecutor for executing generated code.
         """
         self.code_generator = code_generator
-        # self.history_manager = history_manager #todo: delete this if we don't need it
         self.perception_handler = perception_handler
         self.answer_handler = answer_handler
         self.code_executor = code_executor
@@ -172,46 +170,48 @@ class StepHandler:
         agent_id: str,
     ) -> dict:
         logger.debug("Handling execution step")
-        executionContext = self.code_generator.get_code_with_input(
-            account_id, agent_id, session_id, context
-        )
+        try:
+            executionContext = self.code_generator.get_code_with_input(
+                account_id, agent_id, session_id, context
+            )
 
-        logger.debug(f"Executing code: {executionContext.generated_code.code}")
-        logger.debug(f"Inputs: {executionContext.inputs}")
-        logger.debug(f"Reference ID: {executionContext.reference_id}")
+            logger.debug(f"Executing code: {executionContext.generated_code.code}")
+            logger.debug(f"Inputs: {executionContext.inputs}")
+            logger.debug(f"Reference ID: {executionContext.reference_id}")
 
-        # filter the secrets to only include the ones that are required by the code
-        secrets = {
-            secret["name"]: secret["value"]
-            for secret in context["secrets"]
-            if secret["name"] in executionContext.generated_code.secrets
-        }
-
-        # filter the integrations to only include the ones that are required by the code
-        integrations = {
-            integration["name"]: {
-                "credentials": integration["credentials"],
+            # filter the secrets to only include the ones that are required by the code
+            secrets = {
+                secret["name"]: secret["value"]
+                for secret in context["secrets"]
+                if secret["name"] in executionContext.generated_code.secrets
             }
-            for integration in context["integrations"]
-            if integration["name"] in executionContext.generated_code.integrations
-        }
 
-        job_id = self.code_executor.execute_code(
-            account_id=account_id,
-            agent_id=agent_id,
-            session_id=session_id,
-            code=executionContext.generated_code.code,
-            requirements=executionContext.generated_code.requirements,
-            inputs=executionContext.inputs,
-            secrets=secrets,
-            integrations=integrations,
-            name=executionContext.generated_code.name,
-            description=executionContext.generated_code.description,
-        )
-        logger.info(f"Scheduled job: {job_id}")
-        # We return None here because we already inform the user that the job is scheduled. Once we switch to
-        # websocket for all interactions, we won't need to worry about this at all.
-        return None
+            # filter the integrations to only include the ones that are required by the code
+            integrations = {
+                integration["name"]: {
+                    "credentials": integration["credentials"],
+                }
+                for integration in context["integrations"]
+                if integration["name"] in executionContext.generated_code.integrations
+            }
+
+            self.code_executor.execute_code(
+                account_id=account_id,
+                agent_id=agent_id,
+                session_id=session_id,
+                code=executionContext.generated_code.code,
+                requirements=executionContext.generated_code.requirements,
+                inputs=executionContext.inputs,
+                secrets=secrets,
+                integrations=integrations,
+                name=executionContext.generated_code.name,
+                description=executionContext.generated_code.description,
+            )
+            return None
+        except Exception as e:
+            # todo: get rid of this try-catch block. It should be consistent with the other handlers. The errors should be captured where they happen.
+            logger.error(f"Error handling execution: {traceback.format_exc()}")
+            return self._handle_error(str(e))
 
     def _handle_none(
         self,

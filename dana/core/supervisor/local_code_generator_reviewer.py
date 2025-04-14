@@ -108,16 +108,16 @@ class LocalCodeGeneratorReviewer:
         - Verify that the code fulfills the intended task as described in the user request.
         - Confirm that all required dependencies are included and correctly listed.
         - Ensure the `main` function is the correct entry point and all inputs are passed as function arguments.
-        - Verify that no placeholder values, are included in the code.
+        - Verify that no dummy placeholder values, are included in the code. If a valid placeholder is used and the code is correct, it's fine.
         - Make sure the generated code aligns with the given agent policies and constraints.
-        Also verify that the code adheres to the following requirements - none of these requirements should be violated:
+        Also verify that the code adheres to the following requirements - NONE of these requirements should be violated:
         - The code MUST have a function named 'main' that takes all the required inputs as arguments.
         - The `main` function MUST be the entry point of the code, but you can have additional functions if needed.
         - All the code MUST be contained within a single file.
-        - If any secret is used in the code, the 'main' function should take an argument named 'secrets' which is a dictionary containing
+        - If any secret is used in the code, the 'main' function MUST take an argument named 'secrets' which is a dictionary containing
         all the secrets required by the code.
-        - If any of the information needed in the code is provided as a secret, the 'secrets' argument should be used to pass the secret values.
-        - The main function should wrap the entire code in a final try-except block to catch any exceptions and return a JSON response in either case
+        - If any of the information needed in the code is provided as a secret, the 'secrets' argument MUST be used to pass the secret values.
+        - The main function MUST wrap the entire code in a final try-except block to catch any exceptions and return a JSON response in either case
           (success or failure).
         - The code should not have use dummy values or placeholders unless explicitly mentioned in the user inputs.
         - Don't worry about comments, linting or non-breaking style issues, the focus is on correctness and following the key structural requirements.

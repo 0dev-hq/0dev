@@ -130,7 +130,8 @@ class LocalCodeExecutor(BaseCodeExecutor):
             )
 
             args = {}
-            args["inputs"] = (
+
+            inputs_str = (
                 ", ".join(
                     [
                         f"{input_item.name}={repr(input_item.get_typed_value())}"
@@ -140,12 +141,17 @@ class LocalCodeExecutor(BaseCodeExecutor):
                 if inputs
                 else ""
             )
+
             if secrets:
                 args["secrets"] = secrets
             if integrations:
                 args["integrations"] = integrations
 
-            args_str = ", ".join([f"{k}={v}" for k, v in args.items() if v])
+            args_str = inputs_str
+            if args:
+                if inputs_str:
+                    args_str += ", "
+                args_str += ", ".join([f"{k}={v}" for k, v in args.items()])
 
             output_file = os.path.join(temp_dir, "0dev.out")
 
@@ -165,24 +171,35 @@ with open('{output_file}', 'w') as f:
             # Execute the script in the virtual environment
             python_executable = os.path.join(venv_dir, "bin", "python")
             logger.info(f"Executing script with Python: {python_executable}")
-            executionResult = subprocess.run(
-                [python_executable, caller_script_path],
-                check=True,
-                cwd=temp_dir,
-                timeout=240,
-            )
+            try:
+                executionResult = subprocess.run(
+                    [python_executable, caller_script_path],
+                    check=True,
+                    cwd=temp_dir,
+                    timeout=240,
+                )
+            except subprocess.TimeoutExpired as e:
+                logger.error(f"Subprocess timed out: {e}")
+                raise Exception("Subprocess timed out")
+            except subprocess.CalledProcessError as e:
+                logger.error(f"Subprocess returned non-zero exit code: {e}")
+                raise Exception(f"Subprocess returned non-zero exit code: {e}")
 
             logger.info(f"Result: {executionResult}")
 
             # read the output file and store it in the result
-            with open(f"{output_file}", "r") as f:
-                output = f.read()
-            logger.info(f"Output: {output}")
             try:
+                with open(f"{output_file}", "r") as f:
+                    output = f.read()
+                logger.info(f"Output: {output}")
                 parsedOutput = json.loads(output)
                 print("parsedOutput", parsedOutput)
+            except FileNotFoundError:
+                logger.error(f"Output file not found: {output_file}")
+                raise Exception(f"Output file not found: {output_file}")
             except json.JSONDecodeError:
-                parsedOutput = {"status": "failed", "error": "Invalid JSON output"}
+                logger.error(f"Could not parse the output file: {output_file}")
+                raise Exception(f"Could not parse the output file: {output_file}")
 
             if (
                 executionResult.returncode == 0
